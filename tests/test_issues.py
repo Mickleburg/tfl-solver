@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 
+from tfl.automata import dfa_of
 from tfl.words import iter_words
 
 # --------------------------------------------------------------------------
@@ -58,3 +59,85 @@ def test_recursive_language_is_thin():
     assert accepted == [
         "", "aab", "baab", "aaaab", "bbaab", "aabaab", "baaaab", "bbbaab",
     ]
+
+
+# --------------------------------------------------------------------------
+# Issue #7 — Арден с рекурсией под звёздочкой
+# --------------------------------------------------------------------------
+
+MAX_LEN = 12
+
+
+def _cut(words: set[str]) -> set[str]:
+    return {w for w in words if len(w) <= MAX_LEN}
+
+
+def _concat(left: set[str], right: set[str]) -> set[str]:
+    return _cut({a + b for a in left for b in right})
+
+
+def _star(inner: set[str]) -> set[str]:
+    out, frontier = {""}, {""}
+    while frontier:
+        nxt = _cut({f + w for f in frontier for w in inner if w}) - out
+        out |= nxt
+        frontier = nxt
+    return out
+
+
+def _least_fixpoint(step) -> set[str]:
+    """Наименьшая неподвижная точка языкового уравнения, срез до MAX_LEN."""
+    current: set[str] = set()
+    while True:
+        nxt = _cut(step(current))
+        if nxt == current:
+            return current
+        current = nxt
+
+
+def _words_of(pattern: str) -> set[str]:
+    machine = dfa_of(pattern)
+    return {w for w in iter_words("ab", MAX_LEN) if machine.accepts(w)}
+
+
+def test_arden_under_a_star_the_teachers_answer_is_right():
+    """`A = (bA)*b` ⇒ `((bb)*bb)*b`, и это в самом деле `b(bb)*`.
+
+    Приём из issue #7: раскрыть итерацию (`A = (bA)*bbA + b`), применить
+    Арден (`A = ((bA)*bb)*b`), подставить выход из рекурсии.
+    """
+    fixpoint = _least_fixpoint(lambda s: _concat(_star(_concat({"b"}, s)), {"b"}))
+    assert fixpoint == _words_of("((bb)*bb)*b")
+    assert fixpoint == _words_of("b(bb)*")
+
+
+def _second_example() -> set[str]:
+    """`B → (b)*B | b | a(aB)*a` — второй пример из того же ответа."""
+    return _least_fixpoint(
+        lambda s: (
+            _concat(_star({"b"}), s)
+            | {"b"}
+            | _concat(_concat({"a"}, _star(_concat({"a"}, s))), {"a"})
+        )
+    )
+
+
+def test_second_example_has_a_slip_in_the_written_answer():
+    """В ответе стоит `aa(aB)*` там, где по алгебре выходит `aa(Ba)*`.
+
+    Тождество `x(yx)* = (xy)*x` даёт `a(aB)*a = aa(Ba)*`. Опечатка сквозная
+    (повторяется во всех трёх строках вывода), поэтому логика шагов цела,
+    но дословно переписывать формулу нельзя.
+    """
+    language = _second_example()
+    left = _concat(_concat({"a"}, _star(_concat({"a"}, language))), {"a"})
+    assert left == _concat({"aa"}, _star(_concat(language, {"a"})))
+    assert left != _concat({"aa"}, _star(_concat({"a"}, language)))
+
+
+def test_second_example_answer_taken_literally_is_a_different_language():
+    """Дословная запись расходится с языком в обе стороны — есть свидетели."""
+    language = _second_example()
+    literal = _words_of("(b*|aaa(a(aa|b))*)*(aa|b)")
+    assert "aaba" in language and "aaba" not in literal
+    assert "aaab" in literal and "aaab" not in language
