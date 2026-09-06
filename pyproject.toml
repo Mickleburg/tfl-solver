@@ -1,0 +1,18 @@
+[project]
+name = "tfl-solver"
+version = "0.1.0"
+description = "Агент для решения задач по теории формальных языков (ИУ9, МГТУ им. Баумана)"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+# Извлечение текста и рендер сканов из PDF курса
+corpus = ["pymupdf>=1.24"]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.setuptools]
+packages = ["tfl"]
