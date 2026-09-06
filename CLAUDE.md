@@ -50,7 +50,11 @@ python -m pytest -q              # pythonpath настроен в pyproject.toml
   (`tools/lab1_report.py`), рецепт `docs/recipes/LAB-1.md`, сводка
   `evals/lab1_2025_report.md`, образец `reports/lab1-variant-20/`.
   304 теста.
-* **Дальше — S-4**: грамматики, PDA, LL/LR (`tfl/cfg.py`, `tfl/pda.py`).
+* **S-4 частично** — КС-грамматики (`tfl/cfg.py`): чистка, First_k/Follow_k,
+  LL(1), LR(0)/SLR(1); разбор (`tfl/parse.py`): Эрли, перечисление языка,
+  вывод. Фикстуры `evals/lab3_2025/` (14 грамматик + 14 описаний языка).
+  382 теста. Осталось в S-4: `tfl/pda.py`, НФ Хомского и CYK,
+  рецепт `docs/recipes/LAB-3.md`, генератор отчёта ЛР3.
   См. таблицу сессий в `docs/03-AGENT-PLAN.md`, §7.
 
 Две тонкости, уже стоившие ошибки и закреплённые тестами:
