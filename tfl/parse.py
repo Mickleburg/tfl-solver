@@ -15,9 +15,18 @@ from dataclasses import dataclass
 from typing import Callable, Iterable
 
 from tfl.cfg import CFG, Production
+from tfl.verdict import Verdict, refuted, unknown
 from tfl.words import iter_words
 
-__all__ = ["recognize", "language", "derivation", "disagreements"]
+__all__ = [
+    "recognize",
+    "language",
+    "derivation",
+    "disagreements",
+    "cyk",
+    "prefix_free",
+    "equivalent_up_to",
+]
 
 
 @dataclass(frozen=True)
@@ -188,3 +197,79 @@ def disagreements(
             if len(bad) >= limit:
                 break
     return bad
+
+
+def cyk(grammar: CFG, word: str, cnf: CFG | None = None) -> bool:
+    """Принадлежность по алгоритму Кока–Янгера–Касами.
+
+    Третий независимый способ ответить на тот же вопрос, что `recognize`
+    (Эрли) и `language` (неподвижная точка). Именно ради независимости он
+    и нужен: Эрли работает сверху вниз по исходной грамматике, CYK — снизу
+    вверх по нормальной форме Хомского, и совпасть «по построению» они
+    не могут.
+
+    `cnf` позволяет передать уже приведённую грамматику, чтобы не
+    пересчитывать её на каждом слове.
+    """
+    normal = cnf if cnf is not None else grammar.chomsky_normal_form()
+    if not word:
+        return any(p.lhs == normal.start and not p.rhs for p in normal.productions)
+
+    by_body: dict[tuple[str, ...], set[str]] = {}
+    for p in normal.productions:
+        if p.rhs:
+            by_body.setdefault(p.rhs, set()).add(p.lhs)
+
+    n = len(word)
+    # table[length][start] — нетерминалы, выводящие word[start : start + length]
+    table = [[set() for _ in range(n + 1)] for _ in range(n + 1)]
+    for i, char in enumerate(word):
+        table[1][i] = set(by_body.get((char,), ()))
+    for length in range(2, n + 1):
+        for start in range(n - length + 1):
+            cell = table[length][start]
+            for split in range(1, length):
+                for left in table[split][start]:
+                    for right in table[length - split][start + split]:
+                        cell |= by_body.get((left, right), set())
+    return normal.start in table[n][0]
+
+
+def prefix_free(grammar: CFG, max_len: int = 12) -> Verdict:
+    """Беспрефиксен ли язык: нет ли в нём слова, являющегося началом другого.
+
+    Свойство важно в ЛР3 потому, что по пустому стеку DPDA распознаёт
+    **ровно** беспрефиксные детерминированные языки: если язык не
+    беспрефиксен, детерминированный распознаватель обязан принимать
+    по финальному состоянию.
+
+    Исходов два, и «да» среди них нет: беспрефиксность КС-языка
+    неразрешима (это пустота пересечения `L ∩ L·Σ⁺`), поэтому отсутствие
+    контрпримера до длины `max_len` остаётся «не выяснено».
+    """
+    known = language(grammar, max_len)
+    for word in sorted(known, key=lambda w: (len(w), w)):
+        for cut in range(len(word)):
+            if word[:cut] in known:
+                return refuted(
+                    f"«{word[:cut] or 'ε'}» — собственное начало «{word}», оба в языке",
+                    (word[:cut], word),
+                )
+    return unknown(f"контрпример не найден среди слов длины ≤ {max_len}")
+
+
+def equivalent_up_to(
+    left: CFG, right: CFG, max_len: int = 8
+) -> tuple[list[str], list[str]]:
+    """Слова, различающие две грамматики: `только в левой`, `только в правой`.
+
+    Это и есть «автоматическое тестирование предполагаемой эквивалентности»
+    из задания ЛР3: грамматику сравнивают с ней же после пересечения
+    с регулярной аппроксимацией. Аппроксимация строится **сверху**, поэтому
+    непустой второй список означает ошибку построения, а непустой первый —
+    что аппроксимация действительно сузила язык.
+    """
+    ours = language(left, max_len)
+    theirs = language(right, max_len)
+    order = lambda w: (len(w), w)  # noqa: E731
+    return sorted(ours - theirs, key=order), sorted(theirs - ours, key=order)

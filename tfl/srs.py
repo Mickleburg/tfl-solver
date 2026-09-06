@@ -21,6 +21,7 @@ import random
 from dataclasses import dataclass, field
 from typing import Callable, Iterable, Iterator
 
+from tfl.verdict import Verdict
 from tfl.words import iter_words
 
 __all__ = [
@@ -82,30 +83,6 @@ def shortlex_key(word: str, precedence: str) -> tuple[int, tuple[int, ...]]:
     """
     rank = {ch: i for i, ch in enumerate(precedence)}
     return (len(word), tuple(rank.get(ch, len(rank)) for ch in word))
-
-
-@dataclass
-class Verdict:
-    """Результат проверки, которая может и не завершиться выводом.
-
-    `value` — True (доказано), False (опровергнуто) или None (не выяснено
-    в пределах бюджета). `witness` — то, что предъявляется в отчёте:
-    цикл, критическая пара, порядок.
-    """
-
-    value: bool | None
-    reason: str
-    witness: object = None
-
-    def __bool__(self) -> bool:  # pragma: no cover - защита от опечатки
-        raise TypeError(
-            "Verdict нельзя использовать как bool: у него три исхода. "
-            "Проверяйте .value is True / is False / is None"
-        )
-
-    def __str__(self) -> str:
-        mark = {True: "да", False: "нет", None: "не выяснено"}[self.value]
-        return f"{mark}: {self.reason}"
 
 
 @dataclass

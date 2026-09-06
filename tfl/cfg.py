@@ -321,6 +321,157 @@ class CFG:
                     changed = True
         return {n for n in self.nonterminals if n in begins[n]}
 
+    # -------------------------------------------- нормальная форма Хомского
+
+    def _fresh(self, base: str, taken: set[str]) -> str:
+        """Свежее имя нетерминала, не пересекающееся с уже занятыми."""
+        candidate, i = base, 0
+        while candidate in taken:
+            i += 1
+            candidate = f"{base}{i}"
+        return candidate
+
+    def remove_epsilon(self) -> CFG:
+        """Убрать ε-правила.
+
+        Если ε принадлежит языку, оно сохраняется единственным правилом
+        `S → ε` для стартового нетерминала; при этом стартовый нетерминал
+        предварительно выносится наружу, чтобы не встречаться в правых
+        частях (иначе `S → ε` пришлось бы применять внутри вывода).
+        """
+        grammar = self._with_fresh_start() if self.start in self.nullable() else self
+        # Пересчитываем после выноса стартового: новый `S₀ → S` тоже аннулируем,
+        # и без пересчёта правило `S₀ → ε` теряется вместе с пустым словом.
+        nullable = grammar.nullable()
+
+        fresh: set[Production] = set()
+        for p in grammar.productions:
+            positions = [i for i, s in enumerate(p.rhs) if s in nullable]
+            for mask in itertools.product((True, False), repeat=len(positions)):
+                drop = {pos for pos, keep in zip(positions, mask) if not keep}
+                rhs = tuple(s for i, s in enumerate(p.rhs) if i not in drop)
+                if rhs or p.lhs == grammar.start:
+                    fresh.add(Production(p.lhs, rhs))
+        if grammar.start in nullable:
+            fresh.add(Production(grammar.start, ()))
+        else:
+            fresh = {p for p in fresh if p.rhs}
+
+        return CFG(grammar.start, tuple(sorted(fresh)), grammar.nonterminals, grammar.terminals)
+
+    def _with_fresh_start(self) -> CFG:
+        """Новый стартовый нетерминал `S₀ → S`, не встречающийся справа."""
+        start = self._fresh(self.start + "₀", set(self.nonterminals) | set(self.terminals))
+        extra = Production(start, (self.start,))
+        return CFG(
+            start,
+            (extra,) + self.productions,
+            self.nonterminals | {start},
+            self.terminals,
+        )
+
+    def remove_unit(self) -> CFG:
+        """Убрать цепные правила `A → B`.
+
+        Правила `A → B` заменяются на все нецепные правила, достижимые
+        из `B` по цепочкам. Именно этого требует фаззер из ЛР3 2024
+        («удалить цепные правила») и шаг приведения к НФХ.
+        """
+        pairs: dict[str, set[str]] = {n: {n} for n in self.nonterminals}
+        changed = True
+        while changed:
+            changed = False
+            for p in self.productions:
+                if len(p.rhs) == 1 and p.rhs[0] in self.nonterminals:
+                    for a in self.nonterminals:
+                        if p.lhs in pairs[a] and p.rhs[0] not in pairs[a]:
+                            pairs[a].add(p.rhs[0])
+                            changed = True
+
+        fresh = {
+            Production(a, p.rhs)
+            for a in self.nonterminals
+            for b in pairs[a]
+            for p in self.rules_for(b)
+            if not (len(p.rhs) == 1 and p.rhs[0] in self.nonterminals)
+        }
+        return CFG(self.start, tuple(sorted(fresh)), self.nonterminals, self.terminals)
+
+    def chomsky_normal_form(self) -> CFG:
+        """Привести к нормальной форме Хомского.
+
+        Все правила принимают вид `A → BC`, `A → a` и, если ε входит
+        в язык, единственное `S → ε` при стартовом `S`, не встречающемся
+        справа. Порядок шагов обязателен: сначала ε-правила, потом цепные
+        (снятие ε-правил порождает новые цепные), и лишь затем разбиение
+        длинных правых частей.
+
+        Форма нужна алгоритму Кока–Янгера–Касами (`tfl.parse.cyk`) и лемме
+        о накачке для КС-языков: именно из неё берётся оценка длины
+        накачиваемого слова через высоту дерева вывода.
+        """
+        grammar = self.clean().remove_epsilon().remove_unit().clean()
+        taken = set(grammar.nonterminals) | set(grammar.terminals)
+        rules: list[Production] = []
+        wrappers: dict[str, str] = {}
+        pairs: dict[tuple[str, str], str] = {}
+
+        def wrap(symbol: str) -> str:
+            """Нетерминал-обёртка для терминала: `A_a → a`."""
+            if symbol not in wrappers:
+                name = grammar._fresh(f"⟨{symbol}⟩", taken)
+                taken.add(name)
+                wrappers[symbol] = name
+                rules.append(Production(name, (symbol,)))
+            return wrappers[symbol]
+
+        def pair(left: str, right: str) -> str:
+            """Нетерминал для пары символов — общий для всех правил.
+
+            Без общей таблицы одна и та же пара получает разные имена
+            в разных правилах, и грамматика распухает на ровном месте.
+            """
+            if (left, right) not in pairs:
+                name = grammar._fresh(f"⟨{left}{right}⟩", taken)
+                taken.add(name)
+                pairs[(left, right)] = name
+                rules.append(Production(name, (left, right)))
+            return pairs[(left, right)]
+
+        for p in grammar.productions:
+            if len(p.rhs) == 1 and p.rhs[0] in grammar.terminals:
+                rules.append(p)
+                continue
+            if not p.rhs:
+                rules.append(p)  # единственное уцелевшее `S → ε`
+                continue
+            body = [s if s in grammar.nonterminals else wrap(s) for s in p.rhs]
+            while len(body) > 2:
+                body = body[:-2] + [pair(body[-2], body[-1])]
+            rules.append(Production(p.lhs, tuple(body)))
+
+        nonterminals = {p.lhs for p in rules} | set(grammar.nonterminals)
+        terminals = {s for p in rules for s in p.rhs} - nonterminals
+        return CFG(grammar.start, tuple(rules), frozenset(nonterminals), frozenset(terminals))
+
+    def is_chomsky_normal_form(self) -> bool:
+        """Проверка формы — дешевле, чем доверять построению."""
+        for p in self.productions:
+            if not p.rhs:
+                if p.lhs != self.start:
+                    return False
+                if any(self.start in q.rhs for q in self.productions):
+                    return False
+            elif len(p.rhs) == 1:
+                if p.rhs[0] not in self.terminals:
+                    return False
+            elif len(p.rhs) == 2:
+                if any(s not in self.nonterminals for s in p.rhs):
+                    return False
+            else:
+                return False
+        return True
+
     # ---------------------------------------------------- LR(0) / SLR(1)
 
     def augmented(self) -> tuple[CFG, Production]:

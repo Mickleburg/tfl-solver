@@ -16,7 +16,7 @@ import pathlib
 import pytest
 
 from tfl.cfg import CFG, Production, parse_cfg
-from tfl.parse import derivation, language, recognize
+from tfl.parse import cyk, derivation, language, prefix_free, recognize
 from tfl.words import iter_words
 
 LAB3 = pathlib.Path(__file__).parent.parent / "evals" / "lab3_2025"
@@ -312,3 +312,106 @@ def test_minimal_nullable_chain():
     """Ещё короче: `S → A B`, оба нетерминала аннулируемы."""
     grammar = parse_cfg("S -> A B\nA -> ε\nB -> ε")
     assert recognize(grammar, "")
+
+
+# --------------------------------------------------------------------------
+# Нормальная форма Хомского и алгоритм Кока–Янгера–Касами
+# --------------------------------------------------------------------------
+
+
+def test_epsilon_removal_keeps_the_empty_word():
+    """Регрессия: `S₀ → ε` терялся из-за того, что nullable не пересчитывался.
+
+    После выноса стартового нетерминала наружу (`S₀ → S`) новый стартовый
+    тоже аннулируем, но в старом множестве nullable его нет — и правило
+    `S₀ → ε` не добавлялось, а вместе с ним из языка пропадало пустое слово.
+    """
+    grammar = parse_cfg("S -> a S b | ε").remove_epsilon()
+    assert "" in language(grammar, 4)
+    assert language(grammar, 6) == {"", "ab", "aabb", "aaabbb"}
+
+
+def test_epsilon_removal_drops_all_other_epsilon_rules():
+    grammar = parse_cfg("S -> A B\nA -> a | ε\nB -> b | ε").remove_epsilon()
+    empty = [p for p in grammar.productions if not p.rhs]
+    assert [p.lhs for p in empty] == [grammar.start]
+
+
+def test_epsilon_free_grammar_gets_no_fresh_start():
+    grammar = parse_cfg("S -> a S | a")
+    assert grammar.remove_epsilon().start == "S"
+
+
+def test_unit_rules_removed():
+    grammar = parse_cfg("S -> A\nA -> B\nB -> b").remove_unit()
+    assert all(not (len(p.rhs) == 1 and p.rhs[0] in grammar.nonterminals)
+               for p in grammar.productions)
+    assert language(grammar, 3) == {"b"}
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "S -> a S b | ε",
+        "S -> A\nA -> B\nB -> b",
+        EXPRESSION,
+        "S -> S a S b | T T | b a b\nT -> b b T | ε",
+    ],
+)
+def test_chomsky_normal_form_shape_and_language(text):
+    grammar = parse_cfg(text)
+    normal = grammar.chomsky_normal_form()
+    assert normal.is_chomsky_normal_form()
+    assert language(normal, 6) == language(grammar, 6)
+
+
+def test_pair_nonterminals_are_shared_between_rules():
+    """Одна и та же пара символов не должна плодить разные нетерминалы.
+
+    В `S → abc | xabc` пара `⟨b⟩⟨c⟩` возникает дважды. Без общей таблицы
+    вторая получит имя вроде `⟨⟨b⟩⟨c⟩⟩1`, и грамматика распухнет на ровном
+    месте. Совпадение тела с телом правила исходного нетерминала при этом
+    нормально и проверкой не считается.
+    """
+    grammar = parse_cfg("S -> a b c | x a b c")
+    normal = grammar.chomsky_normal_form()
+    added = set(normal.nonterminals) - set(grammar.nonterminals)
+    bodies = [p.rhs for p in normal.productions if len(p.rhs) == 2 and p.lhs in added]
+    assert len(bodies) == len(set(bodies))
+    assert len(bodies) == 2  # ⟨b⟩⟨c⟩ и ⟨a⟩⟨⟨b⟩⟨c⟩⟩
+
+
+@pytest.mark.parametrize("number,grammar", GRAMMARS, ids=IDS)
+def test_cyk_agrees_with_earley(number, grammar):
+    """Третий независимый распознаватель против первого.
+
+    Эрли идёт сверху вниз по исходной грамматике, CYK — снизу вверх
+    по нормальной форме Хомского. Совпадение проверяет заодно и само
+    приведение к нормальной форме.
+    """
+    normal = grammar.chomsky_normal_form()
+    for word in iter_words("ab", 6):
+        assert cyk(grammar, word, normal) == recognize(grammar, word), (
+            f"вариант {number}: расхождение на «{word or 'ε'}»"
+        )
+
+
+# --------------------------------------------------------------------------
+# Беспрефиксность
+# --------------------------------------------------------------------------
+
+
+def test_prefix_free_refuted_with_witness():
+    verdict = prefix_free(parse_cfg("S -> a S b | ε"), 6)
+    assert verdict.value is False
+    short, long = verdict.witness
+    assert long.startswith(short) and short != long
+
+
+def test_prefix_free_is_never_proved():
+    """«Да» среди исходов нет: беспрефиксность КС-языка неразрешима.
+
+    Язык aⁿbⁿ (n > 0) беспрефиксен, но подтвердить это перебором нельзя,
+    и честный ответ — «не выяснено».
+    """
+    assert prefix_free(parse_cfg("S -> a S b | a b"), 8).value is None
