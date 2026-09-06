@@ -309,17 +309,32 @@ def extended_fooling_set(
             if i != j:
                 can_follow[j][i] = not minimal.accepts(xj + yi)
 
+    def weight(seq: list[int]) -> tuple[int, int]:
+        """Больше пар — лучше; при равном размере короче слова — лучше.
+
+        Второй критерий чисто косметический, но отчёт с парами вида
+        (ε, bbb) читается заметно лучше, чем с (aabab, abbaba), а проверять
+        его глазами преподавателю проще.
+        """
+        total = sum(len(candidates[i][0]) + len(candidates[i][1]) for i in seq)
+        return (len(seq), -total)
+
+    by_length = sorted(
+        range(n), key=lambda i: (len(candidates[i][0]) + len(candidates[i][1]), i)
+    )
     rng = random.Random(seed)
     best: list[int] = []
     for attempt in range(restarts):
-        order = list(range(n))
-        if attempt:
+        if attempt == 0:
+            order = by_length  # даёт короткие пары, часто сразу максимальный размер
+        else:
+            order = list(range(n))
             rng.shuffle(order)
         seq: list[int] = []
         for i in order:
             if all(can_follow[j][i] for j in seq):
                 seq.append(i)
-        if len(seq) > len(best):
+        if weight(seq) > weight(best):
             best = seq
 
     return FoolingSet([candidates[i] for i in best], kind="triangular")
