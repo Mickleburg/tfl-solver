@@ -1,0 +1,58 @@
+# ---------------------------------------------------------------------------
+# Склонированные чужие репозитории
+# ---------------------------------------------------------------------------
+# Это внешние источники, а не наш код: у каждого своя история и свой .git.
+# Версионировать их здесь незачем, а как вложенные репозитории они бы
+# попали в индекс gitlink-ссылками и сломали клонирование.
+#
+# Полезное из них извлекается в corpus/ (и в дальнейшем — в курируемые
+# каталоги), и вот это уже версионируется.
+
+# Первоисточник — репозиторий преподавателя
+FormalLanguageTheory/
+
+# Учебные материалы и сканы
+TFL-IU9-claude/
+
+# Решения студентов
+DionisSerbin-bmstu_iu9-TFL/
+Formal Language Theory/
+KsardasY-BMSTU-programming-TFL/
+OkDenAl-BMSTU-IU9-TFL/
+Prrromanssss-formal-languages-labs/
+Sarahdeep-TFL/
+TFL-rk1-volki_team/
+TFL_additional_lab4/
+VDEN5-IU9-TFL/
+Vsevolond-FormalLanguage_Labs/
+boomhaa-tfl-labs/
+dm800-TFLcheck/
+dm800-TFLlabs/
+formal-languages-theory/
+iu9-tfl/
+iu9-tfl-lab1/
+iu9-tfl-lab2/
+kms-qwe-BMSTU_programming_IU-9-TFL/
+kms-qwe-FLT/
+tfl_labs/
+theory_of_formal_languages/
+
+# ---------------------------------------------------------------------------
+# Производное и временное
+# ---------------------------------------------------------------------------
+
+# Рендеры сканов: бинарные, тяжёлые, пересоздаются
+#   python tools/extract_corpus.py --render FILE.pdf 1 5
+corpus/png/
+
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+.venv/
+venv/
+
+.DS_Store
+Thumbs.db

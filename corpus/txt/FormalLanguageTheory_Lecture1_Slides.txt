@@ -1,0 +1,2858 @@
+
+----- [page 1] -----
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Introduction to Realms of Formal Languages
+Antonina Nepeivoda
+a_nevod@mail.ru
+REG
+VPL
+DCFL
+CFL
+CONJ
+CSL
+
+----- [page 2] -----
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+1
+Formal Languages by Examples
+Automata Around Us
+Tons of Formalizations
+2
+Course Details
+3
+Basics on Term Rewriting
+Rewriting and Reduction
+Ordering and Induction
+String Rewriting
+2/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 3] -----
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+Standard English Abbreviations
+All
+academia:
+
+
+math
+papers:
+
+
+• e.g. (exempli gratia – Latin) — shortcut for “for
+example” (например – рус.).
+• i.e. (id est – Latin) — shortcut for “that is” (то
+есть – рус.).
+• etc (et cetera – Latin) — shortcut for “and so on”
+(и так далее – рус.).
+• wrt — shortcut for “with respect to”
+(относительно, по отношению к – рус.).
+• s.t. — shortcut for “such that” (такой, что – рус.).
+• iff — shortcut for “if and only if” (тогда и только
+тогда – рус.).
+3/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 4] -----
+Physical Concept of Automaton
+Physical Concept of Automaton
+Physical Concept of Automaton
+Physical Concept of Automaton
+Physical Concept of Automaton
+Physical Concept of Automaton
+Physical Concept of Automaton
+Physical Concept of Automaton
+Physical Concept of Automaton
+Physical Concept of Automaton
+Physical Concept of Automaton
+Continuous control
+Differential equations
+Analog Machines
+Analog Machines
+Analog Machines
+Analog Machines
+Analog Machines
+Analog Machines
+Analog Machines
+Analog Machines
+Analog Machines
+Analog Machines
+Analog Machines
+Discrete control
+Algebra & Logics
+Discrete Machines
+Discrete Machines
+Discrete Machines
+Discrete Machines
+Discrete Machines
+Discrete Machines
+Discrete Machines
+Discrete Machines
+Discrete Machines
+Discrete Machines
+Discrete Machines
+4/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 5] -----
+Automata Specifications
+Automata Specifications
+Automata Specifications
+Automata Specifications
+Automata Specifications
+Automata Specifications
+Automata Specifications
+Automata Specifications
+Automata Specifications
+Automata Specifications
+Automata Specifications
+READY
+RUN
+WAIT
+start
+terminate
+schedule
+preempt
+wait
+I/O
+get
+I/O
+• CPU Scheduler scheme
+• Automata-based schemes are used widely:
+• communication protocols;
+• user interfaces;
+• control units;
+• optimisation cycles.
+NEW GAME
+LOAD GAME
+SETTINGS
+EXIT
+up
+down
+up
+down
+up
+down
+up
+down
+• Simple game menu
+5/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 6] -----
+Programming: Automata Languages
+Programming: Automata Languages
+Programming: Automata Languages
+Programming: Automata Languages
+Programming: Automata Languages
+Programming: Automata Languages
+Programming: Automata Languages
+Programming: Automata Languages
+Programming: Automata Languages
+Programming: Automata Languages
+Programming: Automata Languages
+checker?
+AUTOMATON
+INSTRU-
+CTIONS
+EXECUTE
+automaton
+language
+• One-by-one input steps ⇒automaton model is enough.
+• Sequence of multiple steps given simultaneously ⇒executor is
+required to verify the sequence wrt the automata model.
+• Admissible step sequences — a formal language of the machine.
+6/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 7] -----
+Automata Models
+Automata Models
+Automata Models
+Automata Models
+Automata Models
+Automata Models
+Automata Models
+Automata Models
+Automata Models
+Automata Models
+Automata Models
+Door automaton:
+Closed
+Open
+𝑜
+𝑐
+𝑐
+𝑜
+Channel automaton:
+Closed
+Open
+Error
+𝑜
+𝑜
+𝑐
+𝑐
+𝑜, 𝑐
+Elevator:
+Lv0
+Lv1
+Lv2
+...
+LvN
+up
+dwn
+up
+dwn
+up
+dwn
+up
+dwn
+dwn
+up
+7/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 8] -----
+Prehistoric Era of Formalization
+Prehistoric Era of Formalization
+Prehistoric Era of Formalization
+Prehistoric Era of Formalization
+Prehistoric Era of Formalization
+Prehistoric Era of Formalization
+Prehistoric Era of Formalization
+Prehistoric Era of Formalization
+Prehistoric Era of Formalization
+Prehistoric Era of Formalization
+Prehistoric Era of Formalization
+Quando chel cubo con le cose appresso
+Se aqquaglia a qualche numero discreto
+Trouan duo altri di erenti in esso
+Dapoi terrai questo per consueto
+Che llor productto sempre sia equale
+Alterzo cubo delle cose neto,
+El residuo poi suo generale
+Delli lor lati cubi ben sottrati
+Varra la tua cosa principale.
+...
+Tartaglia, 1539
+3𝑥2 + 1 −(10𝑥3 + 2𝑥) = 4 in Diophantus’s notation:
+Δ𝜐𝛾˚
+𝑀𝛼⋔𝐾𝜐𝜄𝜍𝛽𝜄𝜎˚
+𝑀𝛿
+8/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 9] -----
+Antique Era of Formal Languages
+Antique Era of Formal Languages
+Antique Era of Formal Languages
+Antique Era of Formal Languages
+Antique Era of Formal Languages
+Antique Era of Formal Languages
+Antique Era of Formal Languages
+Antique Era of Formal Languages
+Antique Era of Formal Languages
+Antique Era of Formal Languages
+Antique Era of Formal Languages
+Von Dyck’s Theorem, 1882
+Let 𝑋be a set and let 𝑅be a set of reduced words on 𝑋. Assume
+that a group 𝐺has the presentation ⟨𝑋| 𝑅⟩. If 𝐻is any group
+generated by 𝑋and 𝐻satisfies the relations of 𝐺, i.e., 𝜔= 1 in
+𝐻for all 𝜔∈𝑅, then there is a surjective group homomorphism
+from 𝐺to 𝐻.
+Axel Thue’s Theorems on Unavoidable Patterns, 1906
+In the alphabet {𝑎, 𝑏, 𝑐, 𝑑}, there exists an infinite square-free
+word (i.e. not containing adjacent equal factors, or not
+matching a pattern 𝑥𝑤𝑤𝑦with 𝑤non-empty).
+Later, in 1912, A. Thue improved his result for the alphabet {𝑎, 𝑏, 𝑐}.
+9/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 10] -----
+Renaissance of Formal Languages
+Renaissance of Formal Languages
+Renaissance of Formal Languages
+Renaissance of Formal Languages
+Renaissance of Formal Languages
+Renaissance of Formal Languages
+Renaissance of Formal Languages
+Renaissance of Formal Languages
+Renaissance of Formal Languages
+Renaissance of Formal Languages
+Renaissance of Formal Languages
+McCulloch& Pitts Neural Networks:
+• — excitatory signal;
+◦— inhibitory signal;
+— an input neuron;
+𝑘— an inner neuron firing whenever none of the inhibitory signals
+and at least 𝑘of excitatory signals fire.
+Kleene (1951) introduced regular languages, describing the events in
+McCulloch–Pitts NN in terms of three operations:
+
+·, ∪, ∗	
+.
+10/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 11] -----
+Noam Chomsky and Language Hierarchy
+Noam Chomsky and Language Hierarchy
+Noam Chomsky and Language Hierarchy
+Noam Chomsky and Language Hierarchy
+Noam Chomsky and Language Hierarchy
+Noam Chomsky and Language Hierarchy
+Noam Chomsky and Language Hierarchy
+Noam Chomsky and Language Hierarchy
+Noam Chomsky and Language Hierarchy
+Noam Chomsky and Language Hierarchy
+Noam Chomsky and Language Hierarchy
+Three Models For The Description of Language, 1956:
+Finite state
+machines
+Phrase structure
+grammars
+either... or ...
+Transformational
+grammars
+{𝜔𝜔| 𝜔∈Σ∗}
+binary
+trees?
+In modern terms:
+• phrase-structure grammars (1956) ⇒context-free grammars
+• transformational grammars (1956) ⇒recursively-enumerable
+grammars
+11/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 12] -----
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+One-sided (von) Dyck’s language is the language of balanced
+parentheses.
+One is able to code tree structures with strings using the parentheses
+language.
+• One-to-one correspondence between words of length 2 · 𝑛and
+binary trees with 𝑛inner vertices (using 𝑉𝑃→(𝑉𝑅)𝑉𝐿).
+      !        
+←→
+ 
+!
+
+
+  
+ 
+!
+    
+12/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 13] -----
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+One-sided (von) Dyck’s language is the language of balanced
+parentheses.
+One is able to code tree structures with strings using the parentheses
+language.
+• One-to-one correspondence between words of length 2 · 𝑛and
+arbitrary trees with 𝑛+ 1 vertices (DFS).
+      !        
+←→
+ 
+!
+
+
+  
+ 
+!
+     
+12/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 14] -----
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Binary Trees and Von Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+Dyck’s Language
+One-sided (von) Dyck’s language is the language of balanced
+parentheses.
+One is able to code tree structures with strings using the parentheses
+language.
+• One-to-one correspondence between words of length 2 · 𝑛and
+binary trees with 𝑛inner vertices (using 𝑉𝑃→(𝑉𝑅)𝑉𝐿).
+• One-to-one correspondence between words of length 2 · 𝑛and
+arbitrary trees with 𝑛+ 1 vertices (DFS).
+Two-sided Dyck’s languages are the languages of words in a free
+group that are reduced to 1.
+12/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 15] -----
+Text Analysis and Forbidden Patterns
+Text Analysis and Forbidden Patterns
+Text Analysis and Forbidden Patterns
+Text Analysis and Forbidden Patterns
+Text Analysis and Forbidden Patterns
+Text Analysis and Forbidden Patterns
+Text Analysis and Forbidden Patterns
+Text Analysis and Forbidden Patterns
+Text Analysis and Forbidden Patterns
+Text Analysis and Forbidden Patterns
+Text Analysis and Forbidden Patterns
+• Russian and English texts naturally avoid the pattern
+𝑥𝑥𝑦𝑦𝑧𝑧𝑤𝑤,
+𝑥, 𝑦, 𝑧, 𝑤non-empty
+z     }|     {
+𝑥2𝑦2𝑧2𝑤2.
+• Still, pattern 𝑥2𝑦2𝑧2𝑤2 occurs in everyday Chinese language,
+e.g.:
+明明白白清清楚楚
+• Any well-composed natural text and programming language
+source code written by hand should avoid the pattern 𝑥2 (tandem
+repeats) with
+|𝑥|
+|{z}
+length of 𝑥
+large enough.
+• Still, generated and auto-optimised code can contain this pattern
+naturally (e.g. in loop unrolling).
+• Within DNA, tandem repeats (and even more, multiple repeats
+𝑥𝑛with 𝑛large enough) are a crucial part of the gene code.
+13/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 16] -----
+Capturing Invariants with Formal Languages
+Capturing Invariants with Formal Languages
+Capturing Invariants with Formal Languages
+Capturing Invariants with Formal Languages
+Capturing Invariants with Formal Languages
+Capturing Invariants with Formal Languages
+Capturing Invariants with Formal Languages
+Capturing Invariants with Formal Languages
+Capturing Invariants with Formal Languages
+Capturing Invariants with Formal Languages
+Capturing Invariants with Formal Languages
+while (x > 0) {
+// some code not involving x and y
+x = x - y;
+}
+•
+Minimal formal language validating loop termination: {= 0, ≠0}.
+•
+Better: {−, 0, +}.
+•
+Possibly more precise, also for overflows: intervals.
+while (x.contains('<script>')) {
+// x = x.replace('<', '< '); // invalid
+// x = x.replaceAll('<', '< '); // valid
+// x = x.replace('<', '&lt;'); // valid
+x = x.replace('<s', '< s'); } // valid
+•
+Minimal language validating loop termination: tracking
+occurrences of substring <s
+z}|{
+|𝑥|<s .
+14/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 17] -----
+Formal Languages Formally
+Formal Languages Formally
+Formal Languages Formally
+Formal Languages Formally
+Formal Languages Formally
+Formal Languages Formally
+Formal Languages Formally
+Formal Languages Formally
+Formal Languages Formally
+Formal Languages Formally
+Formal Languages Formally
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Let us consider an algebra
+Let us consider an algebra
+Let us consider an algebra
+Let us consider an algebra
+Let us consider an algebra A = ⟨M
+|{z}
+carrier
+,
+signature
+z}|{
+F
+⟩.
+A formal language is a set M of terms in algebra A.
+A formal language is a set M of terms in algebra A.
+A formal language is a set M of terms in algebra A.
+A formal language is a set M of terms in algebra A.
+A formal language is a set M of terms in algebra A.
+• Classical case: if A = ⟨Σ, ·⟩, where · is the concatenation
+operation, then M ⊆Σ∗, where ∗is iteration (Kleene star, Kleene
+closure).
+• Wider scope: tree automata languages, syntax trees, process
+graphs...
+15/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 18] -----
+Formal Languages Examples
+Formal Languages Examples
+Formal Languages Examples
+Formal Languages Examples
+Formal Languages Examples
+Formal Languages Examples
+Formal Languages Examples
+Formal Languages Examples
+Formal Languages Examples
+Formal Languages Examples
+Formal Languages Examples
+syntax
+
+
+•
+
+𝑎𝑎...𝑎
+|{z}
+𝑛times
+𝑏𝑏...𝑏
+|{z}
+𝑛·3 times
+| 𝑛∈N
+	
+(henceforth
+
+𝑎𝑛𝑏3𝑛| 𝑛∈N
+	
+);
+•
+words containing a square number of letters 𝑎
+
+𝑤| ∃𝑘( |𝑤|𝑎
+|{z}
+number of letters 𝑎in word 𝑤
+= 𝑘2)
+
+;
+•
+Russian palindromes of the even length
+(«Я слипся, я слился, я спился»);
+•
+sequences of balanced parentheses;
+•
+well-formed arithmetic expressions over N and {·, +}.
+semantics
+
+
+•
+all tautologies in the classical logic;
+•
+all consistently typed programs in Python;
+•
+formal languages with linear-time-decidable membership.
+16/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 19] -----
+Varieties of FL Representations
+Varieties of FL Representations
+Varieties of FL Representations
+Varieties of FL Representations
+Varieties of FL Representations
+Varieties of FL Representations
+Varieties of FL Representations
+Varieties of FL Representations
+Varieties of FL Representations
+Varieties of FL Representations
+Varieties of FL Representations
+• Set comprehension:
+
+𝑤∈{𝑎, 𝑏}∗| 𝑤does not include 𝑎𝑏}, or
+{𝑤| |𝑤|𝑎𝑏= 0 & 𝑤∈{𝑎, 𝑏}∗}.
+• Algebraic expressions: 𝑏∗𝑎∗.
+• Term rewriting systems:
+(
+𝑎→𝑎𝑎
+𝑏→𝑏𝑏, base set {
+empty word
+z}|{
+𝜀
+, 𝑎, 𝑏, 𝑏𝑎}.
+• Recognising machines:
+0
+1
+T
+nal
+non-nal
+𝑎
+𝑏
+𝑏
+𝑎, 𝑏
+𝑎
+• First-order or second-order logical formulas:
+∀𝑥, 𝑦 Q𝑎(𝑥)
+|{z}
+𝑥is equal to 𝑎
+& S(𝑥, 𝑦)
+|   {z   }
+𝑦succeeds 𝑥
+⇒
+¬ Q𝑏(𝑦)
+|   {z   }
+𝑦is not equal to 𝑏
+.
+17/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 20] -----
+Varieties of FL Representations
+Varieties of FL Representations
+Varieties of FL Representations
+Varieties of FL Representations
+Varieties of FL Representations
+Varieties of FL Representations
+Varieties of FL Representations
+Varieties of FL Representations
+Varieties of FL Representations
+Varieties of FL Representations
+Varieties of FL Representations
+• Set comprehension:
+
+𝑤∈{𝑎, 𝑏}∗| 𝑤does not include 𝑎𝑏}, or
+{𝑤| |𝑤|𝑎𝑏= 0 & 𝑤∈{𝑎, 𝑏}∗}.
+• Algebraic expressions: 𝑏∗𝑎∗.
+• Term rewriting systems:
+(
+𝑎→𝑎𝑎
+𝑏→𝑏𝑏, base set {
+empty word
+z}|{
+𝜀
+, 𝑎, 𝑏, 𝑏𝑎}.
+• Recognising machines:
+0
+1
+T
+nal
+non-nal
+𝑎
+𝑏
+𝑏
+𝑎, 𝑏
+𝑎
+Automata-based representation easily reduces to Turing machines
+⇒useful when estimating computational complexity of the
+language recognition.
+17/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 21] -----
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+The Empty Word Notation
+• In modern computer science (2000s and later) — epsilon 𝜀.
+• Before 2000s — lambda 𝜆.
+The reason: 𝜆-notation for anonymous functions.
+in theory
+z       }|       {
+𝜆Arg.Body or
+in applied research
+z            }|            {
+𝜆Arg →Body, although known from 1930-s, became widespread and
+met formal language theory.
+Compare: 𝜆⟨𝑞𝑖, 𝜆, 𝑞𝑗⟩.𝜆and 𝜆⟨𝑞𝑖, 𝜀, 𝑞𝑗⟩.𝜀.
+Or: 𝜆 𝑞𝑖
+𝜆→𝑞𝑗
+ →𝜆and 𝜆 𝑞𝑖
+𝜀→𝑞𝑗
+ →𝜀.
+18/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 22] -----
+Transforming & Analysing Representations
+Transforming & Analysing Representations
+Transforming & Analysing Representations
+Transforming & Analysing Representations
+Transforming & Analysing Representations
+Transforming & Analysing Representations
+Transforming & Analysing Representations
+Transforming & Analysing Representations
+Transforming & Analysing Representations
+Transforming & Analysing Representations
+Transforming & Analysing Representations
+• Efficient conversions between representation classes
+• Constructing an optimal form of a representation inside a class
+ALGEBRA
+GRAMMAR
+LOGIC
+AUTOMATON
+action
+semigroups
+Cayley
+graphs
+memory
+tracking
+delayed
+tape reading
+coding
+transitions
+ascending
+assembly
+19/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 23] -----
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+Spherical Cows in RoFL Course
+What is a reason to study artificial languages like «words not
+containing subwords 𝑏𝑎»?
+(common knowledge):
+A cow is homeomorphic
+to a sphere with a couple
+of handles.
+• Transducer images are shorter and their
+intermediate interpretations are more
+sheer;
+• The transducer images reveal the
+essence of abstract formal properties
+rather than features of the ad-hoc
+model;
+• In fact, morphisms and FSM
+transformations can be considered as
+lexers into the theoretical scope.
+20/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 24] -----
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+Course Structure
+•
+Introduction and TRS
+I part:
+automata
+
+
+•
+Rewriting and Syntactic Monoids;
+•
+Finite Automata;
+•
+Visibly Pushdown Automata;
+•
+Generic Pushdown Automata;
+•
+Deterministic Pushdown Automata;
+•
+Alternating Automata, Memory Automata;
+•
+Cellular Automata, Tree Automata + Midterm I.
+II part:
+languages
+
+
+•
+Semirings;
+•
+Ehrenfeucht–Fra¨ıss´e games and Pumping;
+•
+Hardest Languages and Language Representations;
+•
+Language Inference;
+•
+Combinatorial & Computational Language Properties.
+•
+Midterm II
+•
+Concluding Lecture
+•
+«RoFL Farm»
+21/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 25] -----
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Course Scores
+Score Arrangement
+Score Arrangement
+Score Arrangement
+Score Arrangement
+Score Arrangement
+Score Arrangement
+Score Arrangement
+Score Arrangement
+Score Arrangement
+Score Arrangement
+Score Arrangement
+• Midterms × 2 × 15+.
+• Assignments × 5 × 8+.
+• Java, Python, Go, JS — no score bonus
+• C/C++, Kotlin, Dart, TypeScript, Lua, Julia — +1 point
+• Rust, Lisp dialects, Scala — +2 points
+• Haskell, Erlang — +3 points
+• Рефал — +4 points for first time +3 afterwards
+• Deadlines for assignments:
+• 0-14 days — no penalty
+• 15-21 days — 1 score penalty
+• 22-28 days — 2 score penalty
+• 29-∞— 3 score penalty
+22/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 26] -----
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Reputation Count and Queuing
+Initial rep = 100 points for everyone.
+• Submit a work at deadline daytime: rep −2.
+• Submit a work at deadline night: rep −5 .
+• Submit a work on the eve of Reset Event: rep−10.
+• Artefacts of someone’s else code: rep−25.
+• Unable to explain self code: rep−50.
+• Submit a work on the eve of exam (daytime): rep−35.
+• Submit a work on the eve of exam (night): rep−50.
+• Submit a work not assigned to self: rep−75.
+• Other (violating RoFL Farm rules, etc) — ad hoc.
+The assignments are considered in descending order of rep!
+rep ≤0 ⇒personal task arrangement.
+23/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 27] -----
+Term Rewriting and All That
+Term Rewriting and All That
+Term Rewriting and All That
+Term Rewriting and All That
+Term Rewriting and All That
+Term Rewriting and All That
+Term Rewriting and All That
+Term Rewriting and All That
+Term Rewriting and All That
+Term Rewriting and All That
+Term Rewriting and All That
+Any symbolic computation is a term rewriting process, controlled by
+an appropriate set of rewrite rules — term rewriting system.
+LHS
+RHS
+𝑑
+𝑑𝑥
+  𝑡1 + 𝑡2
+→𝑑
+𝑑𝑥𝑡1 +
+𝑑
+𝑑𝑥𝑡2
+variables
+constructors
+24/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 28] -----
+Unification and Pattern Matching
+Unification and Pattern Matching
+Unification and Pattern Matching
+Unification and Pattern Matching
+Unification and Pattern Matching
+Unification and Pattern Matching
+Unification and Pattern Matching
+Unification and Pattern Matching
+Unification and Pattern Matching
+Unification and Pattern Matching
+Unification and Pattern Matching
+A rewriting process unifies term 𝑡and LHS 𝑠1 of a rule 𝑠1 →𝑠2 by
+constructing a substitution.
+Unification Formally
+Unification Formally
+Unification Formally
+Unification Formally
+Unification Formally
+Unification Formally
+Unification Formally
+Unification Formally
+Unification Formally
+Unification Formally
+Unification Formally
+Given two terms 𝑡1, 𝑡2, a unifier is a pair of variable
+substitutions ⟨𝜃1, 𝜃2⟩s.t. 𝑡1𝜃1 = 𝑡2𝜃2.
+If Eq(𝑥, 𝑥) →True, when Eq
+
+A
+Y
+Y ,
+B
+X
+X
+Z 
+is rewritten?
+Unification is possible when 𝑥=
+B
+A
+B
+A
+A
+Term Eq
+
+A
+Y
+Y ,
+B
+X
+X
+X 
+is never unified with
+Eq(𝑥, 𝑥).
+25/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 29] -----
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+Notation Clash: Substitutions
+In algebraic courses, given a substitution 𝜎, its application to a term Φ
+is denoted with 𝜎(Φ).
+In mathematical logic & computer science, a postfix notation Φ𝜎is
+more usual.
+Origins of the Notation
+In classical mathematical logic textbooks (Tarski, Curry) the
+substitutions were denoted by [𝑥/𝐴]. Hence, the postfix notation
+was natural: formula 𝐹(𝑥, 𝑥)[𝑥/𝐴] is pretty more readable than
+[𝑥/𝐴](𝐹(𝑥, 𝑥)).
+In modern computer science, the notations [𝑥:= 𝐴] are [𝑥↦→𝐴] are
+both widely used.
+26/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 30] -----
+Reduction, Redexes, Normal Forms
+Reduction, Redexes, Normal Forms
+Reduction, Redexes, Normal Forms
+Reduction, Redexes, Normal Forms
+Reduction, Redexes, Normal Forms
+Reduction, Redexes, Normal Forms
+Reduction, Redexes, Normal Forms
+Reduction, Redexes, Normal Forms
+Reduction, Redexes, Normal Forms
+Reduction, Redexes, Normal Forms
+Reduction, Redexes, Normal Forms
+Given a TRS
+
+Φ𝑖→Ψ𝑖
+𝑛
+𝑖=1
+and a term 𝑇,
+Basic Notions of Rewriting
+Basic Notions of Rewriting
+Basic Notions of Rewriting
+Basic Notions of Rewriting
+Basic Notions of Rewriting
+Basic Notions of Rewriting
+Basic Notions of Rewriting
+Basic Notions of Rewriting
+Basic Notions of Rewriting
+Basic Notions of Rewriting
+Basic Notions of Rewriting
+• A redex is a subterm 𝑇0 that can be unified with some Φ𝑖by
+unifier ⟨𝜃1, 𝜃2⟩.
+• Reduction replaces 𝑇0𝜃1 in 𝑇by Ψ𝑖𝜃2.
+• Term 𝑇is in a normal form if 𝑇contains no redex.
+• Normalisation — reduction to the normal form: 𝑇↠𝑇′.
+Given TRS
+(
+0 + 𝑥→𝑥
+0 · 𝑥→0
+, the term (0 + 1) · 0 contains a redex 0 + 1,
+and the reduced term 1 · 0 is in the normal form.
+Adding commutativity rules results in unrestricted reductions.
+27/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 31] -----
+𝛼-conversions and 𝛼-equivalence
+𝛼-conversions and 𝛼-equivalence
+𝛼-conversions and 𝛼-equivalence
+𝛼-conversions and 𝛼-equivalence
+𝛼-conversions and 𝛼-equivalence
+𝛼-conversions and 𝛼-equivalence
+𝛼-conversions and 𝛼-equivalence
+𝛼-conversions and 𝛼-equivalence
+𝛼-conversions and 𝛼-equivalence
+𝛼-conversions and 𝛼-equivalence
+𝛼-conversions and 𝛼-equivalence
+• If 𝑥, 𝑧are variables, the rewriting rules
+
+Eq(𝑥, 𝑥) →True
+	
+and
+
+Eq(𝑧, 𝑧) →True
+	
+are equivalent; while the rule
+
+Eq(𝑥, 𝑧) →True
+	
+is not equivalent to both.
+• 𝛼-conversion is a semantic-preserving variable renaming.
+Non-trivial in case of bound variables.
+𝜆-calculus
+• Constructors: Apply(𝑀, 𝑁) and 𝜆𝑥.𝑀, binding 𝑥in 𝑀.
+• Rewriting rule: Apply (𝜆𝑥.𝑀), 𝑁 →𝑀[𝑥:= 𝑁]
+Reduction + capture-avoiding substitution = universal computation
+model.
+28/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 32] -----
+Proving Properties of FL and Term Ordering
+Proving Properties of FL and Term Ordering
+Proving Properties of FL and Term Ordering
+Proving Properties of FL and Term Ordering
+Proving Properties of FL and Term Ordering
+Proving Properties of FL and Term Ordering
+Proving Properties of FL and Term Ordering
+Proving Properties of FL and Term Ordering
+Proving Properties of FL and Term Ordering
+Proving Properties of FL and Term Ordering
+Proving Properties of FL and Term Ordering
+Check that the language L =
+
+𝑤| |𝑤|𝑎is even
+	
+is the set of
+normal forms generated from term srt {𝑆} using the following
+TRS T: 𝑆→𝑎𝑆𝑎
+𝑆→𝑏𝑆
+𝑆→𝑆𝑏
+𝑆→𝜀
+• Check that all words from L can be generated by T.
+• Check that all the normal forms 𝜂s.t 𝑆→∗𝜂are in L .
+Assume that there exists 𝑤s.t.
+arbitrary number of steps
+z   }|   {
+𝑆→∗𝑤and |𝑤|𝑎is odd. The reduction
+step before the application of {𝑆→𝜀} can always be replaced by
+{𝑆→𝜀} ⇒making the word 𝑤shorter. We can repeat this process to
+∞, contradicting that |𝑤| is finite.
+Key moment: the length ordering admits no infinite descending
+chains.
+29/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 33] -----
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+Many Arrows, Many Notions
+• definitive arrows (define functions, types, etc): plain →.
+E.g.
+(
+𝑓: Σ∗→N
+(a function mapping strings to naturals)
+𝑆𝑎→𝑎𝑆
+(a rule replacing a subterm 𝑆𝑎with 𝑎𝑆)
+• closures wrt rewriting (define closure functions): →∗.
+E.g.
+(
+𝑆→∗𝑆
+(𝑆is a result of rewriting 𝑆zero or more times)
+𝜔→∗𝜀
+(𝜔can be collapsed to the empty string eventually)
+• substitutions (denote applications of concrete replacing rules): ↦→.
+Depending on context, either exhaustive or one-time replacement.
+E.g.
+(
+𝑆↦→𝑎
+(𝑆should be replaced with 𝑎)
+𝑎𝑎𝑎𝑎
+𝑎𝑎↦→𝑎
+−→∗𝑎𝑎(𝑎𝑎results from a substitution composition)
+• normalizing arrows (denote exhaustive rewriting): ↠. E.g.
+(
+𝑆↠𝑎
+(𝑆is rewritten to 𝑎, and 𝑎cannot be rewritten further)
+𝑎𝑎𝑎𝑎
+𝑎𝑎↦→𝑎̸
+↠𝑎𝑎(𝑎𝑎is not a final result of the iterative replacements)
+30/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 34] -----
+Noetherian Orders and Well-Founded Orders
+Noetherian Orders and Well-Founded Orders
+Noetherian Orders and Well-Founded Orders
+Noetherian Orders and Well-Founded Orders
+Noetherian Orders and Well-Founded Orders
+Noetherian Orders and Well-Founded Orders
+Noetherian Orders and Well-Founded Orders
+Noetherian Orders and Well-Founded Orders
+Noetherian Orders and Well-Founded Orders
+Noetherian Orders and Well-Founded Orders
+Noetherian Orders and Well-Founded Orders
+Stabilizes
+𝐶𝑔1
+/ 𝐶𝑔2
+/
+𝐶𝑔3
+/ . . .
+/
+𝐶𝑔𝑖
+/ . . .
+/
+𝐶𝑔𝑖+𝑘
+/ . . .
+Ordering as an Induction Base
+Ordering as an Induction Base
+Ordering as an Induction Base
+Ordering as an Induction Base
+Ordering as an Induction Base
+Ordering as an Induction Base
+Ordering as an Induction Base
+Ordering as an Induction Base
+Ordering as an Induction Base
+Ordering as an Induction Base
+Ordering as an Induction Base
+• A preorder ⪯is well-founded on set A if it admits no
+infinite descending chains, i.e. all chains 𝑡0 ⪰𝑡1 ⪰. . . are
+finite.
+• A preorder is Noetherian on set A if it stabilizes upwards
+(no infinite strictly ascending chains, abbreviated ACC).
+31/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 35] -----
+Well-Founded Monotone Algebras
+Well-Founded Monotone Algebras
+Well-Founded Monotone Algebras
+Well-Founded Monotone Algebras
+Well-Founded Monotone Algebras
+Well-Founded Monotone Algebras
+Well-Founded Monotone Algebras
+Well-Founded Monotone Algebras
+Well-Founded Monotone Algebras
+Well-Founded Monotone Algebras
+Well-Founded Monotone Algebras
+A preorder ⪯is monotone on A, if
+∀𝑓, 𝑡1, .., 𝑡𝑛, 𝑠, 𝑠′ ∈A
+
+𝑠⪯𝑠′ ⇒𝑓(𝑡1, .., 𝑠, .., 𝑡𝑛) ⪯𝑓(𝑡1, .., 𝑠′, .., 𝑡𝑛)
+
+,
+and is strictly monotone, if converse always fails.
+Well-Founded Monotone Algebras
+WFMA over the signature 𝐹on a well-founded set ⟨A, >⟩is an
+algebra s.t. for any ⟨𝑓, 𝑛⟩∈𝐹there exists a function 𝑓A : A𝑛→
+A, called an interpretation of 𝑓, being strictly monotone wrt all
+its arguments.
+• ⟨N, >⟩can be a WFMA over a signature ( 𝑓1, 2), ( 𝑓2, 1), given
+e.g. interpretations 𝑓1(𝑥, 𝑦) = 𝑥+ 𝑦+ 1, 𝑓2(𝑥) = 2 · 𝑥;
+• ⟨Q+, >⟩and ⟨Z, >⟩are not WFMAs.
+32/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 36] -----
+TRS Termination
+TRS Termination
+TRS Termination
+TRS Termination
+TRS Termination
+TRS Termination
+TRS Termination
+TRS Termination
+TRS Termination
+TRS Termination
+TRS Termination
+Given a variable set V, extension of 𝜎: V →A is defined as:
+• [𝑥, 𝜎] = 𝑥𝜎;
+• [ 𝑓(𝑡1, . . . , 𝑡𝑛), 𝜎] = 𝑓A([𝑡1, 𝜎], . . . , [𝑡𝑛, 𝜎]).
+A TRS {𝑙𝑖→𝑟𝑖} is compatible with WFMA A ⇔for all 𝑖, 𝜎
+condition [𝑙𝑖, 𝜎] > [𝑟𝑖, 𝜎] holds.
+Informally: the image of 𝑙𝑖is greater than the image of 𝑟𝑖for the
+extension of any substitution 𝜎: V →A.
+Consider TRS { 𝑓( 𝑓(𝑥)) →𝑓(𝑥)} and WFMA carrier N = ⟨N, >⟩.
+• Let 𝑓N(𝑥) = 2 · 𝑥and 𝜎= [𝑥:= 0]: 𝑓N( 𝑓N(𝑥))𝜎= 𝑓N(𝑥)𝜎= 0,
+⇒WFMA is not compatible with the TRS.
+• Let 𝑓N(𝑥) = 𝑥+ 1: ∀𝑥  𝑓N( 𝑓N(𝑥)) −𝑓N(𝑥) = 1 ⇒the TRS and
+WFMA are compatible.
+33/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 37] -----
+WFMA and TRS
+WFMA and TRS
+WFMA and TRS
+WFMA and TRS
+WFMA and TRS
+WFMA and TRS
+WFMA and TRS
+WFMA and TRS
+WFMA and TRS
+WFMA and TRS
+WFMA and TRS
+Main Theorem on TRS Termination
+A TRS {𝑙𝑖→𝑟𝑖} terminates ⇔there exists a WFMA compatible
+with {𝑙𝑖→𝑟𝑖}.
+The TRS
+
+𝑑
+𝑑𝑥
+ 𝑡1 + 𝑡2
+ →𝑑
+𝑑𝑥𝑡1 + 𝑑
+𝑑𝑥𝑡2
+
+is terminating, which is
+verified by WFMA N over ⟨N, >⟩, N not including 0:
+• +N (𝑢, 𝑣) = 𝑢+ 𝑣+ 1;
+•
+𝑑
+𝑑𝑥N (𝑢) = 2 · 𝑢.
+Indeed,
+𝑑
+𝑑𝑥N
+ 𝑡1 +N 𝑡2
+ = 2 · (𝑡1 + 𝑡2 + 1) = 2 · 𝑡1 + 2 · 𝑡2 + 2, which is
+strictly greater than
+𝑑
+𝑑𝑥N𝑡1 +N
+𝑑
+𝑑𝑥N𝑡2 = 2 · 𝑡1 + 2 · 𝑡2 + 1.
+34/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 38] -----
+Choosing a Monotone Interpretation
+Choosing a Monotone Interpretation
+Choosing a Monotone Interpretation
+Choosing a Monotone Interpretation
+Choosing a Monotone Interpretation
+Choosing a Monotone Interpretation
+Choosing a Monotone Interpretation
+Choosing a Monotone Interpretation
+Choosing a Monotone Interpretation
+Choosing a Monotone Interpretation
+Choosing a Monotone Interpretation
+If A is well-founded and 𝑓A is strictly monotone, then
+∀𝑎  𝑓A(𝑎) ⪰𝑎.
+Indeed, let 𝑎≻𝑓A(𝑎). Then the chain
+𝑎, 𝑓A(𝑎), 𝑓A( 𝑓A(𝑎)), . . . , 𝑓𝑛
+A(𝑎), . . .
+is infinitely descending.
+Good choices of functions over A:
+• given A ⊆N, extended polynomials strictly increasing on A,
+e.g. 𝑓(𝑥) = 𝑥· ⌊log2 𝑥⌋on [4; +∞);
+• given A ⊆N𝑘, functions strictly increasing lexicographically on
+A, e.g. 𝑓(⟨𝑥, 𝑦⟩) = ⟨𝑥+ 1, 0⟩on N2.
+35/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 39] -----
+Free Monoid (aka String DataType) as a FL Carrier
+Free Monoid (aka String DataType) as a FL Carrier
+Free Monoid (aka String DataType) as a FL Carrier
+Free Monoid (aka String DataType) as a FL Carrier
+Free Monoid (aka String DataType) as a FL Carrier
+Free Monoid (aka String DataType) as a FL Carrier
+Free Monoid (aka String DataType) as a FL Carrier
+Free Monoid (aka String DataType) as a FL Carrier
+Free Monoid (aka String DataType) as a FL Carrier
+Free Monoid (aka String DataType) as a FL Carrier
+Free Monoid (aka String DataType) as a FL Carrier
+Usual case: the string data type is a carrier of a TRS; the only
+constructor is the string concatenation.
+Then the term rewriting system becomes a string rewriting system
+(SRS):
+
+𝑙𝑖→𝑟𝑖
+	
+, where 𝑙𝑖, 𝑟𝑖are strings.
+Terminal & Nonterminal Symbols
+Terminal & Nonterminal Symbols
+Terminal & Nonterminal Symbols
+Terminal & Nonterminal Symbols
+Terminal & Nonterminal Symbols
+Terminal & Nonterminal Symbols
+Terminal & Nonterminal Symbols
+Terminal & Nonterminal Symbols
+Terminal & Nonterminal Symbols
+Terminal & Nonterminal Symbols
+Terminal & Nonterminal Symbols
+Given disjoint alphabets 𝑁, Σ, we say that elements of Σ are
+terminal symbols, and elements of 𝑁are non-terminals in a
+given SRS {𝑙𝑖→𝑟𝑖}, if words 𝑤∈𝑁∪Σ containing letters from
+𝑁are considered as partially computed (even if they are in the
+normal form).
+36/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 40] -----
+Formal Grammars
+Formal Grammars
+Formal Grammars
+Formal Grammars
+Formal Grammars
+Formal Grammars
+Formal Grammars
+Formal Grammars
+Formal Grammars
+Formal Grammars
+Formal Grammars
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+A grammar is a tuple 𝐺= ⟨𝑁, Σ, 𝑃, 𝑆⟩, where:
+• 𝑁— non-terminal alphabet;
+• Σ — terminal alphabet;
+• 𝑃— string rewriting system
+
+𝛼𝑖→𝛽𝑖
+	
+, where 𝛼𝑖is
+non-empty;
+• 𝑆∈𝑁is an initial nonterminal.
+A language L (𝐺) of a grammar 𝐺is the set
+{𝑢| 𝑢∈Σ∗& 𝑆→∗𝑢}, where →∗is a composition of
+reductions.
+37/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 41] -----
+Diamond Property, or Confluence
+Diamond Property, or Confluence
+Diamond Property, or Confluence
+Diamond Property, or Confluence
+Diamond Property, or Confluence
+Diamond Property, or Confluence
+Diamond Property, or Confluence
+Diamond Property, or Confluence
+Diamond Property, or Confluence
+Diamond Property, or Confluence
+Diamond Property, or Confluence
+Evaluation of an arithmetic
+expression:
+(2 + 3) · (4 + 5)
+5 · (4 + 5)
+(2 + 3) · 9
+45
+A unique normal form exists.
+Non-deterministic
+replacements
+(rewriting)
+in strings:
+𝑎𝑏𝑎𝑏𝑎
+𝑏𝑏𝑎
+𝑎𝑏𝑏
+𝑎𝑏𝑎↦→𝑏
+𝑎𝑏𝑎↦→𝑏
+No unique normal form.
+Given a TRS T, it is confluent iff
+∀𝑡0, 𝑡1, 𝑡2∃𝑡3
+ 𝑡0
+T→∗𝑡1 & 𝑡0
+T→∗𝑡2 ⇒𝑡1
+T→∗𝑡3 & 𝑡2
+T→∗𝑡3
+.
+38/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 42] -----
+Global and Local Confluence
+Global and Local Confluence
+Global and Local Confluence
+Global and Local Confluence
+Global and Local Confluence
+Global and Local Confluence
+Global and Local Confluence
+Global and Local Confluence
+Global and Local Confluence
+Global and Local Confluence
+Global and Local Confluence
+• (Global) confluence:
+∀𝑡0, 𝑡1, 𝑡2∃𝑡3
+ 𝑡0
+T→∗𝑡1
+|    {z    }
+arbitrary number of steps
+&
+arbitrary number of steps
+z  }|  {
+𝑡0
+T→∗𝑡2 ⇒𝑡1
+T→∗𝑡3 & 𝑡2
+T→∗𝑡3
+.
+• Local confluence:
+∀𝑡0, 𝑡1, 𝑡2∃𝑡3
+ 𝑡0
+T→𝑡1
+|  {z  }
+one-step rewriting
+&
+one-step rewriting
+z}|{
+𝑡0
+T→𝑡2 ⇒𝑡1
+T→∗𝑡3 & 𝑡2
+T→∗𝑡3
+.
+The following TRS is locally confluent, but not confluent:
+∞→∞+ 1
+Eq(𝑥, 𝑥) →True
+Eq(𝑥, 𝑥+ 1) →False
+39/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 43] -----
+Global and Local Confluence
+Global and Local Confluence
+Global and Local Confluence
+Global and Local Confluence
+Global and Local Confluence
+Global and Local Confluence
+Global and Local Confluence
+Global and Local Confluence
+Global and Local Confluence
+Global and Local Confluence
+Global and Local Confluence
+• (Global) confluence:
+∀𝑡0, 𝑡1, 𝑡2∃𝑡3
+ 𝑡0
+T→∗𝑡1
+|    {z    }
+arbitrary number of steps
+&
+arbitrary number of steps
+z  }|  {
+𝑡0
+T→∗𝑡2 ⇒𝑡1
+T→∗𝑡3 & 𝑡2
+T→∗𝑡3
+.
+• Local confluence:
+∀𝑡0, 𝑡1, 𝑡2∃𝑡3
+ 𝑡0
+T→𝑡1
+|  {z  }
+one-step rewriting
+&
+one-step rewriting
+z}|{
+𝑡0
+T→𝑡2 ⇒𝑡1
+T→∗𝑡3 & 𝑡2
+T→∗𝑡3
+.
+Newman’s Lemma
+Newman’s Lemma
+Newman’s Lemma
+Newman’s Lemma
+Newman’s Lemma
+Newman’s Lemma
+Newman’s Lemma
+Newman’s Lemma
+Newman’s Lemma
+Newman’s Lemma
+Newman’s Lemma
+If TRS is terminating, then local and global confluence
+properties coincide.
+39/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 44] -----
+Critical Pairs
+Critical Pairs
+Critical Pairs
+Critical Pairs
+Critical Pairs
+Critical Pairs
+Critical Pairs
+Critical Pairs
+Critical Pairs
+Critical Pairs
+Critical Pairs
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Given TRS T, its rules 𝑙1 →𝑟1 and 𝑙2 →𝑟2 are said to form a critical
+pair, iff there exists a term 𝑡and substitution 𝜎, s.t. 𝑙1𝜎and 𝑙2𝜎are
+overlapping subterms of 𝑡.
+The given critical pair is
+
+(𝑡)[𝑙1𝜎↦→𝑟1𝜎], (𝑡)[𝑙2𝜎↦→𝑟2𝜎]
+
+.
+Consider:
+∞→∞+ 1
+Eq(𝑥, 𝑥) →True
+Eq(𝑥, 𝑥+ 1) →False
+Term Eq(∞, ∞) has a critical pair. Indeed, given 𝜎= (𝑥↦→∞),
+Eq(
+𝑙1 𝜎
+z}|{
+∞, ∞)
+|           {z           }
+𝑙2 𝜎
+True
+Eq(∞+ 1, ∞)
+Eq(𝑥, 𝑥) ↦→True
+∞↦→∞+ 1
+40/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 45] -----
+Local Confluence Criterion
+Local Confluence Criterion
+Local Confluence Criterion
+Local Confluence Criterion
+Local Confluence Criterion
+Local Confluence Criterion
+Local Confluence Criterion
+Local Confluence Criterion
+Local Confluence Criterion
+Local Confluence Criterion
+Local Confluence Criterion
+The terms 𝑡1, 𝑡2 are said to be convergent iff they can be reduced to a
+single normal form.
+Eq(∞+ 1, ∞) is convergent with True, given the reduction chain
+Eq(∞+ 1, ∞) →Eq(∞+ 1, ∞+ 1) →True
+Critical Pair Lemma
+Critical Pair Lemma
+Critical Pair Lemma
+Critical Pair Lemma
+Critical Pair Lemma
+Critical Pair Lemma
+Critical Pair Lemma
+Critical Pair Lemma
+Critical Pair Lemma
+Critical Pair Lemma
+Critical Pair Lemma
+A TRS is locally confluent ⇔all its critical pairs are convergent.
+41/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 46] -----
+Critical Pairs in SRS
+Critical Pairs in SRS
+Critical Pairs in SRS
+Critical Pairs in SRS
+Critical Pairs in SRS
+Critical Pairs in SRS
+Critical Pairs in SRS
+Critical Pairs in SRS
+Critical Pairs in SRS
+Critical Pairs in SRS
+Critical Pairs in SRS
+Since in an SRS substitutions are trivial, SRS rules 𝑙1 →𝑟1 and
+𝑙2 →𝑟2 generate a critical pair iff a shortest common superstring 𝑡of
+𝑙1, 𝑙2 satisfies the condition |𝑡| < |𝑙1| + |𝑙2|.
+NB: a rule 𝑙→𝑟forms a critical pair with itself iff 𝑙has a non-empty
+border — i.e. a string both starting and ending 𝑙.
+𝑙has several borders ⇒𝑙→𝑟forms several critical pairs.
+Given 𝑎𝑏𝑎𝑐𝑎𝑏𝑎→𝑐, the terms 𝑎𝑏𝑎𝑐𝑎𝑏𝑎𝑐𝑎𝑏𝑎and 𝑎𝑏𝑎𝑐𝑎𝑏𝑎𝑏𝑎𝑐𝑎𝑏𝑎
+generate non-convergent critical pairs ⟨𝑐𝑐𝑎𝑏𝑎, 𝑎𝑏𝑎𝑐𝑐⟩,
+⟨𝑐𝑏𝑎𝑐𝑎𝑏𝑎, 𝑎𝑏𝑎𝑐𝑎𝑏𝑐⟩, because the lhs 𝑎𝑏𝑎𝑏𝑎has two distinct borders:
+first border
+z     }|     {
+𝑎
+|{z}
+second border
+𝑏𝑎𝑐𝑎𝑏𝑎
+42/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 47] -----
+Knuth–Bendix Completion
+Knuth–Bendix Completion
+Knuth–Bendix Completion
+Knuth–Bendix Completion
+Knuth–Bendix Completion
+Knuth–Bendix Completion
+Knuth–Bendix Completion
+Knuth–Bendix Completion
+Knuth–Bendix Completion
+Knuth–Bendix Completion
+Knuth–Bendix Completion
+Let ≻be a well-founded order, T = {𝑙𝑖→𝑟𝑖} be a TRS s.t.
+∀𝑖 𝑙𝑖≻𝑟𝑖
+. A sketch of the completion procedure is as follows.
+1: R ←T
+⊲Resulting rewrite system
+2: 𝑃←
+Ø
+𝑙𝑖→𝑟𝑖∈T
+ GetCriticalPairs(𝑙𝑖→𝑟𝑖, R) 
+⊲Get all critical pairs in T
+3: while 𝑃≠∅do
+4:
+⟨𝑡1, 𝑡2⟩= 𝑃.pop
+⊲Get an unprocessed critical pair
+5:
+⟨𝑡′
+1, 𝑡′
+2⟩←⟨NormalForm(𝑡1, R), NormalForm(𝑡2, R)⟩
+⊲Reduce wrt current R
+6:
+if 𝑡′
+1 ≠𝑡′
+2 then
+7:
+if  𝑡′
+1 ⊁𝑡′
+2 & 𝑡′
+2 ⊁𝑡′
+1
+ then
+8:
+return failure
+9:
+end if
+10:
+𝑙′′ = max≻(𝑡′
+1, 𝑡′
+2), 𝑟′′ = min≻(𝑡′
+1, 𝑡′
+2)
+⊲min≻and max≻are now valid
+11:
+R ←Interreduce(R ∪{𝑙′′ →𝑟′′})
+⊲Reduce older rules wrt 𝑙′′ →𝑟′′
+12:
+𝑃←𝑃∪GetCriticalPairs(𝑙′′ →𝑟′′, R)
+13:
+end if
+⊲If 𝑡′
+1 = 𝑡′
+2, the pair ⟨𝑡1, 𝑡2⟩is convergent, so do nothing
+14: end while
+15: return R
+Details: pair ordering in 𝑃, efficient interreduction.
+43/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 48] -----
+Completion Example
+Completion Example
+Completion Example
+Completion Example
+Completion Example
+Completion Example
+Completion Example
+Completion Example
+Completion Example
+Completion Example
+Completion Example
+Take length-lexicographic order as ≻.
+(I)
+𝑏𝑏→𝑎
+(II)
+𝑎𝑏𝑎→𝑏
+|{z}
+𝑏
+z}|{
+𝑏𝑏
+𝑎𝑏
+𝑏𝑎
+𝑏𝑏↦→𝑎
+𝑏𝑏↦→𝑎
+(I)
+𝑏𝑏→𝑎
+(II)
+𝑎𝑏𝑎→𝑎𝑎𝑏→𝑏
+(III)
+𝑏𝑎→𝑎𝑏
+|{z}
+𝑎𝑎
+z}|{
+𝑏𝑏
+𝑏𝑏
+𝑎𝑎𝑎
+𝑎
+𝑎𝑎𝑏↦→𝑏
+𝑏𝑏↦→𝑎
+(I)
+𝑏𝑏→𝑎
+(II)
+𝑎𝑎𝑏→𝑏
+(III)
+𝑏𝑎→𝑎𝑏
+(IV)
+𝑎𝑎𝑎→𝑎
+|{z}
+𝑏
+z}|{
+𝑏𝑎
+𝑎𝑎
+𝑏𝑎𝑏
+𝑎𝑏𝑏
+𝑏𝑏↦→𝑎
+𝑏𝑎↦→𝑎𝑏
+44/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 49] -----
+Completion Example
+Completion Example
+Completion Example
+Completion Example
+Completion Example
+Completion Example
+Completion Example
+Completion Example
+Completion Example
+Completion Example
+Completion Example
+(I)
+𝑏𝑏→𝑎
+(II)
+𝑎𝑎𝑏→𝑏
+(III)
+𝑏𝑎→𝑎𝑏
+(IV)
+𝑎𝑎𝑎→𝑎
+|{z}
+𝑏
+z}|{
+𝑏𝑎
+𝑎𝑎
+𝑏𝑎𝑏
+𝑎𝑏𝑏
+𝑏𝑏↦→𝑎
+𝑏𝑎↦→𝑎𝑏
+|{z}
+𝑎𝑎
+z}|{
+𝑏𝑎
+𝑏𝑎
+𝑎𝑎𝑎𝑏
+𝑎𝑏
+𝑎𝑎𝑏↦→𝑏
+𝑏𝑎↦→𝑎𝑏
+|{z}
+𝑏
+z}|{
+𝑎𝑎𝑏
+𝑎𝑏𝑎𝑏
+𝑏𝑏
+𝑎
+𝑎𝑎𝑏𝑏
+𝑏𝑏
+𝑏𝑎↦→𝑎𝑏
+𝑎𝑎𝑏↦→𝑏
+|{z}
+𝑎
+z}|{
+𝑎𝑎𝑏
+𝑎𝑏
+𝑎𝑏
+𝑎𝑎𝑎↦→𝑎
+𝑎𝑎𝑏↦→𝑏
+|{z}
+𝑏
+z}|{
+𝑎𝑎𝑎
+𝑎𝑏𝑎𝑎
+𝑏𝑎
+𝑎𝑏
+𝑎𝑎𝑏𝑎
+𝑏𝑎↦→𝑎𝑏
+𝑎𝑎𝑏↦→𝑏
+44/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 50] -----
+Extracting Normal Forms
+Extracting Normal Forms
+Extracting Normal Forms
+Extracting Normal Forms
+Extracting Normal Forms
+Extracting Normal Forms
+Extracting Normal Forms
+Extracting Normal Forms
+Extracting Normal Forms
+Extracting Normal Forms
+Extracting Normal Forms
+Each of normal forms in fact is a representative of a quotient set wrt
+the equivalence ≡T=
+
+⟨𝜔1, 𝜔2⟩| ∃𝜐1, 𝜐2(𝜐1 →∗𝜔1 & 𝜐1 →∗𝜔2 &
+𝜔1 ↠𝜐2 & 𝜔2 ↠𝜐2)
+	
+.
+Brute-force approach: perform completion and then simply list all the
+irreducible strings.
+(I)
+𝑏𝑏→𝑎
+(II)
+𝑎𝑎𝑏→𝑏
+(III)
+𝑏𝑎→𝑎𝑏
+(IV)
+𝑎𝑎𝑎→𝑎
+Irreducible words: {𝜀, 𝑎, 𝑏, 𝑎𝑎, 𝑎𝑏}.
+45/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 51] -----
+Extracting Normal Forms
+Extracting Normal Forms
+Extracting Normal Forms
+Extracting Normal Forms
+Extracting Normal Forms
+Extracting Normal Forms
+Extracting Normal Forms
+Extracting Normal Forms
+Extracting Normal Forms
+Extracting Normal Forms
+Extracting Normal Forms
+Each of normal forms in fact is a representative of a quotient set wrt
+the equivalence ≡T=
+
+⟨𝜔1, 𝜔2⟩| ∃𝜐1, 𝜐2(𝜐1 →∗𝜔1 & 𝜐1 →∗𝜔2 &
+𝜔1 ↠𝜐2 & 𝜔2 ↠𝜐2)
+	
+.
+Heuristic approach: find invariants preserved by the rules and the
+corresponding minimal set of classes, and then prove there are no
+other classes.
+(I)
+𝑏𝑏→𝑎
+(II)
+𝑎𝑏𝑎→𝑏
+Invariants:
+• string non-emptiness (distinguishes 𝜀)
+• parity of |𝜔|𝑏
+• parity of |𝜔|𝑎+
+j
+|𝜔|𝑏
+2
+k
+
+distinguishes
+𝑎, 𝑏, 𝑎𝑎, 𝑎𝑏
+While the heuristic approach seems involved, the skill to determine
+invariants is extremely useful. E.g. all the formal verification domain
+relies on finding invariant and monotone (wrt wfos) properties.
+45/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University
+
+----- [page 52] -----
+Final Twist: from NFs to Transition Systems
+Final Twist: from NFs to Transition Systems
+Final Twist: from NFs to Transition Systems
+Final Twist: from NFs to Transition Systems
+Final Twist: from NFs to Transition Systems
+Final Twist: from NFs to Transition Systems
+Final Twist: from NFs to Transition Systems
+Final Twist: from NFs to Transition Systems
+Final Twist: from NFs to Transition Systems
+Final Twist: from NFs to Transition Systems
+Final Twist: from NFs to Transition Systems
+The SRS considered:
+(I)
+𝑏𝑏→𝑎
+(II)
+𝑎𝑎𝑏→𝑏
+(III)
+𝑏𝑎→𝑎𝑏
+(IV)
+𝑎𝑎𝑎→𝑎
+Equivalence
+classes:
+𝜀, 𝑎, 𝑏, 𝑎𝑎, 𝑎𝑏.
+Finite number of classes ⇒finite set of
+transitions between them.
+𝜀𝑎→𝑎
+𝜀𝑏→𝑏
+𝑎𝑎→𝑎𝑎
+𝑎𝑏→𝑎𝑏
+𝑏𝑎→𝑎𝑏
+𝑏𝑏→𝑎
+𝑎𝑎𝑎→𝑎
+𝑎𝑎𝑏→𝑏
+𝑎𝑏𝑎→𝑏
+𝑎𝑏𝑏→𝑎𝑎
+𝜀
+𝑎
+𝑏
+𝑎𝑎
+𝑎𝑏
+𝑎
+𝑏
+𝑎
+𝑏
+𝑏
+𝑎
+𝑎
+𝑏
+𝑏
+𝑎
+46/46, Lecture I: Introduction to RoFL, 07.09.25, Bauman Moscow State University

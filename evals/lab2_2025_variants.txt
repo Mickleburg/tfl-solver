@@ -1,0 +1,31 @@
+# Индивидуальные варианты ЛР2 2025 (FormalLanguageTheory/lab_tfl_2025_2.pdf)
+# Формат: <номер><TAB><академическая регулярка>
+# Юникодная звёздочка ∗ (U+2217) нормализована в *; переносы строк PDF склеены.
+1	((a|b)*abb(a|b))|(a|ba)*bb(a*b)*aba(a|b)
+2	((a*b*c*)*ab(a*b*c*)*bc(a|b|c)*)|((a|b|c)*bc(a*b*c*)*ab(a|bc|cc|bb)*)|abc
+3	(aa*bb*ab|c*)*(ba(b|(c|ac)ac|cc(bb|aba))*)*
+4	((aa|ab|ac)*(bc|cc|ac)bb|abacc*)*
+5	(aaa|bbb|cc|ab(ccc)*|aa)*(aa|bbb|aab(cc)*|bbbb)*(aaa|bbb|cc|ab(ccc)*|aa)*
+6	(b(a|(c(bbb|bc)*a(bcc*a)*|ac)*)ac)*
+7	(dcdc*c(d*|e*e)|e(cc)*(ee|d)|cac|dd)*c(a|c|d|e)
+8	((aa|ba)(ab)*(bb)*)*
+9	((baa)*|(abb)*)(bb|cc)*(aa(ba|bab))*(a|b|c)a*b((a|bcc*)abc)*
+10	((bba|a)b|abab*(bab)*)*
+11	(aaaaa|aaa)*(aa|b)(bb|aab)*
+12	((aa|bb)*(ab|ba)(aa|bb)*(ab|ba))*(ab|(bc|cb)(bb)*(cb|bc))*
+13	(aabaa|aaaba|abaaaa)*(a|b)a(a|b)(ab|aab)*
+14	(aa*ab|bbabb|abb*abab)*baba(a|b)(a|b)((aa)*ab|babb*aabab)*
+15	b*((ab*a)*(aabb|(babb)*))*
+16	(b*(db*|c*(dbdc*)*|b*cb)b)*
+17	((aa|bb)*)(b*|(a|a((bc|ac)*b)a|(abc|bca)*)a)|ab
+18	(ab|bc|bbbb|bbb)*bb(a|b)(a|b)(cac|accc|bca)*
+19	(abc|bac|ac|bc)*ba(a|b|c)(a|b)(b|c)
+20	(aa|bb|cc)*b(aaa|bbb)*((ab|bc|ccc)*aa)*abc(a|b|c)(b|ε)
+21	((a|b)*aa*b(a|b)*|bb*a(a|b)*)abab(a|b)(a|b)
+22	((aa|ab|cc)*aba(aaa|bcc)*)*((abac|(cc)*)(b|ca))*
+23	(abc|bac|cba|bca|acb)*aa(a|b|c)(a|b)(b|c)(a|c)
+24	(aba|bab|aabb)*(a|b)(a|b)bba(aba|bab|aabb)*
+25	((a|b)*bb(a*b)*a*ab(a|b)*|abb|(a|b)*ab(a*b)*bb)ba(a|b)(a|b)|a
+26	(aba)*((aa|bab)aba*)*
+27	(a|b)*ab(a|b)(a|b)(a|b*)
+28	(aa(ca)*|bb(bc)*|cc(ab)*)*(abba|bccb)(a|b|c)*

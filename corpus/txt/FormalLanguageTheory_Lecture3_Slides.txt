@@ -1,0 +1,1760 @@
+
+----- [page 1] -----
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Equivalences of Finite Automata
+Antonina Nepeivoda
+a_nevod@mail.ru
+REG
+VPL
+DCFL
+CFL
+CONJ
+CSL
+
+----- [page 2] -----
+Machines Comparison
+Machines Comparison
+Machines Comparison
+Machines Comparison
+Machines Comparison
+Machines Comparison
+Machines Comparison
+Machines Comparison
+Machines Comparison
+Machines Comparison
+Machines Comparison
+Language
+Equivalence
+Literal
+Equality
+depends on
+encoding
+completely
+ignores
+implementation
+Problem: how to find an equivalence that is sustainable to
+irrelevant implementation details (such as node naming) but
+tracks parsing-relevant properties?
+
+----- [page 3] -----
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Given a DFA, its states can be canonically named: i.e. state number is
+determined by the string marking the shortest path from the starting
+state to the state considered. Then the numeration depends only on the
+chosen linear order on strings.
+0
+1
+2
+3
+4
+5
+6
+a
+b
+a
+b
+a
+b
+a
+b
+b
+a
+b
+a
+b
+a
+Above is the state numeration with respect to the military
+(length- lexicographic) order, given a ≺b:
+𝜀≺a ≺b ≺aa ≺ab ≺ba ≺bb.
+
+----- [page 4] -----
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Given a DFA, its states can be canonically named: i.e. state number is
+determined by the string marking the shortest path from the starting
+state to the state considered. Then the numeration depends only on the
+chosen linear order on strings.
+0
+1
+4
+2
+3
+5
+6
+a
+b
+a
+b
+a
+b
+a
+b
+b
+a
+b
+a
+b
+a
+Another numeration is induced by the “vanilla” lexicographic
+order, given a ≺b: now 𝜀≺a ≺aa ≺ab ≺b ≺ba ≺bb.
+
+----- [page 5] -----
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Equality of DFA and NFA
+Given a DFA, its states can be canonically named: i.e. state number is
+determined by the string marking the shortest path from the starting
+state to the state considered. Then the numeration depends only on the
+chosen linear order on strings.
+However, the canonical numeration does not work for NFA, provided
+that the string sets marking paths to the states can coincide.
+Hence, DFA equality up to the state renaming can be thought as the
+literal coincidence of the canonically ordered DFA; but the canonical
+order does not work for recognising NFA equality.
+
+----- [page 6] -----
+Behavioral Equivalence and Language Equivalence
+Behavioral Equivalence and Language Equivalence
+Behavioral Equivalence and Language Equivalence
+Behavioral Equivalence and Language Equivalence
+Behavioral Equivalence and Language Equivalence
+Behavioral Equivalence and Language Equivalence
+Behavioral Equivalence and Language Equivalence
+Behavioral Equivalence and Language Equivalence
+Behavioral Equivalence and Language Equivalence
+Behavioral Equivalence and Language Equivalence
+Behavioral Equivalence and Language Equivalence
+Language equivalence tracks only admissible actions, but not a way the
+actions are performed. The following example is well-known.
+• N is «put a note into the machine»;
+• C is «order a coffee»;
+• T is «order a tea».
+S
+Paid
+Got1
+Got2
+N
+C
+T
+S
+Paid1
+Paid2
+Got1
+Got2
+N
+N
+C
+T
+The given two machines have the same language, but are distinct from the
+point of view of a user:
+• the first requires a note, and then asks what drink is ordered;
+• the second asks for a choice when taking money, then requires to press
+the button that prepares it.
+
+----- [page 7] -----
+Bisimulation of Labelled Transition Systems
+Bisimulation of Labelled Transition Systems
+Bisimulation of Labelled Transition Systems
+Bisimulation of Labelled Transition Systems
+Bisimulation of Labelled Transition Systems
+Bisimulation of Labelled Transition Systems
+Bisimulation of Labelled Transition Systems
+Bisimulation of Labelled Transition Systems
+Bisimulation of Labelled Transition Systems
+Bisimulation of Labelled Transition Systems
+Bisimulation of Labelled Transition Systems
+Bisimulation is a relation ∼between states of the systems T1
+and T2 satisfying the following property:
+• If 𝑞1 ∼𝑞2 (𝑞1 ∈T1, 𝑞2 ∈T2), then for every transition
+𝑞1
+𝛾−→𝑞′
+1 in T1 there is a transition 𝑞2
+𝛾−→𝑞′
+2 in T2 such
+that 𝑞′
+1 ∼𝑞′
+2, and vice versa.
+Starting and final (if any) states must be bisimilar.
+Every state machine A can be represented as a labelled transition system.
+• A1 and A2 are bisimilar ⇔their LTS T1 and T2 are bisimilar.
+
+----- [page 8] -----
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled Transition Systems versus NFA
+Labelled transition systems are not necessarily finite; moreover, LTS
+contain no final states.
+Existence of final states can be modelled via introducing endmarkers
+(usually denoted $). Then every final state of an NFA has a transition
+by the endmarker to the unique «bottom» state.
+
+----- [page 9] -----
+Bisimulation Game
+Bisimulation Game
+Bisimulation Game
+Bisimulation Game
+Bisimulation Game
+Bisimulation Game
+Bisimulation Game
+Bisimulation Game
+Bisimulation Game
+Bisimulation Game
+Bisimulation Game
+T1 and T2 bisimilarity checking technique can be formulated as a two-player
+game with an initial configuration ⟨𝑞𝑆, 𝑞′
+𝑆⟩:
+A chooses any element
+of the current pair and
+a transition 𝑞𝑐
+𝛾−→𝑞𝑛.
+D responds with a
+transition 𝑞′
+𝑐
+𝛾−→𝑞′
+𝑛
+from the remaining state.
+D cannot choose any
+matching transition ⇒
+LTS are not bisimilar.
+Next configuration
+⟨𝑞𝑛, 𝑞′
+𝑛⟩
+• Attacker’s winning strategy always leads to the fact that any possible
+play is finite.
+• In presence of final states, A can additionally declare «game-over» in
+any final state (and D must respond with the «game-over» as well).
+
+----- [page 10] -----
+Equivalent Trim DFA are Bisimilar
+Equivalent Trim DFA are Bisimilar
+Equivalent Trim DFA are Bisimilar
+Equivalent Trim DFA are Bisimilar
+Equivalent Trim DFA are Bisimilar
+Equivalent Trim DFA are Bisimilar
+Equivalent Trim DFA are Bisimilar
+Equivalent Trim DFA are Bisimilar
+Equivalent Trim DFA are Bisimilar
+Equivalent Trim DFA are Bisimilar
+Equivalent Trim DFA are Bisimilar
+Given two non-bisimilar trim DFA A1 and A2, we assume by the
+contradiction that the player A has a winning strategy. The strategy is
+completely determined by a finite input string 𝜔.
+• If after reading the string 𝜔one DFA ends up in a final state,
+while the other ends up in a non-final state, then 𝜔witnesses that
+their languages do not coincide.
+• If after reading the string 𝜔one DFA (say A1) ends up in a state
+with an outgoing transition by some 𝛾∈Σ, while the other does
+not has such a transition, then no string in L (A1) with the prefix
+𝜔𝛾can belong to L (A2). The DFA are trim ⇒at least one
+string prefixed by 𝜔𝛾is in L (A1).
+
+----- [page 11] -----
+Bisimulation and Equality
+Bisimulation and Equality
+Bisimulation and Equality
+Bisimulation and Equality
+Bisimulation and Equality
+Bisimulation and Equality
+Bisimulation and Equality
+Bisimulation and Equality
+Bisimulation and Equality
+Bisimulation and Equality
+Bisimulation and Equality
+Bisimilar DFA are not necessarily equal, even if cardinalities of their
+state sets are also equal.
+S
+a0
+b2
+c1
+c3
+a
+b
+c, d
+c, d
+S
+a0
+b2
+c1
+c3
+a
+b
+c, d
+d
+c
+In this example, the distinction between the states c1 and c3 is
+redundant: they are indistinguishable with respect to the languages
+that can be recognised from them, namely, L (c1) = L (c3) = {𝜀}.
+Hence, c1 ∼c3.
+We could merge the bisimilar states with no impact to the recognised
+DFA language; conversely, if we know that the DFA states coincide
+wrt their languages, then we know they are behaviorally equivalent.
+
+----- [page 12] -----
+𝑘-Bisimulation: Playing Backwards
+𝑘-Bisimulation: Playing Backwards
+𝑘-Bisimulation: Playing Backwards
+𝑘-Bisimulation: Playing Backwards
+𝑘-Bisimulation: Playing Backwards
+𝑘-Bisimulation: Playing Backwards
+𝑘-Bisimulation: Playing Backwards
+𝑘-Bisimulation: Playing Backwards
+𝑘-Bisimulation: Playing Backwards
+𝑘-Bisimulation: Playing Backwards
+𝑘-Bisimulation: Playing Backwards
+Given an NFA A , how do we know that its states 𝑞𝑖, 𝑞𝑗are bisimilar?
+• if 𝑞𝑖is final, while 𝑞𝑗is non-final, then A can choose 𝑞𝑖and declare
+game-over, winning the game. Hence, A can win doing no move at all.
+If 𝑞𝑖, 𝑞𝑗are both final or both non-final, at least one move is required
+for A to win, and we say that 𝑞𝑖∼0 𝑞𝑗.
+• if exists 𝛾and 𝑞′
+𝑖s.t. 𝑞𝑖
+𝛾→𝑞′
+𝑖, and for all 𝑞′
+𝑗s.t. 𝑞𝑗
+𝛾→𝑞′
+𝑗𝑞′
+𝑖̸ ∼𝑘𝑞′
+𝑗,
+then A wins in 𝑘+ 1 moves starting from the position ⟨𝑞𝑖, 𝑞𝑗⟩.
+Otherwise, we say that 𝑞𝑖∼𝑘+1 𝑞𝑗.
+A closer look on the ∼𝑘+1-condition:
+𝑞𝑖∼𝑘+1 𝑞𝑗⇔∀𝑞′
+𝑖, 𝛾 𝑞𝑖
+𝛾→𝑞′
+𝑖⇒∃𝑞′
+𝑗(𝑞𝑗
+𝛾→𝑞′
+𝑗)
+& ∀𝑞′
+𝑗, 𝛾 𝑞𝑗
+𝛾→𝑞′
+𝑗⇒∃𝑞′
+𝑖(𝑞𝑖
+𝛾→𝑞′
+𝑖)
+When we reach the fixpoint of ∼𝑘(i.e. ∼𝑘=∼𝑘+1), then we know that
+A never can win in position ⟨𝑞𝑖, 𝑞𝑗⟩given 𝑞𝑖∼𝑘𝑞𝑗, hence 𝑞𝑖∼𝑞𝑗.
+
+----- [page 13] -----
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Fixpoints
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Given a function 𝑓: D →D, its fixpoint is a value 𝜏∈D such
+that 𝑓(𝜏) = 𝜏.
+If 𝑓: R →R, then its fixpoints are located at the intersection of
+𝑓-graph with the diagonal.
+We have met the fixpoint construction before in the Arden lemma.
+Namely, the expression Φ∗Ψ is the fixpoint of the function
+𝑓(𝑋) = Φ𝑋| Ψ.
+Moreover, the «Kleene star» construction is a fixpoint itself: Φ∗is the
+fixpoint language for the function 𝑠(𝑋) = Φ𝑋| 𝜀.
+The fixpoint construction is particularly useful in computer science
+when some set is saturated wrt a well-founded relation.
+
+----- [page 14] -----
+Bisimilarity in DFA and Minimization
+Bisimilarity in DFA and Minimization
+Bisimilarity in DFA and Minimization
+Bisimilarity in DFA and Minimization
+Bisimilarity in DFA and Minimization
+Bisimilarity in DFA and Minimization
+Bisimilarity in DFA and Minimization
+Bisimilarity in DFA and Minimization
+Bisimilarity in DFA and Minimization
+Bisimilarity in DFA and Minimization
+Bisimilarity in DFA and Minimization
+Given a DFA with state set 𝑄, and set of final states 𝐹, we know that
+𝑞𝑖∼𝑞𝑗if and only if the sets of words recognised starting from 𝑞𝑖
+and starting from 𝑞𝑗are equal.
+Hence, we can minimize the DFA by merging bisimilar states.
+DFA Minimization Algorithm
+1. Given 𝑞𝑖,𝑞𝑗∈𝑄, mark the pairs
+
+𝑞𝑖, 𝑞𝑗
+	
+s.t. 𝑞𝑖̸ ∼0 𝑞𝑗(i.e.
+𝑞𝑖∈𝐹, while 𝑞𝑗∉𝐹, or vice versa).
+2. Mark all the pairs
+
+𝑞𝑖, 𝑞𝑗
+	
+s.t.
+∃𝛾(𝑞𝑖
+𝛾→𝑞′
+𝑖& 𝑞𝑗
+𝛾→𝑞′
+𝑗&
+
+𝑞′
+𝑖, 𝑞′
+𝑗
+	
+is marked).
+3. Repeat Step 2 until no new marked pair appear (i.e. fixpoint of
+∼𝑘is reached).
+4. Merge the states in the all unmarked pairs: they are bisimilar.
+
+----- [page 15] -----
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+The initial DFA is:
+𝑞0
+𝑚1
+𝑚3
+𝑚2
+𝑞3
+𝑚4
+𝑞5
+𝑎
+𝑏
+𝑎
+𝑏
+𝑎
+𝑏
+𝑏
+𝑎
+𝑏
+𝑎
+𝑏
+𝑎
+𝑎
+𝑏
+𝑚1
+𝑚2
+𝑞3
+𝑚3
+𝑚4
+𝑞5
+𝑞0
+𝑚1
+𝑚2
+𝑞3
+𝑚3
+𝑚4
+First, we construct the table in order to track marked pairs. We are required
+to track the pair only once, hence we can consider only the table part below
+its diagonal.
+
+----- [page 16] -----
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+𝑞0
+𝑚1
+𝑚3
+𝑚2
+𝑞3
+𝑚4
+𝑞5
+𝑎
+𝑏
+𝑎
+𝑏
+𝑎
+𝑏
+𝑏
+𝑎
+𝑏
+𝑎
+𝑏
+𝑎
+𝑎
+𝑏
+𝑚1
+𝑚2
+𝑞3
+✓
+✓
+✓
+𝑚3
+✓
+𝑚4
+✓
+𝑞5
+✓
+✓
+✓
+✓
+✓
+𝑞0
+𝑚1
+𝑚2
+𝑞3
+𝑚3
+𝑚4
+We have marked the states being not 0-bisimilar so far.
+
+----- [page 17] -----
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+𝑞0
+𝑚1
+𝑚3
+𝑚2
+𝑞3
+𝑚4
+𝑞5
+𝑎
+𝑏
+𝑎
+𝑏
+𝑎
+𝑏
+𝑏
+𝑎
+𝑏
+𝑎
+𝑏
+𝑎
+𝑎
+𝑏
+𝑚1
+𝑚2
+𝑞3
+✓
+✓
+✓
+𝑚3
+✓
+𝑚4
+✓
+𝑞5
+✓
+✓
+✓
+✓
+✓
+𝑞0
+𝑚1
+𝑚2
+𝑞3
+𝑚3
+𝑚4
+Now we are checking 1-bisimilarity:
+𝑞0
+𝑎→𝑚1, 𝑚1
+𝑎→𝑚2
+𝑞0
+𝑏→𝑚3, 𝑚1
+𝑏→𝑞3
+
+𝑚1, 𝑚2
+	 𝑎→𝑚2
+
+𝑚1, 𝑚2
+	 𝑏→𝑞3
+𝑞0
+𝑎→𝑚1, 𝑚2
+𝑎→𝑚2
+𝑞0
+𝑏→𝑚3, 𝑚2
+𝑏→𝑞3
+The states 𝑞0 and 𝑚1 are distinguishable by 𝑏, as well as 𝑞0 and 𝑚2. The states 𝑚1
+and 𝑚2 behave equally, i.e. we can say in advance that 𝑚1 ∼𝑚2.
+
+----- [page 18] -----
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+𝑞0
+𝑚1
+𝑚3
+𝑚2
+𝑞3
+𝑚4
+𝑞5
+𝑎
+𝑏
+𝑎
+𝑏
+𝑎
+𝑏
+𝑏
+𝑎
+𝑏
+𝑎
+𝑏
+𝑎
+𝑎
+𝑏
+𝑚1
+✓
+𝑚2
+✓
+𝑞3
+✓
+✓
+✓
+𝑚3
+✓
+𝑚4
+✓
+𝑞5
+✓
+✓
+✓
+✓
+✓
+𝑞0
+𝑚1
+𝑚2
+𝑞3
+𝑚3
+𝑚4
+We continue checking 1-bisimilarity:
+𝑞0
+𝑎→𝑚1, 𝑚3
+𝑎→𝑞5
+𝑞0
+𝑎→𝑚1, 𝑚4
+𝑎→𝑞5
+𝑚1
+𝑎→𝑚2, 𝑚3
+𝑎→𝑞5
+𝑚2
+𝑎→𝑚2, 𝑚3
+𝑎→𝑞5
+𝑚1
+𝑎→𝑚2, 𝑚4
+𝑎→𝑞5
+𝑚2
+𝑎→𝑚2, 𝑚4
+𝑎→𝑞5
+𝑞3
+𝑎→𝑚2, 𝑞5
+𝑎→𝑞5
+We find out that 𝑎-transitions distinguish almost all remaining pairs.
+
+----- [page 19] -----
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+𝑞0
+𝑚1
+𝑚3
+𝑚2
+𝑞3
+𝑚4
+𝑞5
+𝑎
+𝑏
+𝑎
+𝑏
+𝑎
+𝑏
+𝑏
+𝑎
+𝑏
+𝑎
+𝑏
+𝑎
+𝑎
+𝑏
+𝑚1
+✓
+𝑚2
+✓
+𝑞3
+✓
+✓
+✓
+𝑚3
+✓
+✓
+✓
+✓
+𝑚4
+✓
+✓
+✓
+✓
+𝑞5
+✓
+✓
+✓
+✓
+✓
+✓
+𝑞0
+𝑚1
+𝑚2
+𝑞3
+𝑚3
+𝑚4
+The one more exception are the states 𝑚3, 𝑚4, behaving equally on both terminal
+letters.
+
+𝑚3, 𝑚4
+	 𝑎→𝑞5
+
+𝑚3, 𝑚4
+	 𝑏→𝑚4
+We cannot distinguish 𝑚3 and 𝑚4, as well as 𝑚1 and 𝑚2, by 2-bisimilarity relation,
+hence, the relation fixpoint is reached.
+
+----- [page 20] -----
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+𝑞0
+𝑚1
+𝑚3
+𝑚2
+𝑞3
+𝑚4
+𝑞5
+𝑎
+𝑏
+𝑎
+𝑏
+𝑎
+𝑏
+𝑏
+𝑎
+𝑏
+𝑎
+𝑏
+𝑎
+𝑎
+𝑏
+𝑚1
+✓
+𝑚2
+✓
+𝑞3
+✓
+✓
+✓
+𝑚3
+✓
+✓
+✓
+✓
+𝑚4
+✓
+✓
+✓
+✓
+𝑞5
+✓
+✓
+✓
+✓
+✓
+✓
+𝑞0
+𝑚1
+𝑚2
+𝑞3
+𝑚3
+𝑚4
+Now we can merge the pairs 𝑚1, 𝑚2 and 𝑚3, 𝑚4, constructing a DFA with
+less number of states.
+
+----- [page 21] -----
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+Minimisation Example
+The resulting DFA is:
+𝑞0
+𝑚2
+𝑞3
+𝑚4
+𝑞5
+𝑎
+𝑏
+𝑎
+𝑏
+𝑏
+𝑎
+𝑏
+𝑎
+𝑎
+𝑏
+𝑚1
+✓
+𝑚2
+✓
+𝑞3
+✓
+✓
+✓
+𝑚3
+✓
+✓
+✓
+✓
+𝑚4
+✓
+✓
+✓
+✓
+𝑞5
+✓
+✓
+✓
+✓
+✓
+✓
+𝑞0
+𝑚1
+𝑚2
+𝑞3
+𝑚3
+𝑚4
+Nice, we have reduced the DFA. But how we can guarantee that the resulted
+DFA is the least one, i.e. there is no DFA with less number of states
+recognising the same language?
+We can guarantee so far only the fact that the states in the given DFA cannot
+be merged any more.
+
+----- [page 22] -----
+Suffix Congruence
+Suffix Congruence
+Suffix Congruence
+Suffix Congruence
+Suffix Congruence
+Suffix Congruence
+Suffix Congruence
+Suffix Congruence
+Suffix Congruence
+Suffix Congruence
+Suffix Congruence
+Every state 𝑞𝑖of an NFA A determines a language of words
+L𝑝(𝑞𝑖) = {𝜔| 𝑞0
+𝜔
+→𝑞𝑖}. If A a DFA, given 𝑞𝑖≠𝑞𝑗,
+L𝑝(𝑞𝑖) ∩L𝑝(𝑞𝑗) = ∅.
+If every two states in the DFA A are not bisimilar, then
+∀𝑞𝑖, 𝑞𝑗
+ 𝑖≠𝑗⇒
+∃𝜔𝑖𝑗
+ L𝑝(𝑞𝑖){𝜔𝑖𝑗} ⊆L (A ) & L𝑝(𝑞𝑗){𝜔𝑖𝑗} ⊈L (A )
+∨ L𝑝(𝑞𝑗){𝜔𝑖𝑗} ⊆L (A ) & L𝑝(𝑞𝑖){𝜔𝑖𝑗} ⊈L (A )
+Namely, suffix 𝜔𝑖𝑗distinguishes states 𝑞𝑖and 𝑞𝑗.
+Meanwhile, all the words belonging to the same L𝑝(𝑞𝑖) are congruent
+(undistinguishable) with respect to suffixes.
+
+----- [page 23] -----
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Forbidden Factors and Thin Languages
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+A word 𝜔is said to be a forbidden factor in a language L is no
+word in L contains 𝜔as a subword.
+Languages with forbidden factors are said to be thin.
+E.g. the word 𝑏𝑎is forbidden in 𝑎∗𝑏∗, hence the expression 𝑎∗𝑏∗
+defines a thin language. On the other hand, language given by the
+expression 𝑎(𝑎|𝑏)∗𝑎has no forbidden factors.
+All the words with forbidden factors in L are undistinguishable with
+respect to suffixes, i.e. lead to the trap state in any machine
+recognising it. However, even if L is not thin, its recognising machine
+can still contain trap states, e.g. the language of balanced parentheses
+has no forbidden factors, but requires the parentheses balance to be
+non-negative in any prefix of its words.
+
+----- [page 24] -----
+Language IS THE Minimal DFA
+Language IS THE Minimal DFA
+Language IS THE Minimal DFA
+Language IS THE Minimal DFA
+Language IS THE Minimal DFA
+Language IS THE Minimal DFA
+Language IS THE Minimal DFA
+Language IS THE Minimal DFA
+Language IS THE Minimal DFA
+Language IS THE Minimal DFA
+Language IS THE Minimal DFA
+Theorem
+Theorem
+Theorem
+Theorem
+Theorem
+Theorem
+Theorem
+Theorem
+Theorem
+Theorem
+Theorem
+• Every two equivalent DFA containing no bisimilar states are
+equal (up to the canonical numeration).
+• Hence, the minimisation procedure is confluent for DFA, and the
+minimal DFA is unique for any regular language.
+Proof:
+Let A1 and A2 be DFA both recognising the same language L , s.t. neither
+A1 nor A2 contains bisimilar states. Equivalent trim DFA are bisimilar, thus non-trap
+parts of A1 and A2 are bisimilar, as well as the traps (if any).
+For any 𝑞𝑖in A1, there is a non-empty set of states 𝑞𝑖, 𝑗in A2 that are bisimilar to 𝑞𝑖
+(and vice versa). If this set is not a singleton, then all the states 𝑞𝑖, 𝑗are mutually
+bisimilar, which contradicts the choice of A1 and A2. Therefore, A1 and A2 have
+equal state set cardinality.
+Assume that the states are canonically numbered, and there is at least one prefix 𝜐s.t.
+𝑞0(A1)
+𝜐→𝑞𝑖, 𝑞0(A2)
+𝜐→𝑞𝑗, and 𝑖≠𝑗, i.e. 𝑞𝑖̸ ∼𝑞𝑗. Hence, there exists a suffix 𝜔𝑖𝑗
+distinguishing 𝑞𝑖and 𝑞𝑗(i.e. the tests 𝜐𝜔𝑖𝑗∈L (A1) and 𝜐𝜔𝑖𝑗∈L (A2) have
+distinct values), which contradicts the choice of A1 and A2.
+□
+
+----- [page 25] -----
+Suffix Congruence and Minimal DFA
+Suffix Congruence and Minimal DFA
+Suffix Congruence and Minimal DFA
+Suffix Congruence and Minimal DFA
+Suffix Congruence and Minimal DFA
+Suffix Congruence and Minimal DFA
+Suffix Congruence and Minimal DFA
+Suffix Congruence and Minimal DFA
+Suffix Congruence and Minimal DFA
+Suffix Congruence and Minimal DFA
+Suffix Congruence and Minimal DFA
+Now we know that partition to L𝑝(𝑞𝑖)-sets wrt the minimal DFA can be
+considered as a relation wrt its language L . Namely, we say that 𝜐1 ≡L 𝜐2,
+iff ∀𝜔(𝜐1𝜔∈L ⇔𝜐2𝜔∈L ), i.e. no suffix can distinguish 𝜐1 and 𝜐2.
+Myhill–Nerode Theorem
+Language L in an alphabet Σ is regular ⇔the quotient set Σ∗/≡L
+is of a finite cardinality.
+Proof (⇐):
+Let Σ∗/≡L be of a finite cardinality. We are going to construct
+a DFA A recognising L .
+• For every equivalence class 𝑆𝑖wrt ≡L , we introduce a state of A . The
+initial state is 𝑆0 s.t. 𝜀∈𝑆0. Final states are 𝑆𝑘s.t. ∀𝜔∈𝑆𝑘(𝜔∈L ).
+• Givenstate 𝑆𝑖and 𝛾∈Σ, add transition 𝑆𝑖
+𝛾→𝑆𝑗s.t. ∀𝜔∈𝑆𝑖(𝜔𝛾∈𝑆𝑗).
+(⇒):
+Was proven already. Elements of Σ∗/≡L are L𝑝(𝑞𝑖)-sets of the
+minimal DFA.
+□
+The suffix congruence ≡L is also called the Myhill–Nerode equivalence.
+
+----- [page 26] -----
+Matrix Method: Non-Regularity
+Matrix Method: Non-Regularity
+Matrix Method: Non-Regularity
+Matrix Method: Non-Regularity
+Matrix Method: Non-Regularity
+Matrix Method: Non-Regularity
+Matrix Method: Non-Regularity
+Matrix Method: Non-Regularity
+Matrix Method: Non-Regularity
+Matrix Method: Non-Regularity
+Matrix Method: Non-Regularity
+Language Regularity Criterion, Negated
+Language L in an alphabet Σ is non-regular ⇔the quotient set
+Σ∗/≡L is infinite.
+In order to prove that Σ∗/≡L is infinite:
+• construct an infinite series 𝜐1,...,𝜐𝑘,... of prefixes of words in L ;
+• construct an infinite series of distinguishing suffixes 𝜔1,..., 𝜔𝑘
+such that ∀𝑖, 𝑗∃𝑘 𝜐𝑖𝜔𝑘∈L & 𝜐𝑗𝜔𝑘∉L .
+If L is “scarse”, it is convenient to choose suffixes s.t. ∀𝑖 𝜐𝑖𝜔𝑖∈L ,
+and for most 𝑘≠𝑖, 𝜐𝑘𝜔𝑖∉L .
+Then the classes can be visualised as an infinite matrix with distinct
+rows containing 1’s on its leading diagonal.
+NB: if L is dense, then it is better to choose an opposite strategy,
+constructing a matrix containing 0’s on its leading diagonal.
+
+----- [page 27] -----
+Matrix Method: Non-Regularity
+Matrix Method: Non-Regularity
+Matrix Method: Non-Regularity
+Matrix Method: Non-Regularity
+Matrix Method: Non-Regularity
+Matrix Method: Non-Regularity
+Matrix Method: Non-Regularity
+Matrix Method: Non-Regularity
+Matrix Method: Non-Regularity
+Matrix Method: Non-Regularity
+Matrix Method: Non-Regularity
+If L is “scarse”, it is convenient to choose suffixes s.t. ∀𝑖 𝜐𝑖𝜔𝑖∈L ,
+and for most 𝑘≠𝑖, 𝜐𝑘𝜔𝑖∉L .
+Let us show non-regularity of the language
+
+𝑤1𝑤2 | 𝑤1 ≠𝜀& |𝑤1| = 2 · 𝑘& 𝑤1 = 𝑤𝑅
+1 & 𝑤𝑖∈{𝑎, 𝑏}∗
+
+Given 𝜔𝑖= 𝜐𝑖= 𝑎𝑏2·𝑖−1𝑎,
+𝜐𝑖𝜔𝑗=
+(
+𝑎𝑏2·𝑖−1𝑎𝑎𝑏2·𝑖−1𝑎, palindrome, if 𝑖= 𝑗;
+𝑎𝑏2·𝑖−1𝑎𝑎𝑏2· 𝑗−1𝑎, never starts with an even palindrome, if 𝑖≠𝑗.
+The classes matrix:
+𝑎𝑏𝑎
+𝑎𝑏3𝑎
+. . .
+𝑎𝑏2·𝑘−1𝑎
+. . .
+𝑎𝑏𝑎
++
+−
+−
+𝑎𝑏3𝑎
+−
++
+−
+. . .
+. . .
+𝑎𝑏2·𝑘−1𝑎
+−
+−
++
+. . .
+There
+𝜐𝑖
+name
+rows,
+𝜔𝑖name columns, + at
+position (𝑖, 𝑗) denotes the
+fact that 𝜐𝑖𝜔𝑗∈L ; and
+−at position (𝑖, 𝑗) denotes
+the fact that 𝜐𝑖𝜔𝑗∉L .
+
+----- [page 28] -----
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Bounded Languages
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Language L is said to be bounded if L ⊆𝜔∗
+1...𝜔∗
+𝑛, where
+𝜔1,...,𝜔𝑛are fixed words.
+The bounded languages are of extreme usefulness further in the
+course (when investigating about the context-freeness property), but
+they are still of interest even in the regular case.
+When discussing “scarse” and “dense” languages, we assume that the
+notions of scarcity and density are given in the context of the
+enclosing bounded language.
+E.g. the language L≠=
+
+𝑎𝑚𝑏𝑛| 𝑛≠𝑚
+	
+is thin in {𝑎, 𝑏}∗(since its
+word contain no subword 𝑏𝑎); but in the bounded context of 𝑎∗𝑏∗it is
+dense (for almost all pairs 𝑛, 𝑚, 𝑎𝑛𝑏𝑚∈L≠).
+Indeed, the trap state equivalence class corresponding to the words
+with forbidden factors is useless in constructing infinite classes
+matrix, so it is natural to omit it.
+
+----- [page 29] -----
+Pumping Lemma vs. Classes Matrix Method
+Pumping Lemma vs. Classes Matrix Method
+Pumping Lemma vs. Classes Matrix Method
+Pumping Lemma vs. Classes Matrix Method
+Pumping Lemma vs. Classes Matrix Method
+Pumping Lemma vs. Classes Matrix Method
+Pumping Lemma vs. Classes Matrix Method
+Pumping Lemma vs. Classes Matrix Method
+Pumping Lemma vs. Classes Matrix Method
+Pumping Lemma vs. Classes Matrix Method
+Pumping Lemma vs. Classes Matrix Method
+Pumping Lemma:
+• requires a unique
+parameterized word.
+• usually requires
+preliminary intersection
+with a bounded language,
+in order to narrow a set of
+pumped subwords.
+Matrix Method:
+• requires constructing series of words,
+not necessarily parameterized.
+• normally does not require any
+intersection tricks, since we are free to
+restrict combinations of subwords by
+the given series.
+The matrix method is far more universal and flexible. However, in a
+few cases the pumping lemma is more convenient.
+Let us prove that L =
+
+𝜔| 𝜔does not contain a factor of power 4
+	
+in
+{𝑎, 𝑏}∗is non-regular.
+• We know that L is infinite, since Thue words (given by iterative
+application of Thue morphism ℎ(𝑎) = 𝑎𝑏, ℎ(𝑏) = 𝑏𝑎) belong to L .
+• Then, if L is regular and its pumping length is 𝑁, there is some Thue
+word 𝜔s.t. |𝜔| > 𝑁, and 𝜔= 𝜔1𝜔2𝜔3, ∀𝑖(𝜔1𝜔𝑖
+2𝜔3 ∈L ). But that
+can never happen for 𝑖≥4, by definition of L .
+
+----- [page 30] -----
+Matrix Method: Minimality
+Matrix Method: Minimality
+Matrix Method: Minimality
+Matrix Method: Minimality
+Matrix Method: Minimality
+Matrix Method: Minimality
+Matrix Method: Minimality
+Matrix Method: Minimality
+Matrix Method: Minimality
+Matrix Method: Minimality
+Matrix Method: Minimality
+DFA Minimality Criterion
+A DFA A is minimal for given language L in alphabet Σ iff
+the number of states in A is equal to card(Σ∗/≡L ) (i.e. the
+number of Myhill–Nerode equivalence classes of L ).
+An easy way to prove that a given DFA A with the state set
+{𝑞0, ..., 𝑞𝑛} is minimal:
+• construct a set of prefixes 𝜀, 𝜐1, ..., 𝜐𝑛s.t. 𝑞0
+𝜐𝑖
+→𝑞𝑖;
+• construct a finite set of distinguishing suffixes 𝜔1,..., 𝜔𝑘s.t.
+∀𝑖, 𝑗∃𝑘 𝜐𝑖𝜔𝑘∈L & 𝜐𝑗𝜔𝑘∉L .
+Usually, it is enough to find |Ø(log2 𝑛)| distinguishing suffixes,
+i.e. the resulting matrix is not necessarily quadratic.
+
+----- [page 31] -----
+Matrix Method: Minimality
+Matrix Method: Minimality
+Matrix Method: Minimality
+Matrix Method: Minimality
+Matrix Method: Minimality
+Matrix Method: Minimality
+Matrix Method: Minimality
+Matrix Method: Minimality
+Matrix Method: Minimality
+Matrix Method: Minimality
+Matrix Method: Minimality
+• construct a set of prefixes 𝜀, 𝜐1, ..., 𝜐𝑛s.t. 𝑞0
+𝜐𝑖
+→𝑞𝑖;
+• construct a finite set of distinguishing suffixes 𝜔1,..., 𝜔𝑘s.t.
+∀𝑖, 𝑗∃𝑘 𝜐𝑖𝜔𝑘∈L & 𝜐𝑗𝜔𝑘∉L .
+Consider the DFA mentioned above for the language
+
+𝜔| 𝜔starts and ends with a same letter
+	
+The given matrix verifies its minimality with respect to the language.
+𝜀
+b
+ba
+a
+ab
+b
+a
+a
+b
+b
+a
+b
+a
+a
+b
+𝜀
+𝑎
+𝑏
+𝜀
+0
+1
+1
+a
+1
+1
+0
+b
+1
+0
+1
+ab
+0
+1
+0
+ba
+0
+0
+1
+
+----- [page 32] -----
+Minimal DFAs can be Huge
+Minimal DFAs can be Huge
+Minimal DFAs can be Huge
+Minimal DFAs can be Huge
+Minimal DFAs can be Huge
+Minimal DFAs can be Huge
+Minimal DFAs can be Huge
+Minimal DFAs can be Huge
+Minimal DFAs can be Huge
+Minimal DFAs can be Huge
+Minimal DFAs can be Huge
+Are the minimal DFA always small? If not, which properties
+cannot be tested without DFA state explosion?
+A difficult case: tracking a dense non-anchored template:
+• non-anchored ⇒a DFA must assume the pattern can start after any
+prefix is read;
+• dense ⇒a DFA must assume the pattern can start even within other
+possible occurrence of the pattern.
+E.g. given regular expression 𝜌= (a | b)∗
+non-anchored pattern
+z        }|        {
+a (a | b)n a
+(a | b)∗
+every two distinct words of the length 𝑛+ 1 fall in the distinct equivalence
+classes wrt the relation ≡L .
+Indeed, let 𝜔1 = 𝜐1a𝜐2, 𝜔2 = 𝜐′
+1b𝜐′
+2, |𝜔1| = |𝜔2| = 𝑛+ 1, |𝜐1| = |𝜐′
+1|
+(hence, |𝜐2| = |𝜐′
+2| as well).
+Then 𝜔1b𝑛−|𝜐2|a ∈L (𝜌), but 𝜔2b𝑛−|𝜐2|a ∉L (𝜌).
+Hence, ≡L (𝜌) forms at least 2𝑛+1 distinct equivalence classes.

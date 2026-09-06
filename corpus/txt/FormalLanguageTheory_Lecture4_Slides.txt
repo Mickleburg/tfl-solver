@@ -1,0 +1,585 @@
+
+----- [page 1] -----
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Bauman Moscow State University
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Th. Computer Science Dept.
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Pushdown Machines: Visible and Not
+Antonina Nepeivoda
+a_nevod@mail.ru
+REG
+VPL
+DCFL
+CFL
+CONJ
+CSL
+
+----- [page 2] -----
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+Lecture Outline
+2/10, Lecture IV: Pushdown Machines, 14.09.24, Bauman Moscow State University
+
+----- [page 3] -----
+Finite Automata is Enough?
+Finite Automata is Enough?
+Finite Automata is Enough?
+Finite Automata is Enough?
+Finite Automata is Enough?
+Finite Automata is Enough?
+Finite Automata is Enough?
+Finite Automata is Enough?
+Finite Automata is Enough?
+Finite Automata is Enough?
+Finite Automata is Enough?
+Real-world machines are finite. Do finite models suffice?
+Recall “elevator automaton” with a unique final state on the “ground
+floor”, breaking if asked to reach an non-existing floor:
+Lv0
+Lv1
+Lv2
+...
+LvN
+up
+dwn
+up
+dwn
+up
+dwn
+up
+dwn
+“up” and “dwn” instructions can be interpreted wrt a parentheses
+structure. That is, parsing string “((” we move to Lv2, and “(()())”
+returns us to Lv1.
+Real-world nesting depth is limited (even in Lisp-like languages), and
+linear blow-up in state size seems satisfactory.
+Until we decide to use several sorts of brackets...
+3/10, Lecture IV: Pushdown Machines, 14.09.24, Bauman Moscow State University
+
+----- [page 4] -----
+Myhill–Nerode Congruence for Many-Sorted Brackets
+Myhill–Nerode Congruence for Many-Sorted Brackets
+Myhill–Nerode Congruence for Many-Sorted Brackets
+Myhill–Nerode Congruence for Many-Sorted Brackets
+Myhill–Nerode Congruence for Many-Sorted Brackets
+Myhill–Nerode Congruence for Many-Sorted Brackets
+Myhill–Nerode Congruence for Many-Sorted Brackets
+Myhill–Nerode Congruence for Many-Sorted Brackets
+Myhill–Nerode Congruence for Many-Sorted Brackets
+Myhill–Nerode Congruence for Many-Sorted Brackets
+Myhill–Nerode Congruence for Many-Sorted Brackets
+S
+(
+((
+⟨
+⟨⟨
+⟨(
+(⟨
+(
+)
+⟨
+⟩
+(
+⟩
+)
+⟨
+(
+)
+⟨
+⟩
+Congruence Table
+𝜀
+)
+⟩
+))
+⟩)
+)⟩
+⟩⟩
+𝜀
++
+−
+−
+−
+−
+−
+−
+(
+−
++
+−
+−
+−
+−
+−
+⟨
+−
+−
++
+−
+−
+−
+−
+((
+−
+−
+−
++
+−
+−
+−
+(⟨
+−
+−
+−
+−
++
+−
+−
+⟨(
+−
+−
+−
+−
+−
++
+−
+⟨⟨
+−
+−
+−
+−
+−
+−
++
+• 𝑁-depth balanced sequences of 2 sorts of
+brackets ⇒2𝑁+1 −1 states in a min NFA.
+• 𝑁-depth balanced sequences of 𝐾sorts of
+brackets ⇒
+𝐾𝑁+1−1
+𝐾−1
+states in a min NFA.
+Finite automata cannot track nested structures efficiently.
+4/10, Lecture IV: Pushdown Machines, 14.09.24, Bauman Moscow State University
+
+----- [page 5] -----
+Memoising Counters via Additional Memory
+Memoising Counters via Additional Memory
+Memoising Counters via Additional Memory
+Memoising Counters via Additional Memory
+Memoising Counters via Additional Memory
+Memoising Counters via Additional Memory
+Memoising Counters via Additional Memory
+Memoising Counters via Additional Memory
+Memoising Counters via Additional Memory
+Memoising Counters via Additional Memory
+Memoising Counters via Additional Memory
+• Queue as a memory — can be considered as an additional tape
+with the write access, since it can be “re-rolled” to any wanted
+position with no memory loss.
+⊤
+𝑄1
+𝛼
+𝑄2
+⊥
+pushed
+back
+𝛼
+𝑄2
+⊥
+⊤
+𝑄1
+read
+pushed
+back
+⊤
+𝑄1
+𝛼
+𝑄2
+⊥
+• Stack as a memory — information given in 𝑄1 cannot be stored
+except in states when 𝛼is read. More restrictive, natural for
+tracking nested structures.
+5/10, Lecture IV: Pushdown Machines, 14.09.24, Bauman Moscow State University
+
+----- [page 6] -----
+Natural Idea: Call–Return Counters
+Natural Idea: Call–Return Counters
+Natural Idea: Call–Return Counters
+Natural Idea: Call–Return Counters
+Natural Idea: Call–Return Counters
+Natural Idea: Call–Return Counters
+Natural Idea: Call–Return Counters
+Natural Idea: Call–Return Counters
+Natural Idea: Call–Return Counters
+Natural Idea: Call–Return Counters
+Natural Idea: Call–Return Counters
+Input alphabet Σ is split into disjoint union Σ𝐼∪Σ𝐶∪Σ𝑅, where:
+Σ𝐼is internal alphabet (symbols not affecting the stack),
+Σ𝐶is call alphabet (symbols that push on the stack),
+Σ𝑅is return alphabet (symbols that pop from stack).
+Balanced parentheses language:
+• Σ𝐼— all non-brackets;
+• Σ𝐶— all opening brackets;
+• Σ𝑅— all closing brackets.
+With several sorts of brackets:
+• state space does not increase;
+• transitions set grows linearly.
+S
+(, ⟨
+(, PUSH FP
+⟨, PUSH FA
+), POP FP
+⟩, POP FA
+), POP BP
+⟩, POP BA
+(, PUSH BP
+⟨, PUSH BA
+a
+a
+For simplicity, henceforth we usually use an unique sort of brackets.
+6/10, Lecture IV: Pushdown Machines, 14.09.24, Bauman Moscow State University
+
+----- [page 7] -----
+Handling Imbalance
+Handling Imbalance
+Handling Imbalance
+Handling Imbalance
+Handling Imbalance
+Handling Imbalance
+Handling Imbalance
+Handling Imbalance
+Handling Imbalance
+Handling Imbalance
+Handling Imbalance
+Language of valid prefixes of balanced parentheses?
+S
+(
+(, PUSH FP
+), POP FP
+), POP BP
+(, PUSH BP
+a
+a
+The final configuration can admit non-empty stack.
+Language of valid suffixes of balanced parentheses?
+S
+(
+(, PUSH FP
+), POP FP
+), POP BP
+(, PUSH BP
+), POP ⊥
+a
+a
+Return symbols can be safely popped from the empty stack (⊥).
+7/10, Lecture IV: Pushdown Machines, 14.09.24, Bauman Moscow State University
+
+----- [page 8] -----
+Visibly Pushdown Automaton
+Visibly Pushdown Automaton
+Visibly Pushdown Automaton
+Visibly Pushdown Automaton
+Visibly Pushdown Automaton
+Visibly Pushdown Automaton
+Visibly Pushdown Automaton
+Visibly Pushdown Automaton
+Visibly Pushdown Automaton
+Visibly Pushdown Automaton
+Visibly Pushdown Automaton
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+A VPA is a tuple A =
+
+𝑄, Σ𝐶∪Σ𝑅∪Σ𝐼, Γ, 𝛿, 𝑞0, 𝐹
+
+, where:
+• 𝑄is a finite set of states, 𝑞0 ∈𝑄is the initial state, 𝐹⊆𝑄is the
+set of final states.
+• Γ is a finite stack alphabet, containing bottom-of-stack symbol ⊥,
+• 𝛿is the transitions set, consisting of the three subsets:
+•
+call transitions:
+𝛿𝐶⊆𝑄× Σ𝐶× (Γ \ {⊥}) × 𝑄,
+•
+return transitions:
+𝛿𝑅⊆𝑄× Σ𝑅× Γ × 𝑄,
+•
+internal transitions:
+𝛿𝐼⊆𝑄× Σ𝐼× 𝑄.
+The subsets are disjoint, since alphabets Σ𝐶, Σ𝑅, Σ𝐼are disjoint.
+The transitions depend on, and change, the stack, and VPA configuration is
+current state
+z}|{
+𝑞𝑖, 𝑎𝑘. . . 𝑎𝑛
+|    {z    }
+suffix to parse
+,
+current stack
+z       }|       {
+𝛾𝑚. . . 𝛾1⊥
+
+8/10, Lecture IV: Pushdown Machines, 14.09.24, Bauman Moscow State University
+
+----- [page 9] -----
+Visibly Pushdown Automaton
+Visibly Pushdown Automaton
+Visibly Pushdown Automaton
+Visibly Pushdown Automaton
+Visibly Pushdown Automaton
+Visibly Pushdown Automaton
+Visibly Pushdown Automaton
+Visibly Pushdown Automaton
+Visibly Pushdown Automaton
+Visibly Pushdown Automaton
+Visibly Pushdown Automaton
+The transitions depend on, and change, the stack, and VPA configuration is
+current state
+z}|{
+𝑞𝑖, 𝑎𝑘. . . 𝑎𝑛
+|    {z    }
+suffix to parse
+,
+current stack
+z       }|       {
+𝛾𝑚. . . 𝛾1⊥
+
+Given such a configuration, next configurations are defined as follows:
+• if 𝑎𝑘∈Σ𝐶and ⟨𝑞𝑖, 𝑎𝑘, 𝛾𝑚+1, 𝑞𝑗⟩∈𝛿, then
+⟨𝑎𝑘+1 . . . 𝑎𝑛, 𝛾𝑚+1𝛾𝑚. . . 𝛾1⊥⟩. Note that the stack bottom ⊥can never
+be pushed.
+• if 𝑎𝑘∈Σ𝐼and ⟨𝑞𝑖, 𝑎𝑘, 𝑞𝑗⟩∈𝛿, then ⟨𝑎𝑘+1 . . . 𝑎𝑛, 𝑞𝑗, 𝛾𝑚. . . 𝛾1⊥⟩.
+𝜀-transitions are forbidden, even for the internal case.
+• if 𝑎𝑘∈Σ𝑅, and 𝑚> 0, and ⟨𝑞𝑖, 𝑎𝑘, 𝛾𝑚, 𝑞𝑗⟩∈𝛿, then
+⟨𝑎𝑘+1 . . . 𝑎𝑛, 𝑞𝑗, 𝛾𝑚−1 . . . 𝛾1⊥⟩.
+• if 𝑎𝑘∈Σ𝑅, and 𝑚= 0, and ⟨𝑞𝑖, 𝑎𝑘, ⊥, 𝑞𝑗⟩∈𝛿, then
+⟨𝑎𝑘+1 . . . 𝑎𝑛, 𝑞𝑗, ⊥⟩. I.e. the stack bottom is a fixed point of POP
+operation.
+8/10, Lecture IV: Pushdown Machines, 14.09.24, Bauman Moscow State University
+
+----- [page 10] -----
+VPA for Dyck’s Language, Revisited
+VPA for Dyck’s Language, Revisited
+VPA for Dyck’s Language, Revisited
+VPA for Dyck’s Language, Revisited
+VPA for Dyck’s Language, Revisited
+VPA for Dyck’s Language, Revisited
+VPA for Dyck’s Language, Revisited
+VPA for Dyck’s Language, Revisited
+VPA for Dyck’s Language, Revisited
+VPA for Dyck’s Language, Revisited
+VPA for Dyck’s Language, Revisited
+Suppose we want to add the trap state to the VPA for balanced
+parentheses language:
+S
+T
+(
+(, PUSH FP
+), POP FP
+), POP ⊥
+), POP ⊥
+), POP BP
+), POP FP
+), POP BP
+(, PUSH BP
+(, PUSH BP
+), POP BP, ), POP ⊥
+), POP FP
+Formally, we are required to add all combinations of stack symbols on
+the stack top and symbols from Σ𝑅(i.e., the closing parenthesis). But
+the transitions given in red are actually unreachable.
+By what means we can get rid of them?
+9/10, Lecture IV: Pushdown Machines, 14.09.24, Bauman Moscow State University
+
+----- [page 11] -----
+Balanced Words
+Balanced Words
+Balanced Words
+Balanced Words
+Balanced Words
+Balanced Words
+Balanced Words
+Balanced Words
+Balanced Words
+Balanced Words
+Balanced Words
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Definition
+Given a word 𝜔∈ Σ𝐶∪Σ𝑅∪Σ𝐼
+∗, 𝜔is said to be a balanced word iff ℎ(𝜔)
+is a balanced parentheses sequence, given the following morphism ℎ:
+• ∀𝑎∈Σ𝐶
+ ℎ(𝑎) = ( ;
+• ∀𝑎∈Σ𝑅
+ ℎ(𝑎) = ) ;
+• ∀𝑎∈Σ𝐼(ℎ(𝑎) = 𝜀.
+Hence, every balanced word 𝜔acts on any given configuration as if 𝜔∈Σ∗
+𝐼.
+unchanged stack part
+trace reading 𝜔
+10/10, Lecture IV: Pushdown Machines, 14.09.24, Bauman Moscow State University
