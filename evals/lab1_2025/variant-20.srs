@@ -1,0 +1,21 @@
+# ЛР1 2025, вариант 20 (FormalLanguageTheory/lab_tfl_2025_1.pdf)
+# Сверено с boomhaa-tfl-labs/lab1/report_lab1.md — тот же поток, тот же вариант.
+cb -> ba
+aaa -> aa
+aba -> ba
+ac -> cc
+baa -> ba
+bba -> ba
+bbb -> b
+bbc -> c
+bcc -> cc
+ba -> cab
+cac -> cc
+bab -> cac
+ccc -> c
+babb -> ba
+babc -> ε
+baca -> cabba
+caab -> bb
+caac -> bc
+aabcaa -> a
