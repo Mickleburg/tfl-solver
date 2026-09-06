@@ -41,7 +41,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from itertools import combinations
-from typing import Callable, Hashable, Iterable, Sequence
+from typing import Callable, Iterable, Sequence
 
 from tfl.automata import DFA, NFA, State
 from tfl.words import iter_words

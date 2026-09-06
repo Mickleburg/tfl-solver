@@ -94,8 +94,8 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | `LAB-2` | `docs/recipes/LAB-2.md` | `tfl/{regex,automata,myhill,glushkov,afa}.py` |
 | `LAB-3` | `docs/recipes/LAB-3.md` | `tfl/{cfg,parse,pda,approx}.py` |
 | `RK1-*` | **нет рецепта** | `tfl/{automata,myhill}.py`, накачка вручную |
-| `RK2-A` | нет рецепта | `tfl/srs.py`, `tfl/cfg.py`, `tfl/lang.py` |
-| `RK2-B` | нет рецепта | `tfl/{automata,cfg,parse,pump}.py` |
+| `RK2-A` | `docs/recipes/RK2-A.md` | `tfl/{srs,cfg,lang,pump}.py` |
+| `RK2-B` | `docs/recipes/RK2-B.md` | `tfl/{lang,pump,pda,automata}.py` |
 | `RK2-C` | `docs/recipes/RK2-C.md` | `tfl/attr.py` |
 | `EXAM-*` | нет рецепта | по объекту задачи |
 | `LAB-4`, `PHARMA` | нет рецепта | по объекту задачи |
@@ -315,9 +315,6 @@ python tools/lab3_report.py 1 --pda my.pda   # ЛР3
   по готовому инварианту (`conjunction`, `with_lookahead`) и мгновенно
   сверяет его с ДКА, но заметить, что язык распадается в конъюнкцию
   условий, оракул не умеет — это и есть содержательная часть задания.
-* **Нет леммы Ю** — отдельной леммы о накачке для проверки
-  детерминированности КС-языка. В корпусе её тоже нет; форма видна
-  только по проверенным работам (`reports/rk2-2026-photos/NOTES.md`).
 * **Нет теоремы Париха** — полулинейность образа Париха, которой в одной
   из работ на 5 баллов доказывается не-КС для условия «число букв —
   точный квадрат».

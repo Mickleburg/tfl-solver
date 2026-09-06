@@ -239,3 +239,34 @@ def test_confidence_requires_a_gap():
 def test_report_warns_when_there_is_no_gap():
     tie = Analysis("", None, (), (), (Candidate("RK1-B", 5), Candidate("RK2-B", 4)))
     assert "Отрыва у лидера нет" in tie.report()
+
+
+def test_attribute_grammar_written_with_plain_equals():
+    """В работах присваивание пишут через `=`, а не `:=` (photo_120).
+
+    Ссылка на атрибут `S2.attr` — сама по себе достаточный признак,
+    иначе условие, переписанное с фотографии, не опознаётся.
+    """
+    text = (
+        "Язык, определяемый следующей атрибутной грамматикой:\n"
+        "S -> S S ; S2.attr < S1.attr, S0.attr = S1.attr - S2.attr\n"
+        "S -> b A ; S.attr = A.attr"
+    )
+    assert "атрибутная грамматика" in {e.name for e in find_features(text)}
+    assert classify(text, limit=1)[0].code == "RK2-C"
+
+
+def test_mu_expression_is_not_an_attribute_grammar():
+    """`µY.bX` из билета — точка там значит связывание, а не атрибут."""
+    text = "Описать язык µ-выражения: µX.(a(µY.bX|Y a|(µZ.ZZ|cc))bX|ε)."
+    assert "атрибутная грамматика" not in {e.name for e in find_features(text)}
+
+
+def test_rk2_asks_to_describe_the_language():
+    """Вопрос в РК2 не задан глаголом — условие это именная группа."""
+    for text in (
+        "Язык SRS ba2 -> ba, ab -> ba над базисом a^n b^n a^n.",
+        "Язык {w1 (ab)* b+ w2 | w1, w2 из (abb|ba)+}.",
+        "Язык, определяемый следующей атрибутной грамматикой:",
+    ):
+        assert "описать язык" in {e.name for e in find_asks(text)}, text

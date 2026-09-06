@@ -22,7 +22,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
-from tfl.srs import SRS, Verdict, parse_srs
+from tfl.srs import SRS, parse_srs
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 VARIANTS = ROOT / "evals" / "lab1_2025"

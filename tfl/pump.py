@@ -34,6 +34,10 @@ __all__ = [
     "defeats_cf",
     "nonregular_by_pumping",
     "noncf_by_pumping",
+    "prefix_splits",
+    "dcfl_splits",
+    "defeats_dcfl",
+    "nondcfl_by_pumping",
 ]
 
 #: Степени, которыми пробуем накачивать. Ноль (стирание) — самый
@@ -159,3 +163,146 @@ def noncf_by_pumping(
 ) -> Verdict:
     """То же для контекстной свободы. `upto` меньше: разбиений здесь `O(|w|⁴)`."""
     return _by_pumping(language, witness, upto, powers, defeats_cf, "контекстно-свободен")
+
+
+# --------------------------------------------------------------------------
+# Лемма Ю: накачка для детерминированных КС-языков
+# --------------------------------------------------------------------------
+
+
+def prefix_splits(word: str, p: int) -> Iterator[tuple[str, str, str]]:
+    """Разбиения `x = x₁x₂x₃` с `|x₂x₃| ≤ p` и `|x₂| > 0`.
+
+    Условие `|x₂x₃| ≤ p` означает, что накачиваемый кусок лежит
+    в **последних** `p` буквах префикса — это и отличает лемму Ю
+    от обычной накачки, где кусок может стоять где угодно.
+    """
+    n = len(word)
+    for i in range(max(0, n - p), n):
+        for j in range(i + 1, n + 1):
+            yield word[:i], word[i:j], word[j:]
+
+
+def _three_splits(word: str) -> Iterator[tuple[str, str, str]]:
+    for i in range(len(word) + 1):
+        for j in range(i, len(word) + 1):
+            yield word[:i], word[i:j], word[j:]
+
+
+def dcfl_splits(
+    x: str, y: str, z: str, p: int
+) -> Iterator[tuple[tuple[str, str, str], tuple[str, str, str], tuple[str, str, str]]]:
+    """Все разбиения из случая 2 теоремы Ю.
+
+    `x = x₁x₂x₃` (`|x₂x₃| ≤ p`, `|x₂| > 0`), `y = y₁y₂y₃`, `z = z₁z₂z₃`;
+    накачиваются `x₂`, `y₂` и `z₂` **одновременно и одной степенью**.
+    Красная пометка на проверенной работе — «можно качать x с y синхронно
+    в одном слове» — про то, что разбирать их по отдельности нельзя.
+    """
+    for xs in prefix_splits(x, p):
+        for ys in _three_splits(y):
+            for zs in _three_splits(z):
+                yield xs, ys, zs
+
+
+def defeats_dcfl(
+    language: Language,
+    x: str,
+    y: str,
+    z: str,
+    p: int,
+    powers: Sequence[int] = POWERS,
+) -> Verdict:
+    """Отбивает ли пара слов накачку по лемме Ю при данной `p`.
+
+    Теорема (S. Yu), лекция 9 курса: пусть `L` — DCFL. Тогда существует `p`
+    такое, что для **всех** пар `w = xy ∈ L`, `w′ = xz ∈ L` с `|x| > p`
+    и совпадающими первыми буквами `y` и `z` выполнено одно из двух:
+
+    1. существует накачка только префикса `x` в привычном смысле;
+    2. существует разбиение `x = x₁x₂x₃`, `y = y₁y₂y₃`, `z = z₁z₂z₃`
+       с `|x₂x₃| ≤ p`, `|x₂| > 0` и `∀i` оба слова
+       `x₁x₂ⁱx₃y₁y₂ⁱy₃` и `x₁x₂ⁱx₃z₁z₂ⁱz₃` лежат в `L`.
+
+    `True` — оба случая провалились на всех разбиениях, то есть пара
+    годится как свидетель при этой `p`.
+
+    Прочтение случая 1 определяется самим примером из лекции. Словами
+    там сказано только «накачка только префикса x (в привычном смысле)»,
+    и остаётся вопрос: обязаны ли остаться в языке оба слова пары или
+    достаточно одного. На `L = {aⁿbⁿ} ∪ {aⁿb²ⁿ}` со свидетелем
+    `x = aⁿbⁿ⁻¹`, `y = b`, `z = bⁿ⁺¹` при слабом прочтении случай 1
+    **выполняется** (синхронная накачка `a` и `b` даёт `a^{n+k}b^{n+k}`),
+    а лекция утверждает, что «в случае 1 нет подходящей накачки».
+    Значит требуются оба слова — так здесь и сделано, и на этом примере
+    результат совпадает с лекцией.
+    """
+    for word, name in ((x + y, "xy"), (x + z, "xz")):
+        if word not in language:
+            return refuted(f"слово {name} = «{word}» не в языке — пара негодна", word)
+    if len(x) <= p:
+        return refuted(f"|x| = {len(x)} ≤ {p}: лемма требует |x| > p", x)
+    if not y or not z or y[0] != z[0]:
+        return refuted("первые буквы y и z обязаны совпадать", (y, z))
+
+    # случай 1: привычная КС-накачка внутри префикса — для обоих слов сразу
+    for u, v, m, t, s in cf_splits(x, p):
+        pumped = [u + v * k + m + t * k + s for k in powers]
+        if all(
+            (head + y) in language and (head + z) in language for head in pumped
+        ):
+            return refuted(
+                f"случай 1: префикс накачивается разбиением "
+                f"v=«{v}» y=«{t}», оба слова остаются в языке",
+                (u, v, m, t, s),
+            )
+
+    # случай 2: синхронная накачка префикса и обоих хвостов
+    for (x1, x2, x3), (y1, y2, y3), (z1, z2, z3) in dcfl_splits(x, y, z, p):
+        if all(
+            (x1 + x2 * k + x3 + y1 + y2 * k + y3) in language
+            and (x1 + x2 * k + x3 + z1 + z2 * k + z3) in language
+            for k in powers
+        ):
+            return refuted(
+                f"случай 2: разбиение x₂=«{x2}» y₂=«{y2}» z₂=«{z2}» "
+                "накачивается, оба слова остаются в языке",
+                ((x1, x2, x3), (y1, y2, y3), (z1, z2, z3)),
+            )
+
+    return Verdict(
+        True, f"оба случая леммы Ю провалились при p = {p}", (x, y, z)
+    )
+
+
+def nondcfl_by_pumping(
+    language: Language,
+    witness: Callable[[int], tuple[str, str, str]],
+    upto: int = 4,
+    powers: Sequence[int] = POWERS,
+) -> Verdict:
+    """Прогнать свидетеля-пару по лемме Ю при всех `p ≤ upto`.
+
+    `witness(p)` возвращает тройку `(x, y, z)`: общий префикс и два хвоста.
+    Классический пример из лекции — `L = {aⁿbⁿ} ∪ {aⁿb²ⁿ}`,
+    `x = aⁿbⁿ⁻¹`, `y = b`, `z = bⁿ⁺¹` при `n − 1 > p`.
+
+    Как и в остальных леммах о накачке, «не выяснено» — потолок:
+    обобщение на произвольное `p` пишет человек.
+    """
+    for p in range(1, upto + 1):
+        x, y, z = witness(p)
+        verdict = defeats_dcfl(language, x, y, z, p, powers)
+        if verdict.value is not True:
+            return refuted(
+                f"при p = {p} пара («{x}», «{y}», «{z}») не отбивает накачку: "
+                f"{verdict.reason}",
+                (p, x, y, z, verdict.witness),
+            )
+    x, y, z = witness(upto)
+    return unknown(
+        f"пара отбивает накачку по лемме Ю при всех p ≤ {upto}; чтобы получить "
+        "доказательство, что язык не DCFL, нужно то же рассуждение "
+        "при произвольном p",
+        (x, y, z),
+    )

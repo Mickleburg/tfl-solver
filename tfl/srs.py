@@ -170,6 +170,42 @@ class SRS:
                     stack.append(nxt)
         return Search(seen, not truncated)
 
+    def closure(
+        self,
+        basis: Iterable[str],
+        max_len: int = 12,
+        max_words: int = 200_000,
+    ) -> Search:
+        """Язык SRS над базисом — первая задача каждого варианта РК2.
+
+        «Язык SRS с правилами … над базисом B» означает замыкание базиса
+        по правилам:
+
+        .. math:: L = \\{\\, w \\mid \\exists u \\in B: u \\Rightarrow^*_T w \\,\\}
+
+        Базис задаётся конечным списком слов: для семейства вроде
+        `aⁿbⁿaⁿ` берутся первые несколько его членов, и это надо
+        помнить при чтении результата — обход **снизу** ограничен ещё
+        и выбором базисных слов, а не только длиной.
+
+        Красная пометка «переписывание не исчерпывающее!» стоит
+        на двух проверенных работах из девяти
+        (`reports/rk2-2026-photos/NOTES.md`) — это самая частая ошибка
+        класса `RK2-A`, и ровно её этот метод и снимает.
+
+        >>> T = parse_srs("baa -> ba\\nab -> ba\\na -> ab")
+        >>> found = T.closure(["aba"], max_len=4)
+        >>> sorted(w for w in found.words if len(w) <= 3)
+        ['aba', 'ba', 'baa', 'bab', 'bba']
+        """
+        words: set[str] = set()
+        exact = True
+        for word in basis:
+            found = self.reachable(word, max_len=max_len, max_words=max_words)
+            words |= found.words
+            exact &= found.exact
+        return Search(words, exact)
+
     def normal_forms(
         self, word: str, max_len: int = 24, max_words: int = 20000
     ) -> Search:

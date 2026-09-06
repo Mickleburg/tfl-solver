@@ -17,7 +17,9 @@ from __future__ import annotations
 
 import itertools
 from dataclasses import dataclass, field
-from typing import Iterable, Iterator
+from typing import Iterable
+
+from tfl.verdict import Verdict, refuted, unknown
 
 __all__ = [
     "Production",
@@ -473,6 +475,84 @@ class CFG:
         return True
 
     # ---------------------------------------------------- LR(0) / SLR(1)
+
+    # ----------------------------------------------------------------------
+    # Числовые инварианты вывода
+    # ----------------------------------------------------------------------
+
+    def residues(self, coefficients: dict[str, int], modulus: int) -> dict[str, set[int]]:
+        """Какие остатки принимает `Σ c_x·|w|_x mod m` на выводимых словах.
+
+        Считается неподвижной точкой по правилам: остаток слова, выведенного
+        из `A`, складывается из вклада терминалов правой части и остатков
+        слов, выведенных из её нетерминалов. Множество остатков конечно,
+        поэтому обход **завершается и точен** — это доказательство для всех
+        слов сразу, а не проверка на выборке.
+
+        Приём из проверенных работ РК2 (`reports/rk2-2026-photos/NOTES.md`,
+        photo_116 и photo_155): числовой инвариант грамматики против
+        числового условия отбора.
+
+        >>> g = parse_cfg("S -> a S b S b | a S a | a")
+        >>> sorted(g.residues({"a": 1, "b": -2}, 2)["S"])
+        [1]
+        """
+        if modulus < 2:
+            raise ValueError("модуль должен быть не меньше двух")
+        table: dict[str, set[int]] = {n: set() for n in self.nonterminals}
+        changed = True
+        while changed:
+            changed = False
+            for production in self.productions:
+                base = sum(
+                    coefficients.get(symbol, 0)
+                    for symbol in production.rhs
+                    if not self.is_nonterminal(symbol)
+                )
+                parts = [
+                    table[symbol]
+                    for symbol in production.rhs
+                    if self.is_nonterminal(symbol)
+                ]
+                if any(not part for part in parts):
+                    continue  # нетерминал пока ничего не выводит
+                for combination in itertools.product(*parts):
+                    value = (base + sum(combination)) % modulus
+                    if value not in table[production.lhs]:
+                        table[production.lhs].add(value)
+                        changed = True
+        return table
+
+    def counting_condition(
+        self,
+        coefficients: dict[str, int],
+        moduli: Iterable[int] = range(2, 13),
+    ) -> Verdict:
+        """Есть ли в языке слово с `Σ c_x·|w|_x = 0`.
+
+        Условия РК2 вида «букв `a` ровно вдвое больше, чем `b`» переводятся
+        в равенство `|w|_a − 2·|w|_b = 0`. Если найдётся модуль, при котором
+        ноль недостижим, язык **пуст** — и это доказано, а не проверено.
+
+        Обратное неверно: достижимость нуля по всем испробованным модулям
+        ничего не доказывает, поэтому вердикт тогда «не выяснено».
+
+        >>> g = parse_cfg("S -> a S a S a | b S b | b")
+        >>> g.counting_condition({"a": 1, "b": -1}).value
+        False
+        """
+        for modulus in moduli:
+            table = self.residues(coefficients, modulus)
+            if 0 not in table.get(self.start, set()):
+                return refuted(
+                    f"по модулю {modulus} достижимы только остатки "
+                    f"{sorted(table.get(self.start, set()))}, нуля среди них нет",
+                    modulus,
+                )
+        return unknown(
+            "ни один из испробованных модулей не даёт противоречия; "
+            "это не значит, что слово есть"
+        )
 
     def augmented(self) -> tuple[CFG, Production]:
         """Пополненная грамматика `S' → S` — основа LR-построений."""
