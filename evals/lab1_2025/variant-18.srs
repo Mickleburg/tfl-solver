@@ -1,0 +1,8 @@
+# ЛР1 2025, вариант 18 (FormalLanguageTheory/lab_tfl_2025_1.pdf)
+# Извлечено tools/extract_lab1_variants.py, правил: 6
+bb -> d
+bb -> c
+cc -> cddc
+ddd -> ac
+aa -> bc
+bc -> abba

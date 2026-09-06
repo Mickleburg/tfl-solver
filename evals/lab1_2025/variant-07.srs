@@ -1,0 +1,15 @@
+# ЛР1 2025, вариант 7 (FormalLanguageTheory/lab_tfl_2025_1.pdf)
+# Извлечено tools/extract_lab1_variants.py, правил: 13
+aaaa -> a
+aaab -> b
+bbba -> ba
+bbbb -> bb
+ababb -> babb
+bba -> baaba
+bbb -> baabb
+bbaaa -> baab
+bbaab -> baa
+bbabb -> abab
+baba -> baa
+babbaa -> babba
+babbab -> abb

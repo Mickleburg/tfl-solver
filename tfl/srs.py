@@ -247,24 +247,51 @@ class SRS:
             witness=precedence,
         )
 
-    def find_cycle(self, max_len: int = 10, start_len: int = 8) -> list[str] | None:
-        """Найти цикл переписывания `w →⁺ w` — свидетельство незавершимости.
+    def start_words(self, context: int = 2) -> list[str]:
+        """Кандидаты в стартовые слова для поиска цикла.
 
-        Перебираются стартовые слова до длины `start_len`; в обходе слова
-        длиннее `max_len` отбрасываются. Ненайденный цикл ничего не доказывает:
-        незавершимость бывает и без циклов (растущие слова).
+        Перебирать все слова алфавита бессмысленно и дорого: у варианта с
+        восемью буквами это 8⁴ стартов только для длины 4. Но любой цикл
+        обязан начинаться с применения какого-то правила, поэтому достаточно
+        брать левые части правил, окружённые короткими контекстами —
+        цикл `cba → baa → caba → cba` из варианта 20 находится уже при
+        `context=1` как левая часть `cb` плюс буква справа.
         """
         letters = sorted(self.alphabet)
-        for start in iter_words(letters, start_len):
+        seeds: dict[str, None] = {}
+        for rule in self.rules:
+            for left in iter_words(letters, context):
+                for right in iter_words(letters, context):
+                    seeds[left + rule.lhs + right] = None
+        return sorted(seeds, key=lambda w: (len(w), w))
+
+    def find_cycle(
+        self, max_len: int = 10, context: int = 2, max_nodes: int = 200_000
+    ) -> list[str] | None:
+        """Найти цикл переписывания `w →⁺ w` — свидетельство незавершимости.
+
+        Стартовые слова берутся из `start_words`, в обходе слова длиннее
+        `max_len` отбрасываются. Ненайденный цикл ничего не доказывает:
+        незавершимость бывает и без циклов, когда слова неограниченно растут.
+
+        `max_nodes` ограничивает суммарный обход. Без него варианты с большим
+        алфавитом (у 12-го их одиннадцать) уводят поиск в многомиллионное
+        пространство слов и он не заканчивается никогда.
+        """
+        explored: set[str] = set()
+        for start in self.start_words(context):
+            if len(start) > max_len:
+                continue
             path: list[str] = []
             on_path: set[str] = set()
-            explored: set[str] = set()
 
             def dfs(word: str) -> list[str] | None:
                 if word in on_path:
                     return path[path.index(word) :] + [word]
                 if word in explored or len(word) > max_len:
                     return None
+                if len(explored) >= max_nodes:
+                    return None  # бюджет исчерпан: цикла не нашли, но и не искали
                 path.append(word)
                 on_path.add(word)
                 for nxt in sorted(self.step(word)):
@@ -282,7 +309,11 @@ class SRS:
         return None
 
     def terminates(
-        self, precedence: str | None = None, max_len: int = 10, start_len: int = 7
+        self,
+        precedence: str | None = None,
+        max_len: int = 10,
+        context: int = 2,
+        max_nodes: int = 200_000,
     ) -> Verdict:
         """Вердикт о завершимости: порядок, цикл или «не выяснено».
 
@@ -290,7 +321,7 @@ class SRS:
         по армейскому порядку — по всем перестановкам алфавита, если приоритет
         не задан явно.
         """
-        cycle = self.find_cycle(max_len=max_len, start_len=start_len)
+        cycle = self.find_cycle(max_len=max_len, context=context, max_nodes=max_nodes)
         if cycle is not None:
             return Verdict(
                 False,
@@ -298,23 +329,73 @@ class SRS:
                 witness=cycle,
             )
 
-        import itertools
-
-        candidates = (
-            [precedence]
-            if precedence
-            else ["".join(p) for p in itertools.permutations(sorted(self.alphabet))]
-        )
-        for order in candidates:
+        order = precedence or self.find_shortlex_order()
+        if order is not None:
             verdict = self.decreasing_under(order)
             if verdict.value is True:
                 return verdict
         return Verdict(
             None,
-            f"цикл длины ≤ {max_len} не найден, но и убывающего армейского порядка "
-            f"нет ни при одном приоритете букв. Нужен более сильный порядок "
-            f"(рекурсивный по путям, полиномиальная интерпретация) или другой аргумент",
+            f"цикл длины ≤ {max_len} не найден, но и убывающего армейского "
+            f"порядка не существует ни при каком приоритете букв. Нужен более "
+            f"сильный порядок (рекурсивный по путям, полиномиальная "
+            f"интерпретация) или другой аргумент",
         )
+
+    def find_shortlex_order(self) -> str | None:
+        """Подобрать приоритет букв, при котором все правила убывают.
+
+        Перебирать перестановки алфавита нельзя: у варианта 12 одиннадцать
+        букв, то есть 39 916 800 вариантов. Но задача решается точно и сразу.
+
+        Шортлекс сравнивает сначала длины, поэтому:
+
+        * правило с `|rhs| > |lhs|` убывающим не сделать никаким приоритетом —
+          ответа нет;
+        * правило с `|rhs| < |lhs|` убывает при любом приоритете;
+        * правило равной длины даёт ровно одно ограничение: в первой позиции,
+          где части различаются, буква слева должна быть старше буквы справа.
+
+        Остаётся проверить, что граф ограничений ацикличен, и выдать его
+        топологическую сортировку.
+        """
+        letters = sorted(self.alphabet)
+        greater: dict[str, set[str]] = {ch: set() for ch in letters}
+        for rule in self.rules:
+            if len(rule.rhs) > len(rule.lhs):
+                return None
+            if len(rule.rhs) < len(rule.lhs):
+                continue
+            diff = next(
+                (i for i, (x, y) in enumerate(zip(rule.lhs, rule.rhs)) if x != y), None
+            )
+            if diff is None:
+                return None  # lhs == rhs, правило-тождество не убывает никогда
+            greater[rule.lhs[diff]].add(rule.rhs[diff])
+
+        # Топологическая сортировка: старшие буквы идут позже (больший ранг).
+        order: list[str] = []
+        temporary: set[str] = set()
+        permanent: set[str] = set()
+
+        def visit(ch: str) -> bool:
+            if ch in permanent:
+                return True
+            if ch in temporary:
+                return False  # цикл ограничений: порядка не существует
+            temporary.add(ch)
+            for smaller in greater[ch]:
+                if not visit(smaller):
+                    return False
+            temporary.discard(ch)
+            permanent.add(ch)
+            order.append(ch)
+            return True
+
+        for ch in letters:
+            if not visit(ch):
+                return None
+        return "".join(order)
 
     # ------------------------------------------------------ конфлюэнтность
 
@@ -662,6 +743,47 @@ class SRS:
                     rules.append(back)
         return SRS(tuple(rules), self.alphabet)
 
+    def linear_invariants(self, modulus: int = 2) -> list[dict[str, int]]:
+        """Найти все инварианты вида `Σ c_x·|w|_x mod m`.
+
+        Такой инвариант сохраняется при переписывании тогда и только тогда,
+        когда для каждого правила `Σ c_x·(|rhs|_x − |lhs|_x) ≡ 0 (mod m)`.
+        Это однородная система линейных уравнений, и её пространство решений
+        находится точно — перебирать и угадывать не нужно.
+
+        `modulus` должен быть простым: исключение по модулю составного числа
+        потребовало бы работы в кольце с делителями нуля.
+
+        Возвращается базис пространства решений. Найденные инварианты
+        **доказаны** для всех слов сразу, а не проверены на выборке — в отличие
+        от `check_invariant`, который лишь ищет опровержение.
+        """
+        if modulus < 2 or any(modulus % d == 0 for d in range(2, modulus)):
+            raise ValueError(f"модуль {modulus} должен быть простым")
+        letters = sorted(self.alphabet)
+        if not letters:
+            return []
+        rows = [
+            [(rule.rhs.count(x) - rule.lhs.count(x)) % modulus for x in letters]
+            for rule in self.rules
+        ]
+        basis = _nullspace_mod_p(rows, len(letters), modulus)
+        return [
+            {x: c for x, c in zip(letters, vector) if c}
+            for vector in basis
+        ]
+
+    def length_is_monotone(self) -> Verdict:
+        """Не удлиняет ли переписывание слова — простейший монотонный инвариант."""
+        growing = [r for r in self.rules if len(r.rhs) > len(r.lhs)]
+        if growing:
+            return Verdict(
+                False,
+                "длину увеличивают правила: " + ", ".join(str(r) for r in growing),
+                witness=growing,
+            )
+        return Verdict(True, "ни одно правило не удлиняет слово, значит |w| не возрастает")
+
     def check_invariant(
         self,
         invariant: Callable[[str], object],
@@ -726,3 +848,43 @@ def parse_srs(text: str, alphabet: str = "") -> SRS:
     for rule in rules:
         letters |= set(rule.lhs) | set(rule.rhs)
     return SRS(tuple(rules), frozenset(letters))
+
+
+def _nullspace_mod_p(rows: list[list[int]], width: int, p: int) -> list[list[int]]:
+    """Базис ядра матрицы над полем GF(p).
+
+    Обычное приведение к ступенчатому виду, только деление заменено на
+    умножение на обратный элемент по модулю p (он существует, поскольку p
+    простое). Свободным переменным поочерёдно даётся единица — так
+    получается базис ядра.
+    """
+    matrix = [row[:] for row in rows]
+    pivot_of_col: dict[int, int] = {}
+    row_index = 0
+    for col in range(width):
+        pivot = next(
+            (r for r in range(row_index, len(matrix)) if matrix[r][col] % p), None
+        )
+        if pivot is None:
+            continue
+        matrix[row_index], matrix[pivot] = matrix[pivot], matrix[row_index]
+        inverse = pow(matrix[row_index][col], p - 2, p)  # малая теорема Ферма
+        matrix[row_index] = [(v * inverse) % p for v in matrix[row_index]]
+        for r in range(len(matrix)):
+            if r != row_index and matrix[r][col] % p:
+                factor = matrix[r][col]
+                matrix[r] = [
+                    (a - factor * b) % p for a, b in zip(matrix[r], matrix[row_index])
+                ]
+        pivot_of_col[col] = row_index
+        row_index += 1
+
+    free = [c for c in range(width) if c not in pivot_of_col]
+    basis: list[list[int]] = []
+    for f in free:
+        vector = [0] * width
+        vector[f] = 1
+        for col, r in pivot_of_col.items():
+            vector[col] = (-matrix[r][f]) % p
+        basis.append(vector)
+    return basis

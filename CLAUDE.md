@@ -43,11 +43,11 @@ python -m pytest -q              # pythonpath настроен в pyproject.toml
 * **S-2 готово** — позиционный автомат Глушкова и редукция НКА (`tfl/glushkov.py`),
   генератор отчёта `tools/lab2_report.py`, рецепт `docs/recipes/LAB-2.md`,
   образец `reports/lab2-variant-15/`. 254 теста.
-* **S-3 частично** — ядро SRS (`tfl/srs.py`): переписывание, завершимость,
-  критические пары, Кнут–Бендикс, классы эквивалентности, инварианты.
-  Фикстура `evals/lab1_2025/variant-20.srs`. 294 теста.
-  Осталось: `docs/recipes/LAB-1.md` и генератор отчёта, извлечение
-  остальных 27 вариантов ЛР1 из PDF.
+* **S-3 готово** — ЛР1 закрыта: ядро SRS (`tfl/srs.py`), извлечение
+  всех 28 вариантов (`tools/extract_lab1_variants.py`), генератор отчёта
+  (`tools/lab1_report.py`), рецепт `docs/recipes/LAB-1.md`, сводка
+  `evals/lab1_2025_report.md`, образец `reports/lab1-variant-20/`.
+  304 теста.
 * **Дальше — S-4**: грамматики, PDA, LL/LR (`tfl/cfg.py`, `tfl/pda.py`).
   См. таблицу сессий в `docs/03-AGENT-PLAN.md`, §7.
 

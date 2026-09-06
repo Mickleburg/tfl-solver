@@ -1,0 +1,7 @@
+# ЛР1 2025, вариант 27 (FormalLanguageTheory/lab_tfl_2025_1.pdf)
+# Извлечено tools/extract_lab1_variants.py, правил: 5
+as -> sa
+babs -> absa
+babb -> css
+cs -> abab
+abaa -> baba

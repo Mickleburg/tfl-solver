@@ -114,7 +114,7 @@ def test_shortlex_key_orders_by_length_then_letters():
 
 
 def test_decreasing_order_proves_termination():
-    verdict = parse_srs("ba -> ab").terminates(max_len=6, start_len=4)
+    verdict = parse_srs("ba -> ab").terminates(max_len=6, context=1)
     assert verdict.value is True
     assert "армейск" in verdict.reason
 
@@ -125,14 +125,14 @@ def test_variant_20_cycle_matches_boomhaa(v20: SRS):
     Они записали его как `caba → cba → baa → caba`; найденный отличается лишь
     точкой входа в цикл.
     """
-    cycle = v20.find_cycle(max_len=8, start_len=4)
+    cycle = v20.find_cycle(max_len=8, context=1)
     assert cycle is not None
     assert cycle[0] == cycle[-1], "цикл должен замыкаться"
     assert set(cycle) == {"cba", "baa", "caba"}
 
 
 def test_variant_20_not_terminating(v20: SRS):
-    verdict = v20.terminates(max_len=8, start_len=4)
+    verdict = v20.terminates(max_len=8, context=1)
     assert verdict.value is False
     assert "цикл" in verdict.reason
 
@@ -316,3 +316,97 @@ def test_verdict_cannot_be_used_as_bool():
     """`if srs.terminates():` молча принял бы «не выяснено» за «да»."""
     with pytest.raises(TypeError, match="три исхода"):
         bool(Verdict(None, "не выяснено"))
+
+
+# --------------------------------------------------------------------------
+# Подбор порядка и линейные инварианты
+# --------------------------------------------------------------------------
+
+
+def test_no_shortlex_order_when_a_rule_lengthens():
+    """Шортлекс сравнивает сначала длины, поэтому удлиняющее правило
+    не сделать убывающим никаким приоритетом букв."""
+    assert parse_srs("a -> bb").find_shortlex_order() is None
+
+
+def test_shortlex_order_from_equal_length_rules():
+    """Правила равной длины дают ограничения на приоритет; порядок находится
+    топологической сортировкой, а не перебором перестановок.
+
+    Перебор здесь недопустим: у варианта 12 одиннадцать букв, то есть
+    11! ≈ 4·10⁷ перестановок — на этом прогон вставал намертво.
+    """
+    order = parse_srs("ba -> ab\nca -> ac").find_shortlex_order()
+    assert order is not None
+    assert order.index("b") > order.index("a")
+    assert order.index("c") > order.index("a")
+    assert parse_srs("ba -> ab\nca -> ac").decreasing_under(order).value is True
+
+
+def test_contradictory_constraints_have_no_order():
+    """`ba → ab` требует b > a, `ab → ba` требует a > b — вместе невозможно."""
+    assert parse_srs("ba -> ab\nab -> ba").find_shortlex_order() is None
+
+
+def test_identity_rule_has_no_order():
+    assert parse_srs("ab -> ab").find_shortlex_order() is None
+
+
+def test_linear_invariants_of_permutation_system():
+    """`ab → ba` переставляет буквы, значит счётчики букв сохраняются точно."""
+    invariants = parse_srs("ab -> ba").linear_invariants(5)
+    assert len(invariants) == 2
+    for vector in invariants:
+        check = parse_srs("ab -> ba").check_invariant(
+            lambda w, v=vector: sum(c * w.count(x) for x, c in v.items()) % 5,
+            ["abab", "aabb", "ba", "bbaa"],
+        )
+        assert check.value is True
+
+
+def test_linear_invariant_modulo_two():
+    """`aa → ε` меняет число a на два, поэтому чётность |w|_a сохраняется."""
+    invariants = parse_srs("aa -> ε").linear_invariants(2)
+    assert {"a": 1} in invariants
+
+
+def test_no_linear_invariants_for_variant_20(v20: SRS):
+    """У варианта 20 линейных инвариантов нет — нужны нелинейные.
+
+    `boomhaa` строит для них гомоморфизм в моноид диагональных матриц.
+    """
+    assert all(not v20.linear_invariants(m) for m in (2, 3, 5, 7))
+
+
+def test_invariant_search_rejects_composite_modulus():
+    with pytest.raises(ValueError, match="простым"):
+        parse_srs("ab -> ba").linear_invariants(4)
+
+
+# --------------------------------------------------------------------------
+# Фикстуры вариантов
+# --------------------------------------------------------------------------
+
+
+def test_all_28_variants_present_and_parse():
+    files = sorted(VARIANT_20.parent.glob("variant-*.srs"))
+    assert len(files) == 28
+    for path in files:
+        srs = parse_srs(path.read_text(encoding="utf-8"))
+        assert srs.rules, f"{path.name}: пустая система"
+        assert srs.alphabet, f"{path.name}: пустой алфавит"
+
+
+def test_extracted_variant_20_matches_boomhaa(v20: SRS):
+    """Автоизвлечение из PDF совпало с ручной сверкой по отчёту boomhaa.
+
+    Вёрстка PDF двухколоночная, номер варианта стоит по центру блока,
+    поэтому автоматическому разбору нужна независимая проверка.
+    """
+    expected = [
+        ("cb", "ba"), ("aaa", "aa"), ("aba", "ba"), ("ac", "cc"), ("baa", "ba"),
+        ("bba", "ba"), ("bbb", "b"), ("bbc", "c"), ("bcc", "cc"), ("ba", "cab"),
+        ("cac", "cc"), ("bab", "cac"), ("ccc", "c"), ("babb", "ba"), ("babc", ""),
+        ("baca", "cabba"), ("caab", "bb"), ("caac", "bc"), ("aabcaa", "a"),
+    ]
+    assert [(r.lhs, r.rhs) for r in v20.rules] == expected

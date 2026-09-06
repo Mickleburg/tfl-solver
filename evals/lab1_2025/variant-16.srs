@@ -1,0 +1,18 @@
+# ЛР1 2025, вариант 16 (FormalLanguageTheory/lab_tfl_2025_1.pdf)
+# Извлечено tools/extract_lab1_variants.py, правил: 16
+ddnn -> dd
+ddoo -> dd
+oouu -> uu
+ttuu -> ttccdd
+ddff -> ffdd
+ddgg -> uugg
+ffuu -> uuff
+nnuu -> uu
+fftt -> ffnn
+ttff -> ttccnn
+ccnn -> nncc
+ccoo -> oocc
+ccoo -> oo
+ccff -> ffcc
+ccuu -> uucc
+ccdd -> ddcc

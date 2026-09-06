@@ -1,0 +1,7 @@
+# ЛР1 2025, вариант 4 (FormalLanguageTheory/lab_tfl_2025_1.pdf)
+# Извлечено tools/extract_lab1_variants.py, правил: 5
+fgh -> fff
+fgh -> ggg
+fgh -> hhh
+hh -> hfhgh
+gggg -> ε

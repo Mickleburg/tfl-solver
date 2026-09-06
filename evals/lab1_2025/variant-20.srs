@@ -1,5 +1,5 @@
 # ЛР1 2025, вариант 20 (FormalLanguageTheory/lab_tfl_2025_1.pdf)
-# Сверено с boomhaa-tfl-labs/lab1/report_lab1.md — тот же поток, тот же вариант.
+# Извлечено tools/extract_lab1_variants.py, правил: 19
 cb -> ba
 aaa -> aa
 aba -> ba

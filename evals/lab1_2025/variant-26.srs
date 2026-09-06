@@ -1,0 +1,7 @@
+# ЛР1 2025, вариант 26 (FormalLanguageTheory/lab_tfl_2025_1.pdf)
+# Извлечено tools/extract_lab1_variants.py, правил: 5
+ab -> br
+raa -> dr
+ara -> ad
+da -> aad
+dd -> abdar

@@ -1,0 +1,6 @@
+# ЛР1 2025, вариант 22 (FormalLanguageTheory/lab_tfl_2025_1.pdf)
+# Извлечено tools/extract_lab1_variants.py, правил: 4
+aabc -> bbaa
+b -> ccaa
+bc -> a
+aac -> ε

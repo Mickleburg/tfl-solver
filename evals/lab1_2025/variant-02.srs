@@ -1,0 +1,14 @@
+# ЛР1 2025, вариант 2 (FormalLanguageTheory/lab_tfl_2025_1.pdf)
+# Извлечено tools/extract_lab1_variants.py, правил: 12
+babab -> aabab
+bbaab -> bbbab
+bbb -> bb
+abaaab -> baba
+aaa -> ε
+bbaaaab -> ε
+ababbab -> ababaab
+baab -> baa
+bbabbaa -> bbaaa
+aabbabba -> bbaa
+aabaababb -> bbb
+baababbaa -> bbabbabba
