@@ -410,3 +410,38 @@ def test_extracted_variant_20_matches_boomhaa(v20: SRS):
         ("baca", "cabba"), ("caab", "bb"), ("caac", "bc"), ("aabcaa", "a"),
     ]
     assert [(r.lhs, r.rhs) for r in v20.rules] == expected
+
+
+def test_fuzz_directed_is_stricter_than_symmetric():
+    """Направленная связь и связь по ↔* — разные вещи, и задание просит первую.
+
+    `T = {a → b}` переписывает `a` в `b`. В `T′ = {a → c, b → c}` слова `a`
+    и `b` лежат в одном классе (оба сводятся к `c`), но ни `a →* b`,
+    ни `b →* a` не выполняется. Проверка по симметричному замыканию такую
+    систему пропустит, а формулировка преподавателя — «можно ли её результат
+    переписать в исходное слово либо наоборот» — забракует.
+
+    Ровно этот случай обсуждали в учебном чате: «все правила в T′ просто
+    переписывают любую последовательность в ccc» (`corpus/chat/FINDINGS.md`).
+    """
+    original = parse_srs("a -> b")
+    replacement = parse_srs("a -> c\nb -> c")
+
+    strict = original.fuzz_equivalence(replacement, trials=40, word_len=3, directed=True)
+    loose = original.fuzz_equivalence(replacement, trials=40, word_len=3, directed=False)
+
+    assert strict.value is False, "направленная проверка обязана найти расхождение"
+    assert loose.value is not False, "по ↔* эти системы неразличимы"
+
+
+def test_fuzz_default_is_the_safe_reading():
+    """По умолчанию — ↔*, потому что прочтение направленной проверки не подтверждено.
+
+    Направленная проверка способна забраковать правильную `T′`: цепочка
+    в `T` может смешивать шаги по перевёрнутым и неперевёрнутым правилам,
+    и тогда после переориентации ни одна из сторон не достижима. Ложное
+    «не эквивалентны» здесь дороже, чем пропущенное расхождение.
+    """
+    original = parse_srs("a -> b")
+    replacement = parse_srs("a -> c\nb -> c")
+    assert original.fuzz_equivalence(replacement, trials=40, word_len=3).value is not False

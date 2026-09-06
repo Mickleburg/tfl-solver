@@ -675,9 +675,28 @@ class SRS:
         seed: int = 0,
         search_len: int = 14,
         max_words: int = 50000,
+        directed: bool = False,
     ) -> Verdict:
         """Фазз-тест ровно по схеме задания: случайное слово ω, случайная
         цепочка переписываний в ω' по `self`, проверка связи ω и ω' в `other`.
+
+        `directed` задаёт, какую связь считать достаточной, и разница
+        существенна.
+
+        * `False` (по умолчанию) — связь по симметричному замыканию ↔*,
+          то есть равенство классов эквивалентности. Это то, что «сохранять
+          классы» означает по определению.
+        * `True` — буквальное прочтение формулировки преподавателя: «можно
+          ли её результат переписать в исходное слово **либо наоборот**»,
+          то есть ω′ →* ω или ω →* ω′ в `other`, каждый раз в одну сторону.
+
+        Направленная проверка строго сильнее, и **её прочтение не проверено**.
+        Она способна забраковать правильную `T′`: цепочка в `T` может
+        смешивать направления (шаг по правилу, которое при переориентации
+        перевернули, и шаг по неперевёрнутому), и тогда после переориентации
+        ни ω →′* ω′, ни ω′ →′* ω не обязаны выполняться. Поэтому по умолчанию
+        стоит безопасный вариант, а строгий показывается в отчёте отдельно
+        и с оговоркой (см. `docs/OPEN-GAPS.md`).
 
         Слабее `same_equivalence` — длинные случайные слова почти гарантируют
         обрезанный обход, — но задание просит именно эту схему, поэтому она
@@ -685,7 +704,7 @@ class SRS:
         """
         rng = random.Random(seed)
         letters = sorted(self.alphabet)
-        symmetric = other.symmetric()
+        probe = other if directed else other.symmetric()
         inconclusive = 0
         for _ in range(trials):
             length = rng.randint(1, word_len)
@@ -693,14 +712,19 @@ class SRS:
             target = self.random_chain(word, chain_len, rng)[-1]
             if target == word:
                 continue
-            search = symmetric.reachable(word, search_len, max_words)
-            if target in search.words:
+
+            forward = probe.reachable(word, search_len, max_words)
+            if target in forward.words:
                 continue
-            if search.exact:
+            backward = probe.reachable(target, search_len, max_words)
+            if word in backward.words:
+                continue
+            if forward.exact and backward.exact:
+                how = "ни в одну сторону" if directed else "по ↔*"
                 return Verdict(
                     False,
                     f"«{word}» переписывается в «{target or 'ε'}» в первой системе, "
-                    f"а во второй класс «{word}» вычислен полностью и не содержит его",
+                    f"а во второй они не связаны {how}, и оба обхода пройдены целиком",
                     witness=(word, target),
                 )
             inconclusive += 1

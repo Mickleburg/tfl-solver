@@ -171,10 +171,22 @@ def build_report(srs: SRS, title: str, precedence: str, budget: dict) -> str:
         completed, max_len=budget["eq_len"], search_len=budget["eq_search"]
     )
     fuzz = srs.fuzz_equivalence(completed, trials=budget["fuzz_trials"], seed=0)
+    strict = srs.fuzz_equivalence(
+        completed, trials=budget["fuzz_trials"], seed=0, directed=True
+    )
     add(f"* Систематически (все слова до длины {budget['eq_len']}): "
         f"**{MARK[systematic.value]}** — {systematic.reason}")
-    add(f"* Фаззом по схеме задания ({budget['fuzz_trials']} цепочек, seed=0): "
-        f"**{MARK[fuzz.value]}** — {fuzz.reason}")
+    add(f"* Фаззом по схеме задания ({budget['fuzz_trials']} цепочек, seed=0), "
+        f"связь по ↔*: **{MARK[fuzz.value]}** — {fuzz.reason}")
+    add(f"* То же, но связь направленная (ω′ →* ω либо ω →* ω′): "
+        f"**{MARK[strict.value]}** — {strict.reason}")
+    add("")
+    add("> Две строки выше — два прочтения одной формулировки задания "
+        "(«можно ли её результат переписать в исходное слово либо наоборот»). "
+        "Направленное прочтение строже и **не подтверждено**: оно способно "
+        "забраковать правильную `T′`, если цепочка в `T` смешала шаги по "
+        "перевёрнутым и неперевёрнутым правилам. Вывод делайте по первой "
+        "строке, вторую — предъявляйте как дополнительное наблюдение.")
     add("")
     add("Обратные правила удлиняют слова, поэтому классы почти всегда "
         "не помещаются в бюджет обхода целиком. Вывод «не эквивалентны» "
@@ -235,8 +247,10 @@ def build_report(srs: SRS, title: str, precedence: str, budget: dict) -> str:
         f"≤{budget['max_rounds']} раундов | {MARK[completion.value]} |")
     add(f"| Совпадение классов `T` и `T′` | слова до длины {budget['eq_len']} | "
         f"{MARK[systematic.value]} |")
-    add(f"| Фазз-эквивалентность | {budget['fuzz_trials']} цепочек | "
+    add(f"| Фазз-эквивалентность (↔*) | {budget['fuzz_trials']} цепочек | "
         f"{MARK[fuzz.value]} |")
+    add(f"| Фазз-эквивалентность (направленная) | {budget['fuzz_trials']} цепочек | "
+        f"{MARK[strict.value]} |")
     add(f"| Линейные инварианты | модули 2, 3, 5, 7 | найдено {len(found)} |")
     add("")
     return "\n".join(md)

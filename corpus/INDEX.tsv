@@ -72,9 +72,7 @@ TEXT	39	21330	FormalLanguageTheory_2023_lect_tfl_12.txt	FormalLanguageTheory\202
 TEXT	41	22377	FormalLanguageTheory_2023_lect_tfl_2.txt	FormalLanguageTheory\2023\lect_tfl_2.pdf
 TEXT	74	33906	FormalLanguageTheory_2023_lect_tfl_3.txt	FormalLanguageTheory\2023\lect_tfl_3.pdf
 TEXT	50	20339	FormalLanguageTheory_2023_lect_tfl_5.txt	FormalLanguageTheory\2023\lect_tfl_5.pdf
-TEXT	43	20462	FormalLanguageTheory_2023_lect_tfl_6.txt	FormalLanguageTheory\2023\lect_tfl_6.pdf
 TEXT	45	19602	FormalLanguageTheory_2023_lect_tfl_7.txt	FormalLanguageTheory\2023\lect_tfl_7.pdf
-TEXT	40	15919	FormalLanguageTheory_2023_lect_tfl_8.txt	FormalLanguageTheory\2023\lect_tfl_8.pdf
 TEXT	86	35941	FormalLanguageTheory_2023_lect_tfl_9.txt	FormalLanguageTheory\2023\lect_tfl_9.pdf
 TEXT	20	24577	FormalLanguageTheory_2023_Pharma_2023.txt	FormalLanguageTheory\2023\Pharma_2023.pdf
 TEXT	9	12955	FormalLanguageTheory_2023_RK1_probe_task_solutions.txt	FormalLanguageTheory\2023\RK1_probe_task_solutions.pdf
@@ -114,9 +112,6 @@ SCAN	5	110	TFL-IU9-claude_tfl_rk1_var_18.txt	TFL-IU9-claude\tfl_rk1_var_18.pdf
 SCAN	5	110	TFL-IU9-claude_tfl_rk1_var_2.txt	TFL-IU9-claude\tfl_rk1_var_2.pdf
 SCAN	6	132	TFL-IU9-claude_tfl_rk1_var_24.txt	TFL-IU9-claude\tfl_rk1_var_24.pdf
 SCAN	5	110	TFL-IU9-claude_tfl_rk1_var_7.txt	TFL-IU9-claude\tfl_rk1_var_7.pdf
-SCAN	5	110	TFL-IU9-claude_РК1_tfl_rk1_var_18.txt	TFL-IU9-claude\РК1\tfl_rk1_var_18.pdf
-SCAN	5	110	TFL-IU9-claude_РК1_tfl_rk1_var_2.txt	TFL-IU9-claude\РК1\tfl_rk1_var_2.pdf
-SCAN	6	132	TFL-IU9-claude_РК1_tfl_rk1_var_24.txt	TFL-IU9-claude\РК1\tfl_rk1_var_24.pdf
 TEXT	4	5402	TFL-IU9-claude_РК1_tfl_rk1_var_2_new.txt	TFL-IU9-claude\РК1\tfl_rk1_var_2_new.pdf
-SCAN	5	110	TFL-IU9-claude_РК1_tfl_rk1_var_7.txt	TFL-IU9-claude\РК1\tfl_rk1_var_7.pdf
 TEXT	8	8963	TFL-IU9-claude_РК2_tfl_rk2_var_8.txt	TFL-IU9-claude\РК2\tfl_rk2_var_8.pdf
+TEXT	10	22889	chat_AFA.txt	chat-onTG-2025-tfl\chats\chat_562952089037772\topic_23455\files\AFA.pdf

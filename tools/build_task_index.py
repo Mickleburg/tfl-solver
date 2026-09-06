@@ -201,7 +201,7 @@ def collect() -> list[dict]:
             records += rk_records(path, "РК1", year)
         elif re.search(r"rk2_tfl(_20\d\d)?\.txt$", name):
             records += rk_records(path, "РК2", year)
-        elif "TFL_exam" in name:
+        elif "TFL_exam" in name or "variants_25Jan" in name or "probe_var" in name:
             records += exam_records(path, year)
         elif "Pharma" in name or "Big_Pharma" in name:
             records += pharma_records(path, year)

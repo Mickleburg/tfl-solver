@@ -18,6 +18,7 @@
 
 Требуется: pip install pymupdf
 """
+import hashlib
 import pathlib
 import sys
 
@@ -25,7 +26,11 @@ import pymupdf
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "corpus" / "txt"
-SOURCES = ("FormalLanguageTheory", "TFL-IU9-claude")
+CHAT = "chat-onTG-2025-tfl"
+SOURCES = ("FormalLanguageTheory", "TFL-IU9-claude", CHAT)
+# Персональные данные третьих лиц: списки групп с ФИО. В корпус не идут —
+# к предмету отношения не имеют, а распространять их мы не вправе.
+SKIP = ("Группа ИУ9", "Список группы")
 CYR = set("абвгдежзийклмнопрстуфхцчшщъыьэюяАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ")
 SCAN_CHARS_PER_PAGE = 120  # ниже порога считаем страницу сканом
 
@@ -82,10 +87,23 @@ def main() -> None:
 
     OUT.mkdir(parents=True, exist_ok=True)
     rows = []
+    seen: dict[str, str] = {}
     for base in SOURCES:
         for pdf in sorted((ROOT / base).rglob("*.pdf")):
+            if any(mark in pdf.name for mark in SKIP):
+                continue
+            # Один и тот же PDF приходит из нескольких источников: файлы из
+            # чата побайтово совпадают с репозиторием преподавателя. Дубли
+            # только засоряют выдачу grep.
+            digest = hashlib.md5(pdf.read_bytes()).hexdigest()
+            if digest in seen:
+                continue
+            seen[digest] = pdf.name
             rel = pdf.relative_to(ROOT)
-            name = str(rel).replace("\\", "_").replace("/", "_").replace(" ", "_")[:-4] + ".txt"
+            if base == CHAT:
+                name = "chat_" + pdf.stem.replace(" ", "_") + ".txt"
+            else:
+                name = str(rel).replace("\\", "_").replace("/", "_").replace(" ", "_")[:-4] + ".txt"
             try:
                 text, pages = extract(pdf)
             except Exception as exc:  # повреждённый или защищённый PDF
