@@ -11,6 +11,8 @@
 | [docs/01-KNOWLEDGE-MAP.md](docs/01-KNOWLEDGE-MAP.md) | Что где лежит, чему доверять, как читать PDF |
 | [docs/02-TASK-TAXONOMY.md](docs/02-TASK-TAXONOMY.md) | Классы задач: вход → что предъявить → чем проверяется |
 | [docs/03-AGENT-PLAN.md](docs/03-AGENT-PLAN.md) | Архитектура агента, цикл S0–S7, критерии L0–L3, план по сессиям |
+| [docs/OPEN-GAPS.md](docs/OPEN-GAPS.md) | **Недоработки.** Что осталось незакрытым — обновлять при завершении каждой сессии |
+| [docs/recipes/](docs/recipes/) | Рецепты по классам задач (пока `LAB-1`, `LAB-2`) |
 
 ## Правила работы
 
