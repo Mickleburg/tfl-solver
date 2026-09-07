@@ -45,11 +45,58 @@ __all__ = [
     "csy_splits",
     "defeats_csy",
     "noncsy_by_pumping",
+    "factorial_powers",
 ]
 
 #: Степени, которыми пробуем накачивать. Ноль (стирание) — самый
 #: результативный случай, поэтому идёт первым.
 POWERS = (0, 2, 3, 4)
+
+
+def _powers_for(powers, pumped: tuple[str, ...], p: int) -> Sequence[int]:
+    """Степени для одного разбиения.
+
+    `powers` — либо готовый набор, либо функция от накачиваемых кусков
+    и длины накачки. Второе нужно, когда подходящая степень **зависит
+    от разбиения**; фиксированным набором такие свидетели не проходят.
+    """
+    if callable(powers):
+        return powers(pumped, p)
+    return powers
+
+
+def factorial_powers(default: Sequence[int] = POWERS):
+    """Степени вида `p!/i + 1`, где `i` — длина накачиваемого куска.
+
+    Приём с семинара 2024 (issue #29). Разбор преподавателя языка
+    `{w₁ a w₂ | |w₁| = |w₂|, w₁ ≠ w₂}`:
+
+    > Накачка-контрпример: `b^{n!+n} a b^n a b^n a b^{n!+n}` … накачивать
+    > только центральный блок, причём **синхронно на одно и то же число
+    > букв `b`** (скажем, `i`) слева и справа от `a` … А его можно
+    > накачать `n!/i` раз.
+
+    Смысл факториала — делимость: `p!` делится на любое `i ⩽ p`, поэтому
+    добавить ровно `p!` букв можно при **любой** длине накачиваемого куска.
+    Степень `p!/i + 1` и добавляет ровно столько: накачка `k` раз удлиняет
+    кусок на `(k−1)·i`.
+
+    Условие применимости — накачиваемые куски одной длины: только тогда
+    обе стороны растут одинаково и середина остаётся серединой. Иначе
+    возвращается обычный набор.
+    """
+    from math import factorial
+
+    def choose(pumped: tuple[str, ...], p: int) -> Sequence[int]:
+        lengths = {len(piece) for piece in pumped if piece}
+        if len(lengths) != 1:
+            return tuple(default)
+        step = lengths.pop()
+        if step > p:
+            return tuple(default)
+        return (*default, factorial(p) // step + 1)
+
+    return choose
 
 
 def regular_splits(word: str, p: int) -> Iterator[tuple[str, str, str]]:
@@ -94,7 +141,7 @@ def defeats_regular(
         return refuted(f"|«{word}»| < {p}: лемма к такому слову неприменима", word)
 
     for x, y, z in regular_splits(word, p):
-        if all((x + y * k + z) in language for k in powers):
+        if all((x + y * k + z) in language for k in _powers_for(powers, (y,), p)):
             return refuted(
                 f"разбиение x=«{x}» y=«{y}» z=«{z}» накачивается, оставаясь в языке",
                 (x, y, z),
@@ -112,7 +159,8 @@ def defeats_cf(
         return refuted(f"|«{word}»| < {p}: лемма к такому слову неприменима", word)
 
     for u, v, x, y, z in cf_splits(word, p):
-        if all((u + v * k + x + y * k + z) in language for k in powers):
+        chosen = _powers_for(powers, (v, y), p)
+        if all((u + v * k + x + y * k + z) in language for k in chosen):
             return refuted(
                 f"разбиение u=«{u}» v=«{v}» x=«{x}» y=«{y}» z=«{z}» "
                 "накачивается, оставаясь в языке",
