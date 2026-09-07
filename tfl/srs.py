@@ -372,6 +372,49 @@ class SRS:
                 return cycle
         return None
 
+    def find_loop(
+        self, max_len: int = 12, context: int = 2, max_nodes: int = 200_000
+    ) -> list[str] | None:
+        """Найти петлю `w →⁺ u·w·v` — свидетельство незавершимости.
+
+        Цикл `w →⁺ w` — частный случай петли при `u = v = ε`, но петля ловит
+        и то, что циклом не ловится никогда: неограниченный рост. Правило
+        `abb → abbb` не возвращает ни одного слова к самому себе, и `find_cycle`
+        на нём молчит, — а система очевидно не завершается, потому что левая
+        часть вложена в правую.
+
+        Вывод правомерен: если `w →⁺ u·w·v`, тем же выводом внутри вложенного
+        `w` получается `u²·w·v²`, и так далее без конца.
+
+        Обход в ширину, отдельно из каждого стартового слова, поэтому
+        найденный вывод — кратчайший. `max_nodes` ограничивает суммарный
+        обход по всем стартам: без него алфавит из десятка букв уводит поиск
+        в пространство, которое не заканчивается.
+        """
+        budget = max_nodes
+        for start in self.start_words(context):
+            if not start or len(start) > max_len:
+                continue
+            frontier: dict[str, tuple[str, ...]] = {start: (start,)}
+            seen = {start}
+            while frontier and budget > 0:
+                following: dict[str, tuple[str, ...]] = {}
+                for word, path in frontier.items():
+                    for succ in sorted(self.step(word)):
+                        if len(succ) > max_len:
+                            continue
+                        if start in succ:
+                            return [*path, succ]
+                        if succ in seen:
+                            continue
+                        budget -= 1
+                        if budget <= 0:
+                            break
+                        seen.add(succ)
+                        following[succ] = (*path, succ)
+                frontier = following
+        return None
+
     def terminates(
         self,
         precedence: str | None = None,
@@ -385,12 +428,15 @@ class SRS:
         по армейскому порядку — по всем перестановкам алфавита, если приоритет
         не задан явно.
         """
-        cycle = self.find_cycle(max_len=max_len, context=context, max_nodes=max_nodes)
-        if cycle is not None:
+        # Петля включает в себя цикл, поэтому ищется одна она: обход в ширину
+        # заодно даёт кратчайший вывод, а его и предъявляют в ответе.
+        loop = self.find_loop(max_len=max_len + 2, context=context, max_nodes=max_nodes)
+        if loop is not None:
+            found = "найден цикл" if loop[0] == loop[-1] else "найдена петля"
             return Verdict(
                 False,
-                "найден цикл переписывания: " + " → ".join(cycle),
-                witness=cycle,
+                f"{found} переписывания: " + " → ".join(loop),
+                witness=loop,
             )
 
         order = precedence or self.find_shortlex_order()
@@ -407,7 +453,7 @@ class SRS:
 
         return Verdict(
             None,
-            f"цикл длины ≤ {max_len} не найден; убывающего армейского порядка "
+            f"петли из слов длины ≤ {max_len + 2} не найдено; убывающего армейского порядка "
             f"не существует ни при каком приоритете букв; линейной интерпретации "
             f"с малыми коэффициентами тоже нет. Нужен более сильный порядок "
             f"(рекурсивный по путям, матричная интерпретация через SMT) "
@@ -417,7 +463,7 @@ class SRS:
     def find_interpretation(
         self,
         max_slope: int = 3,
-        max_shift: int = 4,
+        max_shift: int = 6,
         budget: int = 200_000,
     ) -> Verdict:
         """Искать линейную интерпретацию, доказывающую завершимость.

@@ -250,3 +250,51 @@ def test_pumping_checks_every_split_not_a_convenient_one():
 def test_zero_power_is_included(power):
     """Стирание (`i = 0`) — самый результативный случай, забывать его нельзя."""
     assert (("aaabbb"[:0] + "a" * power + "aabbb") in ANBN) == (power == 1)
+
+
+# --------------------------------------------------------------------------
+# Кривая роста числа классов
+# --------------------------------------------------------------------------
+
+
+def test_growth_reaches_a_plateau_on_a_regular_language():
+    from tfl.lang import from_regex, residual_growth
+
+    verdict = residual_growth(from_regex("(a|b)*ab", "ab"), max_prefix=7, suffix_len=6)
+    assert verdict.value is True
+    assert verdict.witness.plateau()
+    assert verdict.witness.bound == 3
+    assert "полку" in verdict.reason
+
+
+def test_linear_growth_is_growth_and_not_a_plateau():
+    """`|w|_a = |w|_b` даёт ровно `ℓ+1` классов на префиксах длины `ℓ`.
+
+    Рост здесь линейный, а не удваивающийся, но язык всё равно нерегулярен.
+    Проверка на «удвоение» такой случай пропускала и объявляла полку.
+    """
+    from tfl.lang import from_predicate, residual_growth
+
+    language = from_predicate(lambda w: w.count("a") == w.count("b"), "ab")
+    verdict = residual_growth(language, max_prefix=7, suffix_len=7)
+    assert not verdict.witness.plateau()
+    assert [count for _, count in verdict.witness.counts] == [2, 3, 4, 5, 6, 7, 8]
+
+
+def test_bound_is_a_real_lower_bound():
+    """Представители классов действительно попарно различимы."""
+    from tfl.lang import at_least_classes, from_regex, residual_growth
+
+    language = from_regex("(aa|b)*", "ab")
+    growth = residual_growth(language, max_prefix=6, suffix_len=5).witness
+    confirmed = at_least_classes(language, list(growth.representatives), list(growth.suffixes))
+    assert confirmed.value is True
+    assert len(growth.representatives) == growth.counts[-1][1]
+
+
+def test_growth_refuses_an_impossible_budget():
+    from tfl.lang import from_regex, residual_growth
+
+    verdict = residual_growth(from_regex("a*", "ab"), max_prefix=12, suffix_len=12, budget=1000)
+    assert verdict.value is None
+    assert "превышает бюджет" in verdict.reason

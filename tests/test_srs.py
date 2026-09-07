@@ -512,3 +512,48 @@ def test_budget_is_reported_rather_than_burned():
     verdict = system.find_interpretation(budget=1000)
     assert verdict.value is None
     assert "превышает бюджет" in verdict.reason
+
+
+# --------------------------------------------------------------------------
+# Петли: незавершимость без возврата в то же слово
+# --------------------------------------------------------------------------
+
+
+def test_embedded_rule_loops_without_any_cycle():
+    """`abb → abbb`: левая часть вложена в правую, слово растёт навсегда.
+
+    Ни одно слово при этом не повторяется, поэтому поиск цикла молчит,
+    а поиск петли выдаёт свидетеля первым же шагом. Система — третий вопрос
+    билета 3 (пачка 1) экзамена 2025.
+    """
+    system = parse_srs("abb -> abbb\nbbba -> aaab\naabb -> bbaa")
+    assert system.find_cycle() is None
+    assert system.find_loop() == ["abb", "abbb"]
+
+
+def test_loop_makes_the_verdict_negative():
+    verdict = parse_srs("abb -> abbb").terminates()
+    assert verdict.value is False
+    assert "найдена петля" in verdict.reason
+
+
+def test_cycle_is_still_called_a_cycle():
+    """`u = v = ε` — частный случай, и в отчёте он должен называться циклом."""
+    verdict = parse_srs("a -> b\nb -> a").terminates()
+    assert verdict.value is False
+    assert "найден цикл" in verdict.reason
+    assert verdict.witness[0] == verdict.witness[-1]
+
+
+def test_loop_witness_is_shortest():
+    """Обход в ширину: свидетель короткий, его можно переписать в отчёт.
+
+    До перехода на петли этот же вариант ЛР1 предъявлялся шестью словами.
+    """
+    system = parse_srs("aaa -> aaab")
+    loop = system.find_loop()
+    assert loop == ["aaa", "aaab"]
+
+
+def test_terminating_system_has_no_loop():
+    assert parse_srs("a a -> a").find_loop() is None

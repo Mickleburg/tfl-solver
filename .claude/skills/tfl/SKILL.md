@@ -99,12 +99,21 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | `RK2-A` | `docs/recipes/RK2-A.md` | `tfl/{srs,cfg,lang,pump}.py` |
 | `RK2-B` | `docs/recipes/RK2-B.md` | `tfl/{lang,pump,pda,automata}.py` |
 | `RK2-C` | `docs/recipes/RK2-C.md` | `tfl/attr.py` |
-| `EXAM-*` | нет рецепта | по объекту задачи |
+| `EXAM-1` | `docs/recipes/EXAM-1.md` | `tfl/{lang,myhill,automata,pump,monoid}.py` |
+| `EXAM-2` | `docs/recipes/EXAM-2.md` | `tfl/{cfg,pda,parse,pump,approx}.py` |
+| `EXAM-3` | `docs/recipes/EXAM-3.md` | `tfl/{srs,monoid,myhill,attr}.py` |
 | `LAB-4` | `docs/recipes/LAB-4.md` | `tfl/{extre,cfg,parse,attr}.py` |
-| `PHARMA` | нет рецепта | по объекту задачи |
+| `PHARMA` | `docs/recipes/PHARMA.md` | `tfl/{srs,prefix,lang,monoid,myhill}.py` |
 
-Где рецепта нет — работает общая схема S3–S7, просто без готового дерева
-решений. Классификация задач и ловушки по каждому классу описаны
+Рецепты есть для всех 14 классов. Общая схема S3–S7 остаётся запасным
+путём для задачи, которая не легла ни в один класс.
+
+Отдельно про экзамен: **номер вопроса в билете темы не определяет.**
+Замер по 255 вопросам (`python tools/exam_survey.py`) — за первым номером
+стоит 10 разных тем, за третьим тоже 10, и самая частая покрывает
+меньше 56 %. Читайте, что спрашивают, а не что обычно стоит на этом месте.
+
+Классификация задач и ловушки по каждому классу описаны
 в `docs/02-TASK-TAXONOMY.md`.
 
 ## S3. Формализация
@@ -373,5 +382,5 @@ python tools/lab3_report.py 1 --pda my.pda   # ЛР3
 
 ```bash
 export PYTHONIOENCODING=utf-8   # иначе консоль Windows роняет вывод в CP1251
-python -m pytest -q             # 747 тестов
+python -m pytest -q             # 768 тестов
 ```

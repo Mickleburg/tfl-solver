@@ -50,6 +50,8 @@ __all__ = [
     "family",
     "counter_dfa",
     "counter_range",
+    "Growth",
+    "residual_growth",
 ]
 
 Predicate = Callable[[str], bool]
@@ -467,3 +469,102 @@ def counter_range(
             values.add(total)
         result[length] = (min(values), max(values))
     return result
+
+
+@dataclass(frozen=True)
+class Growth:
+    """Кривая роста числа различимых префиксов и представители классов."""
+
+    counts: tuple[tuple[int, int], ...]
+    representatives: tuple[str, ...]
+    suffixes: tuple[str, ...]
+
+    @property
+    def bound(self) -> int:
+        """Наибольшая доказанная нижняя оценка на число классов."""
+        return max(count for _, count in self.counts) if self.counts else 0
+
+    def plateau(self) -> bool:
+        """Вышла ли кривая на полку — последние три значения совпали.
+
+        Различать надо именно полку и рост, а не скорость роста: у языка
+        `|w|_a = |w|_b` классов ровно `ℓ + 1` на префиксах длины `ℓ`,
+        и это линейный рост, а не удвоение, — но язык всё равно нерегулярен.
+        """
+        pairs = [count for _, count in self.counts]
+        return len(pairs) >= 3 and len(set(pairs[-3:])) == 1
+
+    def markdown(self) -> str:
+        header = ["| длина префикса | классов не меньше |", "|---|---|"]
+        rows = [f"| {length} | {count} |" for length, count in self.counts]
+        return "\n".join(header + rows)
+
+    def __str__(self) -> str:
+        return " ".join(f"{length}:{count}" for length, count in self.counts)
+
+
+def residual_growth(
+    language: Language,
+    max_prefix: int = 7,
+    suffix_len: int = 7,
+    budget: int = 2_000_000,
+) -> Verdict:
+    """Как быстро растёт число различимых префиксов — регулярен ли язык.
+
+    Для каждой длины `ℓ` берутся **все** слова этой длины и сравниваются
+    по вектору принадлежности `u·s ∈ L` на всех суффиксах длины `≤ suffix_len`.
+    Разные векторы — это доказанно разные классы Майхилла–Нероуда: суффикс,
+    на котором векторы разошлись, и есть различающий. Поэтому каждое число
+    в кривой — честная нижняя оценка, а не оценка «по образцу».
+
+    Читается кривая так:
+
+    * **вышла на полку** — у языка, вероятно, ровно столько классов;
+      дальше строится ДКА, а `class_table` подтверждает минимальность;
+    * **продолжает расти** (обычно удваиваясь) — автомата не будет,
+      и дальше ищется различающее семейство, а не состояния.
+
+    Вывод односторонний в обе стороны: рост доказывает нижнюю оценку,
+    но не бесконечность классов; полка не доказывает регулярность —
+    её могло не хватить только из-за короткого горизонта суффиксов.
+
+    >>> from tfl.lang import from_regex, residual_growth
+    >>> verdict = residual_growth(from_regex("(a|b)*ab", "ab"), max_prefix=5, suffix_len=4)
+    >>> verdict.witness.bound
+    3
+    >>> verdict.witness.plateau()
+    True
+    """
+    alphabet = "".join(sorted(language.alphabet))
+    suffixes = tuple(iter_words(alphabet, suffix_len))
+    cost = sum(len(alphabet) ** length for length in range(1, max_prefix + 1)) * len(suffixes)
+    if cost > budget:
+        return unknown(
+            f"перебор {cost} проверок превышает бюджет {budget}: "
+            f"уменьшите max_prefix или suffix_len"
+        )
+
+    counts: list[tuple[int, int]] = []
+    classes: dict[tuple[bool, ...], str] = {}
+    for length in range(1, max_prefix + 1):
+        classes = {}
+        for prefix in iter_words(alphabet, length):
+            if len(prefix) != length:
+                continue
+            signature = tuple(prefix + suffix in language for suffix in suffixes)
+            classes.setdefault(signature, prefix)
+        counts.append((length, len(classes)))
+
+    growth = Growth(tuple(counts), tuple(sorted(classes.values())), suffixes)
+    if growth.plateau():
+        return proved(
+            f"классов не меньше {growth.bound} (кривая {growth}). "
+            f"Кривая вышла на полку — ищите ДКА примерно на столько состояний",
+            growth,
+        )
+    return proved(
+        f"классов не меньше {growth.bound} (кривая {growth}). "
+        f"Полки нет, число растёт до конца горизонта — автомата, скорее всего, "
+        f"не будет, ищите различающее семейство",
+        growth,
+    )
