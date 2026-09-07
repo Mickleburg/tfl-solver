@@ -25,6 +25,7 @@ __all__ = [
     "Production",
     "CFG",
     "parse_cfg",
+    "tokenize_body",
     "Conflict",
     "LRItem",
     "EPSILON",
@@ -691,6 +692,39 @@ class CFG:
 # --------------------------------------------------------------------------
 
 
+def tokenize_body(body: str) -> tuple[str, ...]:
+    """Разбить правую часть на символы по нотации курса.
+
+    Пробелы ничего не значат: в условиях одно и то же правило пишут
+    и как `S → b T a a T`, и как `S → ab S bb S`. Поэтому строка всегда
+    разбирается посимвольно, а заглавная буква вместе со следующими
+    за ней штрихами и цифрами (`S'`, `A1`, `S₀`) склеивается в один
+    нетерминал.
+
+    Следствие: многосимвольных терминалов вроде `id` эта нотация
+    не поддерживает — в заданиях курса их и не бывает.
+    """
+    if body.strip() in EPSILON_TOKENS:
+        return ()
+    out: list[str] = []
+    i = 0
+    while i < len(body):
+        ch = body[i]
+        if ch.isspace() or ch in EPSILON_TOKENS:
+            i += 1
+            continue
+        if ch.isupper():
+            j = i + 1
+            while j < len(body) and body[j] in "'′₀₁₂₃0123456789":
+                j += 1
+            out.append(body[i:j])
+            i = j
+        else:
+            out.append(ch)
+            i += 1
+    return tuple(out)
+
+
 def parse_cfg(text: str, start: str | None = None, nonterminals: str = "") -> CFG:
     """Разобрать грамматику из текста.
 
@@ -730,39 +764,7 @@ def parse_cfg(text: str, start: str | None = None, nonterminals: str = "") -> CF
 
     known = explicit | set(heads)
 
-    def tokenize(body: str) -> tuple[str, ...]:
-        """Разбить правую часть на символы по нотации курса.
-
-        Пробелы ничего не значат: в условиях одно и то же правило пишут
-        и как `S → b T a a T`, и как `S → ab S bb S`. Поэтому строка всегда
-        разбирается посимвольно, а заглавная буква вместе со следующими
-        за ней штрихами и цифрами (`S'`, `A1`, `S₀`) склеивается в один
-        нетерминал.
-
-        Следствие: многосимвольных терминалов вроде `id` эта нотация
-        не поддерживает — в заданиях курса их и не бывает.
-        """
-        if body.strip() in EPSILON_TOKENS:
-            return ()
-        out: list[str] = []
-        i = 0
-        while i < len(body):
-            ch = body[i]
-            if ch.isspace() or ch in EPSILON_TOKENS:
-                i += 1
-                continue
-            if ch.isupper():
-                j = i + 1
-                while j < len(body) and body[j] in "'′₀₁₂₃0123456789":
-                    j += 1
-                out.append(body[i:j])
-                i = j
-            else:
-                out.append(ch)
-                i += 1
-        return tuple(out)
-
-    rules = tuple(Production(head, tokenize(body)) for head, body in productions)
+    rules = tuple(Production(head, tokenize_body(body)) for head, body in productions)
     inferred = known | {
         s for p in rules for s in p.rhs if s[0].isupper()
     }

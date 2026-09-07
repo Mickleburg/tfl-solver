@@ -97,11 +97,11 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | `RK1-B` | `docs/recipes/RK1-B.md` | `tfl/{lang,pump,myhill,automata}.py` |
 | `RK1-C` | `docs/recipes/RK1-C.md` | `tfl/{tree,regex,srs,cfg,lang}.py` |
 | `RK2-A` | `docs/recipes/RK2-A.md` | `tfl/{srs,cfg,lang,pump}.py` |
-| `RK2-B` | `docs/recipes/RK2-B.md` | `tfl/{lang,pump,pda,automata}.py` |
+| `RK2-B` | `docs/recipes/RK2-B.md` | `tfl/{lang,pump,pda,automata,conj}.py` |
 | `RK2-C` | `docs/recipes/RK2-C.md` | `tfl/attr.py` |
 | `EXAM-1` | `docs/recipes/EXAM-1.md` | `tfl/{lang,myhill,automata,pump,monoid}.py` |
 | `EXAM-2` | `docs/recipes/EXAM-2.md` | `tfl/{cfg,pda,parse,pump,approx}.py` |
-| `EXAM-3` | `docs/recipes/EXAM-3.md` | `tfl/{srs,monoid,myhill,attr}.py` |
+| `EXAM-3` | `docs/recipes/EXAM-3.md` | `tfl/{srs,monoid,myhill,attr,conj}.py` |
 | `LAB-4` | `docs/recipes/LAB-4.md` | `tfl/{extre,cfg,parse,attr}.py` |
 | `PHARMA` | `docs/recipes/PHARMA.md` | `tfl/{srs,prefix,lang,monoid,myhill}.py` |
 
@@ -152,6 +152,8 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | язык как предикат, пересечение с регулярным | `lang.from_predicate`, `Language.restrict` |
 | таблица различимости, число классов | `lang.table`, `lang.at_least_classes` |
 | накачка: перебор **всех** разбиений | `pump.defeats_regular`, `pump.defeats_cf` |
+| конъюнктивная грамматика: разбор, линейность, автомат Треллиса | `conj.ConjunctiveGrammar`, `conj.Trellis` |
+| префиксная грамматика: коллапс, перевод в линейную | `prefix.PrefixGrammar` |
 
 Правило: **любая проверка, которую можно выполнить двумя независимыми
 способами, выполняется двумя.** Каждое такое сравнение в этом проекте
@@ -382,5 +384,5 @@ python tools/lab3_report.py 1 --pda my.pda   # ЛР3
 
 ```bash
 export PYTHONIOENCODING=utf-8   # иначе консоль Windows роняет вывод в CP1251
-python -m pytest -q             # 768 тестов
+python -m pytest -q             # 784 теста
 ```
