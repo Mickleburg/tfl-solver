@@ -22,6 +22,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Set as AbstractSet
 from typing import Callable, Iterator, Sequence
 
 from tfl.lang import Language
@@ -38,6 +39,9 @@ __all__ = [
     "dcfl_splits",
     "defeats_dcfl",
     "nondcfl_by_pumping",
+    "ogden_splits",
+    "defeats_ogden",
+    "noncf_by_ogden",
 ]
 
 #: Степени, которыми пробуем накачивать. Ноль (стирание) — самый
@@ -305,4 +309,137 @@ def nondcfl_by_pumping(
         "доказательство, что язык не DCFL, нужно то же рассуждение "
         "при произвольном p",
         (x, y, z),
+    )
+
+
+# --------------------------------------------------------------------------
+# Лемма Огдена: накачка с отмеченными позициями
+# --------------------------------------------------------------------------
+
+
+def ogden_splits(
+    word: str, marks: AbstractSet[int], n: int
+) -> Iterator[tuple[str, str, str, str, str]]:
+    """Все разбиения `w = x₁y₁zy₂x₂`, допустимые леммой Огдена.
+
+    Формулировка курса (лекция 6, «Бонус: лемма Огдена») требует, чтобы
+    отмеченные буквы были **во всех трёх** частях одной из двух троек —
+    либо в `x₁, y₁, z`, либо в `z, y₂, x₂`, — и чтобы в `y₁zy₂` было
+    отмечено не более `n` букв.
+
+    Это не то же самое, что расхожая формулировка «`y₁` и `y₂` вместе
+    содержат отмеченную позицию»: курсовая сильнее, и разбор случаев
+    получается другой. Реализована именно курсовая.
+    """
+    marked = sorted(marks)
+    size = len(word)
+
+    def count(lo: int, hi: int) -> int:
+        return sum(1 for m in marked if lo <= m < hi)
+
+    for i in range(size + 1):
+        for j in range(i, size + 1):
+            for k in range(j, size + 1):
+                for l in range(k, size + 1):
+                    if count(i, l) > n:  # отмечено в y₁zy₂ не более n
+                        continue
+                    left = count(0, i) and count(i, j) and count(j, k)
+                    right = count(j, k) and count(k, l) and count(l, size)
+                    if not (left or right):
+                        continue
+                    yield word[:i], word[i:j], word[j:k], word[k:l], word[l:]
+
+
+def defeats_ogden(
+    language: Language,
+    word: str,
+    marks: AbstractSet[int],
+    n: int,
+    powers: Sequence[int] = POWERS,
+) -> Verdict:
+    """Отбивает ли отмеченное слово накачку по Огдену при данном `n`.
+
+    Отметки — это наш ход, и в них вся сила леммы: выбирая, какие позиции
+    отметить, мы запрещаем противнику качать удобный ему блок.
+    """
+    if word not in language:
+        return refuted(f"слово «{word}» не принадлежит языку — свидетель негоден", word)
+    if len(word) < n:
+        return refuted(f"|«{word}»| < {n}: лемма к такому слову неприменима", word)
+    if not marks <= set(range(len(word))):
+        return refuted("отмечены позиции за пределами слова", sorted(marks))
+    if len(marks) < n:
+        return refuted(
+            f"отмечено {len(marks)} букв, а лемма требует не менее {n}", sorted(marks)
+        )
+
+    seen = False
+    for x1, y1, z, y2, x2 in ogden_splits(word, marks, n):
+        seen = True
+        if all((x1 + y1 * k + z + y2 * k + x2) in language for k in powers):
+            return refuted(
+                f"разбиение x₁=«{x1}» y₁=«{y1}» z=«{z}» y₂=«{y2}» x₂=«{x2}» "
+                "накачивается, оставаясь в языке",
+                (x1, y1, z, y2, x2),
+            )
+    if not seen:
+        return unknown(
+            f"при n = {n} и такой отметке допустимых разбиений нет вовсе — "
+            "лемма здесь ничего не говорит. Чтобы обе тройки были достижимы, "
+            "отмеченных букв нужно не меньше трёх",
+            (word, sorted(marks)),
+        )
+    return Verdict(
+        True, f"все допустимые разбиения при n = {n} выводят слово из языка", word
+    )
+
+
+def noncf_by_ogden(
+    language: Language,
+    witness: Callable[[int], tuple[str, AbstractSet[int]]],
+    upto: int = 4,
+    powers: Sequence[int] = POWERS,
+) -> Verdict:
+    """Проверить свидетеля по Огдену на всех `n ≤ upto`.
+
+    `witness(n)` возвращает пару «слово, множество отмеченных позиций».
+    Пример из лекции — язык `{aᵐbⁿcⁿdⁿ | m > 0} ∪ {bⁱcʲdᵏ}`, слово
+    `ab²ⁿc²ⁿd²ⁿ` с отметкой `n` последних букв `d`.
+
+    Исходы те же, что у обычной накачки: «доказано» среди них нет, потому
+    что перебор конечного числа `n` доказательством не является. Зато
+    `False` точен — свидетель или отметки негодны.
+    """
+    vacuous: list[int] = []
+    useful = 0
+    for n in range(1, upto + 1):
+        word, marks = witness(n)
+        verdict = defeats_ogden(language, word, marks, n, powers)
+        if verdict.value is False:
+            return refuted(
+                f"при n = {n} свидетель «{word}» не отбивает накачку: {verdict.reason}",
+                (n, word, verdict.witness),
+            )
+        if verdict.value is None:
+            vacuous.append(n)
+        else:
+            useful += 1
+    last, _ = witness(upto)
+    if not useful:
+        return unknown(
+            f"при всех n ≤ {upto} допустимых разбиений не нашлось ни одного: "
+            "отметка вырождена, проверка ничего не дала",
+            last,
+        )
+    if vacuous:
+        return unknown(
+            f"свидетель отбивает накачку по Огдену при всех n ≤ {upto}, "
+            f"но при n из {vacuous} разбиений нет вовсе и проверка там пустая",
+            last,
+        )
+    return unknown(
+        f"свидетель отбивает накачку по Огдену при всех n ≤ {upto}; для "
+        "доказательства, что язык не контекстно-свободен, нужно то же "
+        "рассуждение при произвольном n",
+        last,
     )
