@@ -48,6 +48,8 @@ __all__ = [
     "one_letter_noncf",
     "distinguishing_suffix",
     "family",
+    "counter_dfa",
+    "counter_range",
 ]
 
 Predicate = Callable[[str], bool]
@@ -359,3 +361,109 @@ def distinguishing_suffix(
         if ((left + word) in language) != ((right + word) in language):
             return word
     return None
+
+
+# --------------------------------------------------------------------------
+# Счётчики подслов: регулярность через ограниченность разности
+# --------------------------------------------------------------------------
+
+
+def counter_dfa(
+    weights: dict[str, int],
+    alphabet: Iterable[str],
+    budget: int = 20_000,
+) -> Verdict:
+    """Язык слов, где взвешенная сумма вхождений подслов равна нулю.
+
+    Приём курса (`RK1-B`): состояние — это пара «последние `k−1` букв,
+    текущее значение счётчика». Условие вида `|w|_ab = |w|_ba`
+    записывается как `{"ab": 1, "ba": -1}`.
+
+    **Обход конечен ровно тогда, когда разность ограничена.** Поэтому
+    исход здесь настоящий:
+
+    * обход завершился — язык **регулярен**, и свидетель `verdict.witness`
+      это построенный ДКА, который можно сразу предъявить в отчёте;
+    * обход упёрся в бюджет — значение не ограничено на просмотренном
+      срезе, и приём не применим. Про сам язык это ничего не говорит:
+      нужен другой аргумент.
+
+    Классика курса: `|w|_ab` и `|w|_ba` различаются не более чем на 1,
+    поэтому условие `|w|_ab = |w|_ba` регулярно, а `|w|_a = |w|_b` — нет.
+
+    >>> verdict = counter_dfa({"ab": 1, "ba": -1}, "ab")
+    >>> verdict.value
+    True
+    >>> len(verdict.witness)
+    5
+    >>> counter_dfa({"a": 1, "b": -1}, "ab", budget=500).value is None
+    True
+    """
+    letters = sorted(set(alphabet))
+    if not weights:
+        raise ValueError("нужен хотя бы один шаблон")
+    width = max(len(pattern) for pattern in weights) - 1
+
+    def step(window: str, char: str) -> tuple[str, int]:
+        extended = window + char
+        delta = sum(w for p, w in weights.items() if extended.endswith(p))
+        return extended[-width:] if width else "", delta
+
+    start = ("", 0)
+    delta_map: dict[tuple[object, str], object] = {}
+    seen = {start}
+    queue = [start]
+    while queue:
+        state = queue.pop()
+        window, value = state
+        for char in letters:
+            new_window, change = step(window, char)
+            target = (new_window, value + change)
+            delta_map[(state, char)] = target
+            if target not in seen:
+                if len(seen) >= budget:
+                    return unknown(
+                        f"достижимых состояний больше {budget}: взвешенная сумма "
+                        "не ограничена на просмотренном срезе, приём не применим",
+                        weights,
+                    )
+                seen.add(target)
+                queue.append(target)
+
+    finals = frozenset(s for s in seen if s[1] == 0)
+    machine = DFA(frozenset(letters), start, finals, delta_map)
+    return proved(
+        f"обход достижимых состояний завершился: их {len(seen)}, значит "
+        "взвешенная сумма ограничена и язык регулярен",
+        machine,
+    )
+
+
+def counter_range(
+    weights: dict[str, int],
+    alphabet: Iterable[str],
+    lengths: Sequence[int] = (4, 6, 8, 10, 12),
+) -> dict[int, tuple[int, int]]:
+    """Как размах взвешенной суммы растёт с длиной слова — быстрая диагностика.
+
+    Постоянный размах — признак ограниченности (и повод звать `counter_dfa`,
+    который это уже докажет). Растущий — приём не применим.
+
+    >>> {n: hi - lo for n, (lo, hi) in counter_range({"ab": 1, "ba": -1}, "ab").items()}
+    {4: 2, 6: 2, 8: 2, 10: 2, 12: 2}
+    """
+    letters = sorted(set(alphabet))
+    result = {}
+    for length in lengths:
+        values = set()
+        for word in iter_words(letters, length):
+            total = 0
+            for pattern, weight in weights.items():
+                total += weight * sum(
+                    1
+                    for i in range(len(word) - len(pattern) + 1)
+                    if word[i : i + len(pattern)] == pattern
+                )
+            values.add(total)
+        result[length] = (min(values), max(values))
+    return result

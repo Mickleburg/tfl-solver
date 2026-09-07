@@ -93,7 +93,9 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | `LAB-1` | `docs/recipes/LAB-1.md` | `tfl/srs.py` |
 | `LAB-2` | `docs/recipes/LAB-2.md` | `tfl/{regex,automata,myhill,glushkov,afa}.py` |
 | `LAB-3` | `docs/recipes/LAB-3.md` | `tfl/{cfg,parse,pda,approx}.py` |
-| `RK1-*` | нет рецепта; разбалловка — `docs/02-TASK-TAXONOMY.md`, §«Разбалловка РК1» | `tfl/{automata,myhill,monoid,lang,pump,approx}.py` |
+| `RK1-A` | `docs/recipes/RK1-A.md` | `tfl/{automata,myhill,monoid,lang}.py` |
+| `RK1-B` | `docs/recipes/RK1-B.md` | `tfl/{lang,pump,myhill,automata}.py` |
+| `RK1-C` | `docs/recipes/RK1-C.md` | `tfl/{tree,regex,srs,cfg,lang}.py` |
 | `RK2-A` | `docs/recipes/RK2-A.md` | `tfl/{srs,cfg,lang,pump}.py` |
 | `RK2-B` | `docs/recipes/RK2-B.md` | `tfl/{lang,pump,pda,automata}.py` |
 | `RK2-C` | `docs/recipes/RK2-C.md` | `tfl/attr.py` |
@@ -370,5 +372,5 @@ python tools/lab3_report.py 1 --pda my.pda   # ЛР3
 
 ```bash
 export PYTHONIOENCODING=utf-8   # иначе консоль Windows роняет вывод в CP1251
-python -m pytest -q             # 691 тест
+python -m pytest -q             # 713 тестов
 ```
