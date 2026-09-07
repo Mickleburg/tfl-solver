@@ -42,6 +42,9 @@ __all__ = [
     "ogden_splits",
     "defeats_ogden",
     "noncf_by_ogden",
+    "csy_splits",
+    "defeats_csy",
+    "noncsy_by_pumping",
 ]
 
 #: Степени, которыми пробуем накачивать. Ноль (стирание) — самый
@@ -442,4 +445,148 @@ def noncf_by_ogden(
         "доказательства, что язык не контекстно-свободен, нужно то же "
         "рассуждение при произвольном n",
         last,
+    )
+
+
+# --------------------------------------------------------------------------
+# Лемма о накачке для CSY-языков: регулярки с обратными ссылками
+# --------------------------------------------------------------------------
+
+
+def csy_splits(
+    word: str, n: int, limit: int = 20_000
+) -> Iterator[tuple[tuple[str, ...], str]]:
+    """Разбиения `ω = x₀ y x₁ y … y x_m` с `|x₀y| < n` и `|y| > 0`.
+
+    Формализация Кампеану–Саломаа–Ю (лекция 12, слайд 5): накачивается
+    **одно и то же** подслово `y` сразу во всех выбранных вхождениях,
+    а не один кусок, как в обычной лемме. Поэтому разбиение задаётся
+    выбором `y` и набора его **непересекающихся** вхождений, первое
+    из которых начинается ровно на границе `x₀`.
+
+    Возвращается пара: куски `(x₀, x₁, …, x_m)` и само `y`.
+    """
+    produced = 0
+    for start in range(min(n, len(word) + 1)):
+        for length in range(1, n - start):
+            if start + length > len(word):
+                break
+            y = word[start : start + length]
+
+            def occurrences(after: int) -> Iterator[list[int]]:
+                yield []
+                position = after
+                while position + length <= len(word):
+                    if word[position : position + length] == y:
+                        for tail in occurrences(position + length):
+                            yield [position, *tail]
+                    position += 1
+
+            for rest in occurrences(start + length):
+                chosen = [start, *rest]
+                pieces = [word[:start]]
+                for left, right in zip(chosen, chosen[1:]):
+                    pieces.append(word[left + length : right])
+                pieces.append(word[chosen[-1] + length :])
+                produced += 1
+                if produced > limit:
+                    return
+                yield tuple(pieces), y
+
+
+def _csy_pump(pieces: tuple[str, ...], y: str, power: int) -> str:
+    out = [pieces[0]]
+    for piece in pieces[1:]:
+        out.append(y * power)
+        out.append(piece)
+    return "".join(out)
+
+
+def defeats_csy(
+    language: Language, word: str, n: int, powers: Sequence[int] = (2, 3, 4)
+) -> Verdict:
+    """Отбивает ли слово накачку по лемме для CSY-языков.
+
+    > Если `L` — CSY-язык, тогда `∃N ∀ω ∈ L (|ω| > N ⇒ ω = x₀yx₁y…yx_m
+    > & |x₀y| < N & |y| > 0 & ∀i > 0 (x₀yⁱx₁yⁱ…yⁱx_m ∈ L))`
+
+    Степень `0` в перебор **не входит**: лемма говорит только про `i > 0`,
+    и стирание здесь неправомерно — в отличие от обычной накачки, где
+    ноль самый результативный случай.
+
+    `True` — каждое разбиение выводит слово из языка; это точный
+    результат для данного `n`. `False` — нашлось разбиение, которое
+    качается и остаётся в языке, оно и предъявляется свидетелем.
+    """
+    if word not in language:
+        return refuted(f"слово «{word}» не принадлежит языку — свидетель негоден", word)
+    if len(word) <= n:
+        return refuted(f"|«{word}»| ≤ {n}: лемма требует слова длиннее N", word)
+
+    seen = False
+    for pieces, y in csy_splits(word, n):
+        seen = True
+        if all(_csy_pump(pieces, y, i) in language for i in powers):
+            return refuted(
+                f"разбиение с y=«{y}» и кусками {list(pieces)} накачивается, "
+                "оставаясь в языке",
+                (pieces, y),
+            )
+    if not seen:
+        return unknown(
+            f"при N = {n} у слова «{word}» нет ни одного допустимого разбиения — "
+            "лемма здесь ничего не говорит",
+            word,
+        )
+    return Verdict(True, f"все разбиения при N = {n} выводят слово из языка", word)
+
+
+def noncsy_by_pumping(
+    language: Language,
+    witness: Callable[[int], str],
+    upto: int = 5,
+    powers: Sequence[int] = (2, 3, 4),
+) -> Verdict:
+    """Прогнать свидетеля по лемме для CSY при всех `N ≤ upto`.
+
+    Опровержение CSY-свойства — это отдельные баллы на РК2 2023:
+    построение MFA или ref-слова общего вида стоит 3 балла, и столько же
+    обоснование, что их не существует.
+
+    Классический пример лекции: `aⁿbⁿ` не описывается CSY-регуляркой.
+
+    Отдельно обрабатывается пустой перебор. При `N = 1` разбиений
+    не существует вовсе: `|y| > 0` и `|x₀y| < 1` несовместимы. Такое `N`
+    не говорит ни за, ни против, и засчитывать его как «свидетель
+    негоден» нельзя — это ровно та ошибка, из-за которой лемма Огдена
+    однажды возвращала `True` на пустом переборе.
+    """
+    vacuous: list[int] = []
+    useful = 0
+    for n in range(1, upto + 1):
+        word = witness(n)
+        verdict = defeats_csy(language, word, n, powers)
+        if verdict.value is True:
+            useful += 1
+            continue
+        if verdict.value is None:
+            vacuous.append(n)
+            continue
+        return refuted(
+            f"при N = {n} свидетель «{word}» не отбивает накачку: {verdict.reason}",
+            (n, word, verdict.witness),
+        )
+    if not useful:
+        return unknown(
+            f"ни при одном N ≤ {upto} допустимых разбиений не нашлось "
+            f"(пустой перебор при N = {vacuous}); лемма о свидетеле "
+            "ничего не сказала",
+            witness(upto),
+        )
+    tail = f" (при N = {vacuous} разбиений нет вовсе)" if vacuous else ""
+    return unknown(
+        f"свидетель отбивает накачку при всех работающих N ≤ {upto}{tail}; "
+        "для доказательства, что язык не CSY, нужно то же рассуждение "
+        "при произвольном N",
+        witness(upto),
     )

@@ -97,7 +97,7 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | `RK1-B` | `docs/recipes/RK1-B.md` | `tfl/{lang,pump,myhill,automata}.py` |
 | `RK1-C` | `docs/recipes/RK1-C.md` | `tfl/{tree,regex,srs,cfg,lang}.py` |
 | `RK2-A` | `docs/recipes/RK2-A.md` | `tfl/{srs,cfg,lang,pump}.py` |
-| `RK2-B` | `docs/recipes/RK2-B.md` | `tfl/{lang,pump,pda,automata,conj}.py` |
+| `RK2-B` | `docs/recipes/RK2-B.md` | `tfl/{lang,pump,pda,automata,conj,mfa}.py` |
 | `RK2-C` | `docs/recipes/RK2-C.md` | `tfl/attr.py` |
 | `EXAM-1` | `docs/recipes/EXAM-1.md` | `tfl/{lang,myhill,automata,pump,monoid}.py` |
 | `EXAM-2` | `docs/recipes/EXAM-2.md` | `tfl/{cfg,pda,parse,pump,approx}.py` |
@@ -154,6 +154,7 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | накачка: перебор **всех** разбиений | `pump.defeats_regular`, `pump.defeats_cf` |
 | конъюнктивная грамматика: разбор, линейность, автомат Треллиса | `conj.ConjunctiveGrammar`, `conj.Trellis` |
 | префиксная грамматика: коллапс, перевод в линейную | `prefix.PrefixGrammar` |
+| автомат с памятью, ref-слово, накачка CSY | `mfa.MFA`, `mfa.RefWord`, `pump.noncsy_by_pumping` |
 
 Правило: **любая проверка, которую можно выполнить двумя независимыми
 способами, выполняется двумя.** Каждое такое сравнение в этом проекте
@@ -384,5 +385,5 @@ python tools/lab3_report.py 1 --pda my.pda   # ЛР3
 
 ```bash
 export PYTHONIOENCODING=utf-8   # иначе консоль Windows роняет вывод в CP1251
-python -m pytest -q             # 784 теста
+python -m pytest -q             # 808 тестов
 ```
