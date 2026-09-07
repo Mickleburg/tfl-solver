@@ -100,7 +100,8 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | `RK2-B` | `docs/recipes/RK2-B.md` | `tfl/{lang,pump,pda,automata}.py` |
 | `RK2-C` | `docs/recipes/RK2-C.md` | `tfl/attr.py` |
 | `EXAM-*` | нет рецепта | по объекту задачи |
-| `LAB-4`, `PHARMA` | нет рецепта | по объекту задачи |
+| `LAB-4` | `docs/recipes/LAB-4.md` | `tfl/{extre,cfg,parse,attr}.py` |
+| `PHARMA` | нет рецепта | по объекту задачи |
 
 Где рецепта нет — работает общая схема S3–S7, просто без готового дерева
 решений. Классификация задач и ловушки по каждому классу описаны
@@ -372,5 +373,5 @@ python tools/lab3_report.py 1 --pda my.pda   # ЛР3
 
 ```bash
 export PYTHONIOENCODING=utf-8   # иначе консоль Windows роняет вывод в CP1251
-python -m pytest -q             # 713 тестов
+python -m pytest -q             # 741 тест
 ```
