@@ -241,3 +241,154 @@ def test_binary_system_has_no_bridge():
     assert not system.is_unary()
     with pytest.raises(ValueError, match="только для унарных"):
         system.as_srs()
+
+
+# --------------------------------------------------------------------------
+# Мартелли–Монтанари, алгоритм 3
+# --------------------------------------------------------------------------
+
+
+def test_common_part_and_frontier_from_the_lab_statement():
+    """Разобранный пример из условия ЛР1 2022.
+
+    > У мультиуравнения `{x₁, x₂} = (f(g(x₃), h(x₄, g(x₅))), f(x₄, h(g(g(x₆)), x₇)))`
+    > общая часть — это `f(x₄, h(x₄, x₇))`, граница — это
+    > `{{x₄} = (g(x₃), g(g(x₆))), {x₇} = g(x₅)}`.
+    """
+    from tfl.trs import common_part
+
+    names = {f"x{i}" for i in range(1, 9)}
+    terms = (
+        parse_term("f(g(x3), h(x4, g(x5)))", names),
+        parse_term("f(x4, h(g(g(x6)), x7))", names),
+    )
+    part, frontier = common_part(terms)
+    assert str(part) == "f(x4, h(x4, x7))"
+
+    got = {
+        (tuple(sorted(e.variables)), tuple(sorted(str(t) for t in e.terms)))
+        for e in frontier
+    }
+    assert got == {
+        (("x4",), ("g(g(x6))", "g(x3)")),
+        (("x7",), ("g(x5)",)),
+    }
+
+
+def test_common_part_stops_at_a_variable():
+    """Если в позиции стоит переменная, конструктор в общую часть не идёт."""
+    from tfl.trs import common_part
+
+    part, frontier = common_part(
+        (parse_term("f(g(a), g(b))", set()), parse_term("f(x, g(b))", {"x"}))
+    )
+    assert str(part) == "f(x, g(b))"
+    assert [str(e) for e in frontier] == ["{x} = (g(a))"]
+
+
+def test_no_common_part_when_heads_clash():
+    from tfl.trs import common_part
+
+    part, frontier = common_part((parse_term("F(a)", set()), parse_term("G(a)", set())))
+    assert part is None and frontier == []
+
+
+def test_algorithm_three_on_the_teachers_example():
+    """Тот же пример из issue #2, но проверяется форма ответа, а не только он.
+
+    Преподаватель записывает результат как «терм `F(q,q,q)` с подстановками
+    `{q} := F(x,y,a)`, `{x,a,w,y} = R`». Представитель внутри слитого класса
+    переменных может быть выбран иначе — важно, что классы те же
+    и подстановка та же.
+    """
+    from tfl.trs import substitution_of, unified_term, unify_mm
+
+    names = {"q", "x", "y", "a", "w"}
+    left = parse_term("F(q,q,q)", names)
+    right = parse_term("F(F(x,y,R), F(a,w,a), F(w,x,y))", names)
+
+    system = unify_mm(left, right)
+    assert system is not None
+    classes = {tuple(sorted(e.variables)) for e in system}
+    assert ("a", "w", "x", "y") in classes
+    assert ("q",) in classes
+
+    binding = substitution_of(system)
+    assert str(binding["q"]) == "F(R, R, R)"
+    assert {str(binding[n]) for n in ("x", "y", "a", "w")} == {"R"}
+    assert substitute(left, binding) == substitute(right, binding)
+    assert str(unified_term(system)) == "F(F(R, R, R), F(R, R, R), F(R, R, R))"
+
+
+def test_algorithm_three_rejects_a_cycle():
+    """Переменная встречается в правой части своего же уравнения — неудача.
+
+    Это и есть проверка вхождения в терминах системы мультиуравнений:
+    выбрать уравнение, переменные которого не заняты, становится нельзя.
+    """
+    from tfl.trs import unify_mm
+
+    assert unify_mm(parse_term("x", {"x"}), parse_term("F(x)", {"x"})) is None
+
+
+def test_algorithm_three_agrees_with_plain_unification():
+    """Два независимо написанных унификатора обязаны совпадать."""
+    from tfl.trs import substitution_of, unify_mm
+
+    names = {"x", "y", "z"}
+    samples = ["x", "F(x)", "F(y)", "G(x, y)", "G(F(x), y)", "G(z, G(x, y))", "F(G(x, x))"]
+    for first in samples:
+        for second in samples:
+            left, right = parse_term(first, names), parse_term(second, names)
+            plain = unify(left, right)
+            system = unify_mm(left, right)
+            assert (plain is None) == (system is None), (first, second)
+            if system is not None:
+                binding = substitution_of(system)
+                assert substitute(left, binding) == substitute(right, binding), (first, second)
+
+
+# --------------------------------------------------------------------------
+# Критические пары
+# --------------------------------------------------------------------------
+
+
+def test_overlap_in_a_variable_gives_no_critical_pair():
+    """`f(f(x)) → x` накладывается сама на себя только в переменной."""
+    system = parse_trs("variables = [x]\nf(f(x)) -> x")
+    assert system.critical_pairs() == []
+    assert system.locally_confluent().value is True
+
+
+def test_two_rules_for_one_term_are_not_confluent():
+    system = parse_trs("variables = []\na -> b\na -> c")
+    verdict = system.locally_confluent()
+    assert verdict.value is False
+    assert "не сходится" in verdict.reason
+
+
+def test_overlap_inside_the_left_side():
+    """`f(g(x)) → x` и `g(a) → b` накладываются в позиции (0,)."""
+    system = parse_trs("variables = [x]\nf(g(x)) -> x\ng(a) -> b")
+    pairs = system.critical_pairs()
+    assert len(pairs) == 1
+    assert (str(pairs[0].left), str(pairs[0].right)) == ("a", "f(b)")
+    assert pairs[0].position == (0,)
+    assert system.locally_confluent().value is False
+
+
+def test_joinable_reports_the_common_descendant():
+    system = parse_trs("variables = []\na -> c\nb -> c")
+    verdict = system.joinable(parse_term("a", set()), parse_term("b", set()))
+    assert verdict.value is True
+    assert str(verdict.witness) == "c"
+
+
+def test_joinability_of_a_growing_system_is_not_refuted():
+    """Обход обрезан по размеру — значит «не выяснено», а не «не сходятся»."""
+    system = parse_trs("variables = [x]\nf(x) -> f(f(x))")
+    verdict = system.joinable(
+        parse_term("f(a)", set()), parse_term("g(a)", set()), max_size=6
+    )
+    assert verdict.value is None
+    assert "обход обрезан" in verdict.reason

@@ -48,6 +48,14 @@ __all__ = [
     "substitute",
     "match",
     "unify",
+    "unify_mm",
+    "MultiEquation",
+    "common_part",
+    "substitution_of",
+    "unified_term",
+    "RESULT",
+    "CriticalPair",
+    "rename",
 ]
 
 
@@ -420,6 +428,86 @@ class TRS:
             "(рекурсивный по путям, матричные интерпретации)"
         )
 
+    # ------------------------------------------------- конфлюэнтность
+
+    def critical_pairs(self) -> list[CriticalPair]:
+        """Наложения правил: один терм, переписанный двумя способами.
+
+        Наложение ищется унификацией левой части одного правила
+        с **не-переменным** подтермом левой части другого. Наложения
+        в переменной критических пар не дают: там подставляется что угодно,
+        и оба пути сходятся автоматически.
+
+        Правило само с собой в вершине пропускается — это тождество.
+        """
+        return _critical_pairs(self)
+
+    def reachable(self, term: Term, max_size: int = 20, max_nodes: int = 2000):
+        """Достижимые термы и признак того, что обход был полным."""
+        seen = {term}
+        frontier = {term}
+        truncated = False
+        while frontier:
+            following = set()
+            for current in frontier:
+                for nxt in self.step(current):
+                    if nxt.size() > max_size:
+                        truncated = True
+                        continue
+                    if nxt not in seen:
+                        if len(seen) >= max_nodes:
+                            truncated = True
+                            break
+                        seen.add(nxt)
+                        following.add(nxt)
+            frontier = following
+        return seen, truncated
+
+    def joinable(self, left: Term, right: Term, max_size: int = 20) -> Verdict:
+        """Сходятся ли два терма к общему потомку.
+
+        Исходов три, и это не формальность: у незавершимой системы обход
+        обрезается, и «общего потомка не нашли» не то же самое, что
+        «его нет».
+        """
+        first, cut_first = self.reachable(left, max_size=max_size)
+        second, cut_second = self.reachable(right, max_size=max_size)
+        common = first & second
+        if common:
+            witness = min(common, key=lambda t: (t.size(), str(t)))
+            return proved(f"«{left}» и «{right}» сходятся к «{witness}»", witness)
+        if cut_first or cut_second:
+            return unknown(
+                f"общего потомка у «{left}» и «{right}» не нашлось, "
+                f"но обход обрезан по размеру {max_size} — вывод неправомерен"
+            )
+        return refuted(f"«{left}» и «{right}» не сходятся: обход пройден целиком")
+
+    def locally_confluent(self, max_size: int = 20) -> Verdict:
+        """Сходятся ли все критические пары.
+
+        При завершимости локальная конфлюэнтность даёт конфлюэнтность
+        по лемме Ньюмана — но только при завершимости, и её надо
+        проверять отдельно.
+        """
+        pairs = self.critical_pairs()
+        if not pairs:
+            return proved("критических пар нет: наложений между правилами не возникает")
+        unresolved = []
+        for pair in pairs:
+            verdict = self.joinable(pair.left, pair.right, max_size=max_size)
+            if verdict.value is False:
+                return refuted(f"критическая пара не сходится: {pair}", pair)
+            if verdict.value is None:
+                unresolved.append(pair)
+        if unresolved:
+            return unknown(
+                f"из {len(pairs)} критических пар {len(unresolved)} не проверены "
+                f"до конца: обход обрезан. Первая — {unresolved[0]}",
+                unresolved,
+            )
+        return proved(f"все {len(pairs)} критических пар сходятся")
+
     # ------------------------------------------------------- мост в строки
 
     def is_unary(self) -> bool:
@@ -739,3 +827,261 @@ def _parse_expression(text: str, binding: dict[str, Poly]) -> Poly:
     if position != len(tokens):
         raise ValueError(f"лишние символы в выражении {text!r}")
     return result
+
+
+# --------------------------------------------------------------------------
+# Мартелли–Монтанари, алгоритм 3
+# --------------------------------------------------------------------------
+
+
+#: Свежая переменная, обозначающая весь унифицируемый терм. Разбор терма
+#: такого имени не породит никогда, поэтому столкновения с входными
+#: переменными невозможны.
+RESULT = "⊤"
+
+
+@dataclass(frozen=True)
+class MultiEquation:
+    """Мультиуравнение `{x₁,…,xₙ} = (t₁,…,t_m)`.
+
+    > Мультиуравнение — это выражение вида `{x₁,…,xₙ} = (t₁,…,t_m)`,
+    > где `xᵢ` — переменные, `tⱼ` — термы в выбранной сигнатуре
+    > (семантически означает, что все они равны друг другу).
+
+    Справа стоят **только не-переменные**: это условие преподаватель
+    отдельно велит проверять, и на нём держится выбор уравнения на шаге 1.
+    """
+
+    variables: frozenset[str]
+    terms: tuple[Term, ...] = ()
+
+    def __post_init__(self) -> None:
+        if any(t.variable for t in self.terms):
+            raise ValueError(
+                f"справа в мультиуравнении стоит переменная: {self}; "
+                "переменные обязаны быть слева"
+            )
+
+    def __str__(self) -> str:
+        left = "{" + ", ".join(sorted(self.variables)) + "}"
+        right = "(" + ", ".join(str(t) for t in self.terms) + ")" if self.terms else "∅"
+        return f"{left} = {right}"
+
+
+def common_part(terms: tuple[Term, ...]) -> tuple[Term | None, list[MultiEquation]]:
+    """Общая часть и граница мультиуравнения.
+
+    > Общая часть мультиуравнения — максимальное внешнее общее поддерево
+    > конструкторов `tᵢ`. Граница — множество мультиуравнений, подстановка
+    > которых в общую часть порождает термы `tᵢ`.
+
+    Разобранный в условии ЛР1 2022 пример: у мультиуравнения
+    `{x₁,x₂} = (f(g(x₃), h(x₄, g(x₅))), f(x₄, h(g(g(x₆)), x₇)))` общая
+    часть это `f(x₄, h(x₄, x₇))`, а граница — `{x₄} = (g(x₃), g(g(x₆)))`
+    и `{x₇} = (g(x₅))`.
+
+    Если в позиции стоит хотя бы одна переменная, общая часть там
+    обрывается: конструктор в неё не попадает, даже если у остальных
+    термов он одинаковый. Если же в позиции стоят разные конструкторы,
+    общей части нет вовсе, и это неудача унификации.
+    """
+    if not terms:
+        return None, []
+    if any(t.variable for t in terms):
+        names = frozenset(t.head for t in terms if t.variable)
+        rest = tuple(t for t in terms if not t.variable)
+        return var(sorted(names)[0]), [MultiEquation(names, rest)]
+
+    heads = {(t.head, t.arity) for t in terms}
+    if len(heads) > 1:
+        return None, []
+    head, arity = heads.pop()
+    args: list[Term] = []
+    frontier: list[MultiEquation] = []
+    for index in range(arity):
+        sub, below = common_part(tuple(t.args[index] for t in terms))
+        if sub is None:
+            return None, []
+        args.append(sub)
+        frontier.extend(below)
+    return Term(head, tuple(args), False), _compactify(frontier)
+
+
+def _compactify(system: list[MultiEquation]) -> list[MultiEquation]:
+    """Компактная форма: у разных уравнений левые части не пересекаются.
+
+    > Ищем все мультиуравнения вида `S₁ ∪ {xᵢ} = M₁`, `S₂ ∪ {xᵢ} = M₂`
+    > (один и тот же `xᵢ`) и объединяем в `S₁ ∪ {xᵢ} ∪ S₂ = M₁ ∪ M₂`.
+    """
+    merged: list[MultiEquation] = []
+    for equation in system:
+        names, terms = set(equation.variables), list(equation.terms)
+        rest: list[MultiEquation] = []
+        for other in merged:
+            if names & other.variables:
+                names |= other.variables
+                terms.extend(t for t in other.terms if t not in terms)
+            else:
+                rest.append(other)
+        merged = [*rest, MultiEquation(frozenset(names), tuple(terms))]
+    return merged
+
+
+def unify_mm(left: Term, right: Term) -> list[MultiEquation] | None:
+    """Унификация по Мартелли–Монтанари, **алгоритм 3** из условия ЛР1 2022.
+
+    > Нужен именно настоящий Мартелли–Монтанари, а не из википедии!
+    > Нам нужен **алгоритм 3**, а не алгоритм 1.
+
+    Возвращается результирующая система мультиуравнений — подстановка
+    в той самой форме, в какой её просят предъявить. `None` — унификации
+    нет. Ход алгоритма по слайдам:
+
+    1. строим `{x} = (t₁, t₂)` со свежей `x` и `{xᵢ} = ∅` на все переменные;
+    2. выбираем уравнение, переменные которого не встречаются в правых
+       частях остальных; если такого нет — неудача (это и есть проверка
+       вхождения, только в терминах системы);
+    3. считаем общую часть и границу, границу добавляем и компактифицируем;
+    4. переносим `S = C` в результат.
+    """
+    names = set(left.variables() | right.variables())
+    head_variables = {RESULT} | {t.head for t in (left, right) if t.variable}
+    head_terms = tuple(t for t in (left, right) if not t.variable)
+    system = _compactify(
+        [MultiEquation(frozenset(head_variables), head_terms)]
+        + [MultiEquation(frozenset({name})) for name in sorted(names)]
+    )
+
+    result: list[MultiEquation] = []
+    while system:
+        chosen = _choose(system)
+        if chosen is None:
+            return None
+        system.remove(chosen)
+        if len(chosen.terms) <= 1:
+            result.append(chosen)
+            continue
+        part, frontier = common_part(chosen.terms)
+        if part is None:
+            return None
+        system = _compactify(system + frontier)
+        result.append(MultiEquation(chosen.variables, (part,)))
+    return result
+
+
+def _choose(system: list[MultiEquation]) -> MultiEquation | None:
+    """Уравнение, переменные которого не встречаются в правых частях других.
+
+    Предпочитается уравнение с двумя и более термами справа: именно к нему
+    применим шаг с общей частью. Если таких нет, годится любое подходящее —
+    его можно сразу вынести в результат.
+    """
+
+    def busy(equation: MultiEquation) -> bool:
+        # «ни одна переменная левой части которого не встречается в правой
+        # части никакого уравнения **вообще**» — включая его собственную.
+        # Без этого `x` и `F(x)` благополучно «унифицируются»: уравнение
+        # `{x} = (F(x))` некому забраковать.
+        for other in system:
+            for term in other.terms:
+                if term.variables() & equation.variables:
+                    return True
+        return False
+
+    free = [e for e in system if not busy(e)]
+    if not free:
+        return None
+    return max(free, key=lambda e: len(e.terms))
+
+
+def unified_term(system: list[MultiEquation]) -> Term | None:
+    """Сам унифицированный терм — то, что стоит в уравнении со свежей `⊤`.
+
+    Ответ преподавателя начинается именно с него: «Результат: терм
+    `F(q,q,q)` с подстановками …».
+    """
+    for equation in system:
+        if RESULT in equation.variables and equation.terms:
+            return substitute(equation.terms[0], substitution_of(system))
+    return None
+
+
+def substitution_of(system: list[MultiEquation]) -> dict[str, Term]:
+    """Перевести результат алгоритма 3 в обычную подстановку.
+
+    Уравнение `{xᵢ, xⱼ} = ∅` общей части не задаёт, но в подстановку
+    входит: оно означает `xᵢ := xⱼ`. Преподаватель отдельно предупреждает,
+    что про такие уравнения забывают.
+
+    Свежая переменная `⊤` в подстановку не попадает: она обозначает весь
+    терм, а не переменную условия. Её значение выдаёт `unified_term`.
+    """
+    binding: dict[str, Term] = {}
+    for equation in sorted(system, key=lambda e: len(e.terms)):
+        names = sorted(equation.variables - {RESULT})
+        if not names:
+            continue
+        value = equation.terms[0] if equation.terms else var(names[-1])
+        for name in names:
+            if var(name) != value:
+                binding[name] = value
+    changed = True
+    while changed:
+        changed = False
+        for name, value in list(binding.items()):
+            expanded = substitute(value, {k: v for k, v in binding.items() if k != name})
+            if expanded != value:
+                binding[name] = expanded
+                changed = True
+    return binding
+
+
+# --------------------------------------------------------------------------
+# Критические пары и локальная конфлюэнтность
+# --------------------------------------------------------------------------
+
+
+def rename(term: Term, suffix: str) -> Term:
+    """Переименовать все переменные терма, приписав суффикс."""
+    if term.variable:
+        return var(term.head + suffix)
+    return Term(term.head, tuple(rename(a, suffix) for a in term.args), False)
+
+
+@dataclass(frozen=True)
+class CriticalPair:
+    """Наложение двух правил: один терм, переписанный двумя способами."""
+
+    left: Term
+    right: Term
+    first: Rule
+    second: Rule
+    position: tuple[int, ...]
+
+    def __str__(self) -> str:
+        where = "в вершине" if not self.position else f"в позиции {self.position}"
+        return (
+            f"наложение «{self.first}» и «{self.second}» {where} "
+            f"даёт «{self.left}» и «{self.right}»"
+        )
+
+
+def _critical_pairs(system: TRS) -> list[CriticalPair]:
+    pairs: list[CriticalPair] = []
+    for outer in system.rules:
+        for inner in system.rules:
+            renamed_lhs = rename(inner.lhs, "′")
+            renamed_rhs = rename(inner.rhs, "′")
+            for path, sub in outer.lhs.positions():
+                if sub.variable:
+                    continue  # наложения в переменной не дают критических пар
+                if outer is inner and not path:
+                    continue  # правило само с собой в вершине — тривиально
+                mgu = unify(sub, renamed_lhs)
+                if mgu is None:
+                    continue
+                by_outer = substitute(outer.rhs, mgu)
+                by_inner = substitute(outer.lhs.replace(path, renamed_rhs), mgu)
+                if by_outer != by_inner:
+                    pairs.append(CriticalPair(by_outer, by_inner, outer, inner, path))
+    return pairs

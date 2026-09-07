@@ -144,6 +144,8 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | нижняя оценка размера НКА | `myhill.extended_fooling_set` (треугольная!) |
 | завершима ли SRS, критические пары, Кнут–Бендикс | `srs.terminates`, `srs.complete` |
 | термы: унификация, переписывание, интерпретации | `trs.unify`, `trs.TRS.terminates`, `trs.TRS.as_srs` |
+| унификация по Мартелли–Монтанари, алгоритм 3 | `trs.unify_mm`, `trs.common_part` |
+| критические пары и конфлюэнтность термов | `trs.TRS.critical_pairs`, `trs.TRS.locally_confluent` |
 | инварианты SRS вида `Σ cₓ·|w|ₓ mod m` | `srs.linear_invariants` |
 | принадлежит ли слово языку грамматики | `parse.recognize` (Эрли), `parse.cyk` |
 | LL(1), LR(0), SLR(1), левая рекурсия | `cfg.is_ll1`, `cfg.slr1_conflicts`, `cfg.left_recursive` |
@@ -387,5 +389,5 @@ python tools/lab3_report.py 1 --pda my.pda   # ЛР3
 
 ```bash
 export PYTHONIOENCODING=utf-8   # иначе консоль Windows роняет вывод в CP1251
-python -m pytest -q             # 835 тестов
+python -m pytest -q             # 846 тестов
 ```
