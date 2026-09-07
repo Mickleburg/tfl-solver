@@ -12,7 +12,7 @@ import pathlib
 
 import pytest
 
-from tfl.srs import Rule, SRS, Verdict, parse_srs, shortlex_key
+from tfl.srs import Interpretation, Rule, SRS, Verdict, parse_srs, shortlex_key
 
 VARIANT_20 = pathlib.Path(__file__).parent.parent / "evals" / "lab1_2025" / "variant-20.srs"
 
@@ -445,3 +445,70 @@ def test_fuzz_default_is_the_safe_reading():
     original = parse_srs("a -> b")
     replacement = parse_srs("a -> c\nb -> c")
     assert original.fuzz_equivalence(replacement, trials=40, word_len=3).value is not False
+
+
+# --------------------------------------------------------------------------
+# Линейные интерпретации: завершимость там, где шортлекс бессилен
+# --------------------------------------------------------------------------
+
+
+def test_interpretation_handles_a_lengthening_rule():
+    """`a → bb` удлиняет слово, значит армейского порядка не существует.
+
+    Интерпретация сравнивает не длины, а значения функций, поэтому берёт
+    такое правило: хватает весов `[a] = 3`, `[b] = 1`.
+    """
+    system = parse_srs("a -> b b")
+    assert system.find_shortlex_order() is None
+    verdict = system.find_interpretation()
+    assert verdict.value is True
+    assert verdict.witness.is_additive()
+    for rule in system.rules:
+        assert verdict.witness.decreases(rule)
+
+
+def test_interpretation_is_wired_into_terminates():
+    verdict = parse_srs("a -> b b").terminates(max_len=6)
+    assert verdict.value is True
+    assert "интерпретация" in verdict.reason
+
+
+def test_slopes_matter_where_weights_alone_fail():
+    """`ab → ba` не меняет состав слова, поэтому чистые веса бессильны.
+
+    С наклонами получается: `[a](x) = 2x`, `[b](x) = x + 1` дают
+    `[ab](x) = 2x + 2` против `[ba](x) = 2x + 1`.
+    """
+    system = parse_srs("a b -> b a")
+    verdict = system.find_interpretation()
+    assert verdict.value is True
+    assert not verdict.witness.is_additive()
+
+
+def test_composition_is_left_to_right():
+    """Значение слова — композиция функций букв, а не сумма."""
+    system = parse_srs("a -> b")
+    interpretation = Interpretation({"a": 2, "b": 1}, {"a": 1, "b": 3})
+    assert interpretation.value("a") == (2, 1)
+    assert interpretation.value("ab") == (2, 1 + 2 * 3)
+    assert interpretation.value("") == (1, 0)
+    assert system.alphabet == {"a", "b"}
+
+
+def test_no_interpretation_proves_nothing():
+    """`aa → aaa` не завершима, но вердикт здесь «не выяснено», а не «нет».
+
+    Опровергать незавершимость интерпретации не умеют: их отсутствие
+    в узком классе ничего не значит.
+    """
+    verdict = parse_srs("a a -> a a a").find_interpretation()
+    assert verdict.value is None
+    assert "ничего не говорит" in verdict.reason
+
+
+def test_budget_is_reported_rather_than_burned():
+    """На большом алфавите перебор не запускается, а честно отказывается."""
+    system = parse_srs("a b c d e f g h -> h g f e d c b a")
+    verdict = system.find_interpretation(budget=1000)
+    assert verdict.value is None
+    assert "превышает бюджет" in verdict.reason

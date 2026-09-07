@@ -31,6 +31,7 @@ __all__ = [
     "parse_srs",
     "Verdict",
     "shortlex_key",
+    "Interpretation",
     "ARROWS",
 ]
 
@@ -84,6 +85,56 @@ def shortlex_key(word: str, precedence: str) -> tuple[int, tuple[int, ...]]:
     rank = {ch: i for i, ch in enumerate(precedence)}
     return (len(word), tuple(rank.get(ch, len(rank)) for ch in word))
 
+
+# --------------------------------------------------------------------------
+# Линейные интерпретации: доказательство завершимости
+# --------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class Interpretation:
+    """Линейная интерпретация: каждой букве сопоставлена функция `x ↦ m·x + c`.
+
+    Слово интерпретируется **композицией** функций своих букв, поэтому
+    `[a₁…aₙ](x) = M·x + C`, где `M = ∏ mᵢ`, а `C` накапливается слева:
+    `C = c₁ + m₁c₂ + m₁m₂c₃ + …`. Пустое слово — тождество.
+
+    Требование `m ≥ 1` делает каждую функцию строго возрастающей, а значит
+    порядок замкнут относительно контекста: приписывание букв слева и справа
+    сохраняет строгое неравенство. Это и позволяет вывести из убывания
+    на правилах завершимость всей системы.
+    """
+
+    slope: dict[str, int]
+    shift: dict[str, int]
+
+    def value(self, word: str) -> tuple[int, int]:
+        """Пара `(M, C)` для слова."""
+        total_slope, total_shift = 1, 0
+        for char in word:
+            total_shift += total_slope * self.shift[char]
+            total_slope *= self.slope[char]
+        return total_slope, total_shift
+
+    def decreases(self, rule: Rule) -> bool:
+        """Строго ли убывает правило при любом `x ≥ 0`."""
+        left_slope, left_shift = self.value(rule.lhs)
+        right_slope, right_shift = self.value(rule.rhs)
+        return left_slope >= right_slope and left_shift > right_shift
+
+    def is_additive(self) -> bool:
+        """Все коэффициенты равны единице — интерпретация это просто вес."""
+        return all(m == 1 for m in self.slope.values())
+
+    def __str__(self) -> str:
+        parts = []
+        for char in sorted(self.slope):
+            m, c = self.slope[char], self.shift[char]
+            if m == 1:
+                parts.append(f"[{char}](x) = x + {c}")
+            else:
+                parts.append(f"[{char}](x) = {m}x + {c}")
+        return "; ".join(parts)
 
 @dataclass
 class Search:
@@ -347,12 +398,87 @@ class SRS:
             verdict = self.decreasing_under(order)
             if verdict.value is True:
                 return verdict
+
+        # Шортлекс бессилен против удлиняющих правил, а линейная интерпретация
+        # их берёт: она сравнивает не длины, а значения функций.
+        interpretation = self.find_interpretation()
+        if interpretation.value is True:
+            return interpretation
+
         return Verdict(
             None,
-            f"цикл длины ≤ {max_len} не найден, но и убывающего армейского "
-            f"порядка не существует ни при каком приоритете букв. Нужен более "
-            f"сильный порядок (рекурсивный по путям, полиномиальная "
-            f"интерпретация) или другой аргумент",
+            f"цикл длины ≤ {max_len} не найден; убывающего армейского порядка "
+            f"не существует ни при каком приоритете букв; линейной интерпретации "
+            f"с малыми коэффициентами тоже нет. Нужен более сильный порядок "
+            f"(рекурсивный по путям, матричная интерпретация через SMT) "
+            f"или другой аргумент",
+        )
+
+    def find_interpretation(
+        self,
+        max_slope: int = 3,
+        max_shift: int = 4,
+        budget: int = 200_000,
+    ) -> Verdict:
+        """Искать линейную интерпретацию, доказывающую завершимость.
+
+        Перебираются наклоны `m ∈ [1, max_slope]` и сдвиги
+        `c ∈ [0, max_shift]` для каждой буквы. Найденная интерпретация —
+        **доказательство**: все правила строго убывают, порядок фундирован
+        и замкнут относительно контекста.
+
+        Ненайденная интерпретация не доказывает ничего: перебор ограничен
+        размерностью один и малыми коэффициентами. Поэтому исход здесь
+        либо `True`, либо «не выяснено», и `False` не бывает.
+
+        Приём сильнее шортлекса: он берёт и удлиняющие правила, для которых
+        армейского порядка не существует в принципе. Так `a → bb` убывает
+        при весах `[a] = 3`, `[b] = 1`.
+
+        >>> parse_srs("a -> b b").find_interpretation().value
+        True
+        >>> parse_srs("a a -> a a a").find_interpretation().value is None
+        True
+        """
+        letters = sorted(self.alphabet)
+        if not letters:
+            return Verdict(True, "в системе нет букв: переписывать нечего")
+
+        options = [
+            (m, c)
+            for m in range(1, max_slope + 1)
+            for c in range(0, max_shift + 1)
+        ]
+        total = len(options) ** len(letters)
+        if total > budget:
+            return Verdict(
+                None,
+                f"перебор {total} интерпретаций превышает бюджет {budget}: "
+                f"букв {len(letters)}, вариантов на букву {len(options)}",
+            )
+
+        # Веса (все наклоны единичные) проверяем первыми: они и проще
+        # для отчёта, и чаще срабатывают.
+        for additive_first in (True, False):
+            for combo in _tuples(options, len(letters)):
+                if all(m == 1 for m, _ in combo) != additive_first:
+                    continue
+                candidate = Interpretation(
+                    {ch: m for ch, (m, _) in zip(letters, combo)},
+                    {ch: c for ch, (_, c) in zip(letters, combo)},
+                )
+                if all(candidate.decreases(rule) for rule in self.rules):
+                    kind = "весовая" if candidate.is_additive() else "линейная"
+                    return Verdict(
+                        True,
+                        f"{kind} интерпретация убывает на всех правилах, "
+                        f"значит система завершима: {candidate}",
+                        witness=candidate,
+                    )
+        return Verdict(
+            None,
+            f"линейной интерпретации с наклонами до {max_slope} и сдвигами "
+            f"до {max_shift} не нашлось; про завершимость это ничего не говорит",
         )
 
     def find_shortlex_order(self) -> str | None:
@@ -925,3 +1051,13 @@ def _nullspace_mod_p(rows: list[list[int]], width: int, p: int) -> list[list[int
             vector[col] = (-matrix[r][f]) % p
         basis.append(vector)
     return basis
+
+
+def _tuples(options: list[tuple[int, int]], length: int):
+    """Все кортежи заданной длины из списка вариантов."""
+    if length == 0:
+        yield ()
+        return
+    for head in options:
+        for tail in _tuples(options, length - 1):
+            yield (head, *tail)
