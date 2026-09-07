@@ -7,6 +7,8 @@ import pytest
 from tfl import regex as rx
 from tfl.automata import dfa_of, disagreements, thompson
 from tfl.glushkov import glushkov, linearize, reduce_nfa, small_nfa
+from tfl.glushkov import is_one_unambiguous, nondeterminism
+from tfl.automata import dfa_of, equivalent
 from tfl.myhill import extended_fooling_set
 
 from tests.test_core import VARIANTS
@@ -103,3 +105,43 @@ def test_dm800_extended_regex_simplification_is_correct():
     original = dfa_of("b*((ab*a)*(aabb|(babb)*))*")
     simplified = dfa_of("b*(ab*a|aabb|babb)*")
     assert counterexample(original, simplified) is None
+
+
+# --------------------------------------------------------------------------
+# 1-однозначность (РК2 2023, 2 балла; вопрос «Фармы»)
+# --------------------------------------------------------------------------
+
+
+def test_deterministic_glushkov_proves_one_unambiguity():
+    """`a*b`: разные буквы в развилках, автомат Глушкова детерминирован."""
+    verdict = is_one_unambiguous("a*b")
+    assert verdict.value is True
+    assert nondeterminism(rx.parse("a*b")) == []
+
+
+def test_nondeterminism_points_at_positions():
+    """Задача 4 РК1 просит указать позиции недетерминированного разбора."""
+    conflicts = nondeterminism(rx.parse("(a|b)*a"))
+    assert conflicts
+    start = [c for c in conflicts if c.position == 0]
+    assert start and start[0].char == "a"
+    assert len(start[0].targets) == 2
+    assert "выбор между" in str(start[0])
+
+
+def test_verdict_is_about_the_regex_not_the_language():
+    """Недетерминированность записи не переносится на язык — и наоборот.
+
+    `(a|b)*a` недетерминирован по Глушкову, но тот же язык задаётся
+    1-однозначной записью `(b*a)+`. Поэтому здесь «не выяснено», а не «нет».
+    """
+    loose = is_one_unambiguous("(a|b)*a")
+    tight = is_one_unambiguous("(b*a)(b*a)*")
+    assert loose.value is None
+    assert tight.value is True
+    assert equivalent(dfa_of("(a|b)*a"), dfa_of("(b*a)(b*a)*"))
+
+
+def test_two_stars_over_one_letter_are_ambiguous():
+    """`a*a*` — учебный пример неоднозначной записи."""
+    assert is_one_unambiguous("a*a*").value is None

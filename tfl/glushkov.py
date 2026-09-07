@@ -20,8 +20,18 @@ from dataclasses import dataclass, field
 
 from tfl import regex as rx
 from tfl.automata import NFA, DFA, State, counterexample
+from tfl.verdict import Verdict, proved, unknown
 
-__all__ = ["glushkov", "small_nfa", "Linearization", "linearize", "reduce_nfa"]
+__all__ = [
+    "glushkov",
+    "small_nfa",
+    "Linearization",
+    "linearize",
+    "reduce_nfa",
+    "Conflict",
+    "nondeterminism",
+    "is_one_unambiguous",
+]
 
 
 @dataclass
@@ -177,3 +187,79 @@ def reduce_nfa(nfa: NFA) -> NFA:
 def small_nfa(node: rx.Node) -> NFA:
     """Возможно малый НКА: позиционный автомат плюс склейка состояний."""
     return reduce_nfa(glushkov(node))
+
+
+# --------------------------------------------------------------------------
+# 1-однозначность: детерминирован ли автомат Глушкова
+# --------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class Conflict:
+    """Место недетерминированного разбора в позиционном автомате.
+
+    `position` — номер вхождения буквы, после которого возникает выбор
+    (`0` — стартовое состояние). `targets` — вхождения, между которыми
+    выбор происходит; они помечены одной и той же буквой `char`.
+    """
+
+    position: int
+    char: str
+    targets: tuple[int, ...]
+
+    def __str__(self) -> str:
+        where = "в начале" if self.position == 0 else f"после позиции {self.position}"
+        return f"{where} по букве «{self.char}» выбор между {list(self.targets)}"
+
+
+def nondeterminism(node: rx.Node) -> list[Conflict]:
+    """Все позиции регулярки, где автомат Глушкова недетерминирован.
+
+    Ровно то, что просят предъявить в задаче 4 РК1: «указать позиции,
+    где происходит недетерминированный разбор».
+    """
+    lin = linearize(node)
+    machine = glushkov(node)
+    conflicts = []
+    for (src, char), targets in sorted(machine.delta.items(), key=lambda kv: kv[0]):
+        if len(targets) > 1:
+            conflicts.append(Conflict(src, char, tuple(sorted(targets))))
+    assert all(lin.symbol[t] == c.char for c in conflicts for t in c.targets)
+    return conflicts
+
+
+def is_one_unambiguous(node: rx.Node | str) -> Verdict:
+    """1-однозначна ли **предъявленная регулярка**.
+
+    Регулярка называется 1-однозначной, если её автомат Глушкова
+    детерминирован: читая слово слева направо, всегда понятно, какому
+    вхождению буквы соответствует прочитанный символ, без заглядывания
+    вперёд.
+
+    Границы вывода. Детерминированность даёт **доказательство**: язык
+    1-однозначен, и свидетель — сама регулярка. Обратный вывод неправомерен:
+    недетерминированность автомата Глушкова говорит только про эту запись,
+    а для языка может найтись другая, 1-однозначная. Поэтому здесь
+    «не выяснено», а не «нет» — то же различие, что между свойством
+    грамматики и свойством языка.
+
+    >>> is_one_unambiguous("a*b").value
+    True
+    >>> is_one_unambiguous("(a|b)*a").value is None
+    True
+    """
+    tree = rx.parse(node) if isinstance(node, str) else node
+    conflicts = nondeterminism(tree)
+    if not conflicts:
+        return proved(
+            "автомат Глушкова детерминирован, значит регулярка 1-однозначна "
+            "и язык 1-однозначен",
+            tree,
+        )
+    return unknown(
+        "автомат Глушкова недетерминирован: "
+        + "; ".join(str(c) for c in conflicts)
+        + ". Про язык это ничего не говорит — 1-однозначной может оказаться "
+        "другая запись",
+        conflicts,
+    )

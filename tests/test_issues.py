@@ -10,6 +10,7 @@ from __future__ import annotations
 import re
 
 from tfl.automata import dfa_of
+from tfl.cfg import parse_cfg
 from tfl.words import iter_words
 
 # --------------------------------------------------------------------------
@@ -141,3 +142,40 @@ def test_second_example_answer_taken_literally_is_a_different_language():
     literal = _words_of("(b*|aaa(a(aa|b))*)*(aa|b)")
     assert "aaba" in language and "aaba" not in literal
     assert "aaab" in literal and "aaab" not in language
+
+
+# --------------------------------------------------------------------------
+# Issue #10 — First_k и левая рекурсия
+# --------------------------------------------------------------------------
+
+
+def test_first_k_ignores_left_recursion():
+    """«Леворекурсивный шаг ничего не даёт» — прямой ответ преподавателя.
+
+    Там же предупреждение: «кое-какие онлайн-калькуляторы считают
+    не по этому алгоритму и левую рекурсию обрабатывать не умеют».
+    У нас `first_k` — неподвижная точка, поэтому проблема не возникает.
+    """
+    grammar = parse_cfg("""
+        A -> A B | c
+        B -> b
+    """)
+    assert grammar.first_k(1)["A"] == {("c",)}
+    assert grammar.first_k(2)["A"] == {("c",), ("c", "b")}
+
+
+def test_first_k_with_a_nullable_left_recursive_nonterminal():
+    """Если `A` порождает ε, леворекурсивное правило заменяется хвостом.
+
+    `A → A B | ε`, `B → b` порождает `b*`, поэтому `first₂(A)`
+    состоит из ε, `b` и `bb`.
+    """
+    grammar = parse_cfg("""
+        S -> A c
+        A -> A B |
+        B -> b
+    """)
+    assert "A" in grammar.nullable()
+    assert grammar.first_k(1)["A"] == {(), ("b",)}
+    assert grammar.first_k(2)["A"] == {(), ("b",), ("b", "b")}
+    assert grammar.follow_k(1)["A"] == {("b",), ("c",)}
