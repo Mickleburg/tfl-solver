@@ -19,8 +19,8 @@
 
 Что здесь механизировано: разбор, подстановка, сопоставление, унификация
 с проверкой вхождения, переписывание, поиск петли, полиномиальные
-интерпретации и мост в `tfl/srs.py` для унарных систем. Чего нет:
-критических пар и пополнения (см. `docs/OPEN-GAPS.md`).
+интерпретации и мост в `tfl/srs.py` для унарных систем, критические пары,
+рекурсивный путевой порядок и пополнение по Кнуту–Бендиксу.
 
 Про границы вывода. Завершимость TRS неразрешима, поэтому `terminates`
 возвращает `Verdict` с тремя исходами, как и его строковый двойник.
@@ -56,6 +56,9 @@ __all__ = [
     "RESULT",
     "CriticalPair",
     "rename",
+    "lpo_greater",
+    "overlaps",
+    "from_srs",
 ]
 
 
@@ -411,6 +414,14 @@ class TRS:
                 + " → ".join(str(t) for t in loop),
                 loop,
             )
+        order = self.find_precedence()
+        if order is not None:
+            shown = " ≻ ".join(order.split()) or "—"
+            return proved(
+                f"все правила убывают в рекурсивном путевом порядке "
+                f"при старшинстве {shown}",
+                order,
+            )
         found = self.find_interpretation()
         if found.value is True:
             return found
@@ -423,9 +434,10 @@ class TRS:
                     bridged.witness,
                 )
         return unknown(
-            "ни петли, ни полиномиальной интерпретации с малыми "
-            "коэффициентами не нашлось; нужен более сильный порядок "
-            "(рекурсивный по путям, матричные интерпретации)"
+            "ни петли, ни подходящего старшинства символов для LPO, "
+            "ни полиномиальной интерпретации с малыми коэффициентами "
+            "не нашлось; нужен более сильный порядок (матричные "
+            "интерпретации, SMT-постановка)"
         )
 
     # ------------------------------------------------- конфлюэнтность
@@ -507,6 +519,235 @@ class TRS:
                 unresolved,
             )
         return proved(f"все {len(pairs)} критических пар сходятся")
+
+    # ----------------------------------------------------- Кнут–Бендикс
+
+    def lpo_terminates(self, precedence) -> Verdict:
+        """Убывают ли все правила в LPO при заданном старшинстве символов.
+
+        Исходов два, а не три: убывание доказывает завершимость, а его
+        отсутствие не доказывает ничего — порядок мог быть выбран неудачно.
+        """
+        bad = [r for r in self.rules if not lpo_greater(r.lhs, r.rhs, precedence)]
+        if bad:
+            return unknown(
+                f"в этом порядке не убывает {len(bad)} правил, первое — «{bad[0]}». "
+                f"Про завершимость отсюда не следует ничего: попробуйте другое "
+                f"старшинство символов",
+                bad,
+            )
+        return proved(
+            f"все {len(self.rules)} правил убывают в рекурсивном путевом порядке",
+            precedence,
+        )
+
+    def precedences(self, max_symbols: int = 7):
+        """Кандидаты в старшинство символов: сперва ориентирующие правила.
+
+        Порядок кандидатов важен для пополнения: там ориентировать придётся
+        не только исходные правила, но и всё, что выведется по дороге,
+        а какой порядок это выдержит — заранее не видно.
+        """
+        signature = sorted(self.signature())
+        if not signature:
+            yield ""
+            return
+        if len(signature) > max_symbols:
+            return
+        rest: list[str] = []
+        for order in itertools.permutations(signature):
+            if all(lpo_greater(r.lhs, r.rhs, order) for r in self.rules):
+                yield " ".join(order)
+            else:
+                rest.append(" ".join(order))
+        yield from rest
+
+    def find_precedence(self, max_symbols: int = 7) -> str | None:
+        """Подобрать старшинство символов, при котором LPO ориентирует все правила."""
+        for order in self.precedences(max_symbols):
+            if all(lpo_greater(r.lhs, r.rhs, order) for r in self.rules):
+                return order
+        return None
+
+    def oriented(self, precedence) -> tuple[TRS, tuple[Rule, ...]]:
+        """Развернуть правила по убыванию LPO. Второй элемент — что не вышло.
+
+        Неориентируемое уравнение — законный исход, а не сбой: `f(x,y) = f(y,x)`
+        не ориентируется **ни одним** порядком редукции, потому что обе части
+        получаются друг из друга подстановкой. Такие уравнения и есть причина,
+        по которой существует пополнение по модулю AC.
+        """
+        rules: list[Rule] = []
+        stuck: list[Rule] = []
+        for rule in self.rules:
+            if rule.lhs == rule.rhs:
+                continue
+            if lpo_greater(rule.lhs, rule.rhs, precedence):
+                rules.append(rule)
+            elif lpo_greater(rule.rhs, rule.lhs, precedence):
+                rules.append(Rule(rule.rhs, rule.lhs))
+            else:
+                stuck.append(rule)
+        return TRS(tuple(dict.fromkeys(rules)), self.variables), tuple(stuck)
+
+    def minimized(self, budget: int = 10_000) -> TRS:
+        """Межредукция: правые части — в нормальную форму, лишние правила — вон.
+
+        Правило выбрасывается, если его левая часть переписывается
+        **остальными**: тогда оно выводимо и в системе не нужно.
+        """
+        rules = list(dict.fromkeys(self.rules))
+        for _ in range(len(rules) + 1):
+            changed = False
+            for index, rule in enumerate(rules):
+                whole = TRS(tuple(rules), self.variables)
+                normal = whole.normal_form(rule.rhs, budget=budget)
+                if normal is not None and normal != rule.rhs:
+                    rules[index] = Rule(rule.lhs, normal)
+                    changed = True
+            if not changed:
+                break
+        index = 0
+        while index < len(rules):
+            others = TRS(tuple(rules[:index] + rules[index + 1 :]), self.variables)
+            if others.step(rules[index].lhs):
+                del rules[index]
+                index = 0
+            else:
+                index += 1
+        return TRS(tuple(rules), self.variables)
+
+    def complete(
+        self,
+        precedence=None,
+        max_rules: int = 30,
+        max_steps: int = 500,
+        budget: int = 10_000,
+        max_orders: int = 12,
+    ) -> tuple[TRS, Verdict]:
+        """Пополнение по Кнуту–Бендиксу относительно LPO.
+
+        Схема Юэ: система правил `R` и очередь уравнений `E`. На каждом шаге
+        уравнение приводится к нормальным формам обеих частей; совпали —
+        выбрасывается, разошлись — ориентируется в правило. После добавления
+        правила система **межредуцируется**: правила, левая часть которых
+        стала переписываемой, возвращаются в очередь уравнениями, а правые
+        части нормализуются. Без этого шага система пухнет — на аксиомах
+        группы за пять раундов набегает сорок правил вместо десяти,
+        и процедура упирается в лимит там, где на самом деле сходится.
+
+        Возвращает систему и вердикт. Исходов два, и оба содержательны:
+
+        * `True` — очередь пуста, критических пар без сходимости нет,
+          система канонична: завершима по LPO плюс локально конфлюэнтна,
+          дальше лемма Ньюмана;
+        * `None` — упёрлись в лимит либо в неориентируемое уравнение.
+          Расходимость пополнения — **штатное поведение**, процедура
+          полуразрешающая.
+
+        Порядок символов можно не задавать: тогда перебираются кандидаты,
+        начиная с ориентирующих исходные правила. Перебор нужен **не для
+        удобства**: на аксиомах группы первый же подходящий порядок
+        (`f ≻ e ≻ i`) через десяток шагов упирается в уравнение
+        `i(f(x,y)) = f(i(y),i(x))`, неориентируемое в нём ни в какую
+        сторону, тогда как при `i ≻ f ≻ e` пополнение доходит до
+        канонических десяти правил.
+        """
+        if precedence is None:
+            attempts: list[tuple[TRS, Verdict]] = []
+            for candidate in itertools.islice(self.precedences(), max_orders):
+                outcome = self.complete(candidate, max_rules, max_steps, budget)
+                if outcome[1].value is True:
+                    return outcome
+                attempts.append(outcome)
+            if not attempts:
+                return self, unknown(
+                    "сигнатура слишком велика, чтобы перебирать старшинство "
+                    "символов, — задайте порядок вручную"
+                )
+            return attempts[0][0], unknown(
+                f"ни один из {len(attempts)} перебранных порядков символов "
+                f"не довёл пополнение до конца; при первом из них: "
+                f"{attempts[0][1].reason}"
+            )
+        rules: list[Rule] = []
+        queue: list[tuple[Term, Term]] = []
+        seen: set[tuple[str, str]] = set()
+
+        def enqueue(left: Term, right: Term) -> None:
+            key = tuple(sorted((str(left), str(right))))
+            if key in seen:
+                return
+            seen.add(key)
+            queue.append((left, right))
+
+        for rule in self.rules:
+            enqueue(rule.lhs, rule.rhs)
+        steps = 0
+        while queue:
+            steps += 1
+            if steps > max_steps:
+                return TRS(tuple(rules), self.variables), unknown(
+                    f"пополнение прервано: {max_steps} шагов исчерпаны, "
+                    f"в очереди осталось {len(queue)} уравнений"
+                )
+            left, right = queue.pop(0)
+            current = TRS(tuple(rules), self.variables)
+            left = current.normal_form(left, budget=budget)
+            right = current.normal_form(right, budget=budget)
+            if left is None or right is None:
+                return current, unknown(
+                    f"нормальная форма уравнения не досчиталась за {budget} "
+                    f"шагов — система, похоже, не завершима"
+                )
+            if left == right:
+                continue
+            if lpo_greater(left, right, precedence):
+                fresh = Rule(left, right)
+            elif lpo_greater(right, left, precedence):
+                fresh = Rule(right, left)
+            else:
+                return current, unknown(
+                    f"уравнение «{left} = {right}» не ориентируется: "
+                    f"ни одна часть не больше другой в выбранном порядке",
+                    (left, right),
+                )
+
+            only_fresh = TRS((fresh,), self.variables)
+            kept: list[Rule] = []
+            for rule in rules:
+                if only_fresh.step(rule.lhs):
+                    # Мимо `enqueue`: это уравнение уже проходило очередь,
+                    # и отсев повторов выбросил бы его насовсем.
+                    queue.append((rule.lhs, rule.rhs))
+                else:
+                    kept.append(rule)
+            rules = [*kept, fresh]
+            current = TRS(tuple(rules), self.variables)
+            rules = [
+                Rule(rule.lhs, current.normal_form(rule.rhs, budget=budget) or rule.rhs)
+                for rule in rules
+            ]
+            if len(rules) > max_rules:
+                return TRS(tuple(rules), self.variables), unknown(
+                    f"пополнение прервано: правил стало больше {max_rules}. "
+                    f"Процедура Кнута–Бендикса может расходиться, и это "
+                    f"её штатный исход"
+                )
+
+            # В очередь идут наложения **только с новым правилом**: пары
+            # старых между собой уже рассматривались, а правила, снятые
+            # межредукцией, вернулись уравнениями, так что ничего не теряется.
+            for rule in rules:
+                for pair in [*overlaps(fresh, rule), *overlaps(rule, fresh)]:
+                    enqueue(pair.left, pair.right)
+
+        done = TRS(tuple(rules), self.variables)
+        return done, proved(
+            f"пополнение завершено за {steps} шагов, правил в итоге "
+            f"{len(done)}: все критические пары сходятся",
+            precedence,
+        )
 
     # ------------------------------------------------------- мост в строки
 
@@ -1066,22 +1307,124 @@ class CriticalPair:
         )
 
 
+def overlaps(outer: Rule, inner: Rule) -> list[CriticalPair]:
+    """Наложения `inner` на подтермы левой части `outer`.
+
+    Порядок важен: `overlaps(a, b)` и `overlaps(b, a)` дают разные пары.
+    """
+    pairs: list[CriticalPair] = []
+    renamed_lhs = rename(inner.lhs, "′")
+    renamed_rhs = rename(inner.rhs, "′")
+    for path, sub in outer.lhs.positions():
+        if sub.variable:
+            continue  # наложения в переменной не дают критических пар
+        if outer is inner and not path:
+            continue  # правило само с собой в вершине — тривиально
+        mgu = unify(sub, renamed_lhs)
+        if mgu is None:
+            continue
+        by_outer = substitute(outer.rhs, mgu)
+        by_inner = substitute(outer.lhs.replace(path, renamed_rhs), mgu)
+        if by_outer != by_inner:
+            pairs.append(CriticalPair(by_outer, by_inner, outer, inner, path))
+    return pairs
+
+
 def _critical_pairs(system: TRS) -> list[CriticalPair]:
     pairs: list[CriticalPair] = []
     for outer in system.rules:
         for inner in system.rules:
-            renamed_lhs = rename(inner.lhs, "′")
-            renamed_rhs = rename(inner.rhs, "′")
-            for path, sub in outer.lhs.positions():
-                if sub.variable:
-                    continue  # наложения в переменной не дают критических пар
-                if outer is inner and not path:
-                    continue  # правило само с собой в вершине — тривиально
-                mgu = unify(sub, renamed_lhs)
-                if mgu is None:
-                    continue
-                by_outer = substitute(outer.rhs, mgu)
-                by_inner = substitute(outer.lhs.replace(path, renamed_rhs), mgu)
-                if by_outer != by_inner:
-                    pairs.append(CriticalPair(by_outer, by_inner, outer, inner, path))
+            pairs.extend(overlaps(outer, inner))
     return pairs
+
+
+def from_srs(system, variable: str = "X") -> TRS:
+    """Обратный мост: строковая система как унарная система термов.
+
+    Слово `abc` кодируется цепочкой `a(b(c(X)))`, правило `l → r` —
+    правилом `l(X) → r(X)`. Подстановка в `X` — это суффикс слова,
+    контекст над цепочкой — префикс, так что переписывание строк
+    и переписывание термов совпадают шаг в шаг.
+
+    Нужен ради LPO: армейский порядок бессилен против удлиняющих правил,
+    а путевой порядок в некоторых из них разбирается.
+    """
+
+    def chain(word: str) -> Term:
+        term = var(variable)
+        for letter in reversed(word):
+            term = Term(letter, (term,), False)
+        return term
+
+    return TRS(tuple(Rule(chain(r.lhs), chain(r.rhs)) for r in system.rules), frozenset({variable}))
+
+
+# --------------------------------------------------------------------------
+# Рекурсивный путевой порядок (LPO)
+# --------------------------------------------------------------------------
+
+
+def _precedence_rank(precedence) -> dict[str, int]:
+    """Символ → его место в порядке. Меньше индекс — старше символ."""
+    names = precedence.split() if isinstance(precedence, str) else list(precedence)
+    return {name: index for index, name in enumerate(names)}
+
+
+def _rank_of(symbol: str, precedence) -> tuple[int, str]:
+    """Место символа в порядке. Неупомянутые идут после упомянутых, по алфавиту.
+
+    Порядок обязан быть **строгим и полным** на сигнатуре, иначе LPO
+    перестаёт быть порядком редукции. Умолчание по алфавиту делает его
+    таким при любом, даже пустом, списке.
+    """
+    rank = _precedence_rank(precedence)
+    if symbol in rank:
+        return (rank[symbol], "")
+    return (len(rank), symbol)
+
+
+def lpo_greater(left: Term, right: Term, precedence) -> bool:
+    """Строго ли `left` больше `right` в лексикографическом порядке по путям.
+
+    Определение (три случая, как в учебнике):
+
+    1. какой-то аргумент `left` уже больше либо равен `right`;
+    2. голова `left` старше головы `right`, и `left` больше **каждого**
+       аргумента `right`;
+    3. головы совпадают, аргументы сравниваются лексикографически,
+       и `left` больше каждого аргумента `right`.
+
+    Переменная меньше любого терма, который её **содержит**, и несравнима
+    со всеми остальными. Отсюда даром получается условие на правила:
+    `l >lpo r` возможно только при `Var(r) ⊆ Var(l)`.
+
+    Порядок устойчив к подстановке и к контексту и вполне обоснован, поэтому
+    убывание всех правил в нём **доказывает** завершимость — в отличие от
+    армейского порядка, бессильного против удлиняющих правил, и в отличие
+    от перебора интерпретаций с малыми коэффициентами.
+    """
+    if left == right:
+        return False
+    if right.variable:
+        return not left.variable and right.head in left.variables()
+    if left.variable:
+        return False
+
+    if any(arg == right or lpo_greater(arg, right, precedence) for arg in left.args):
+        return True  # случай 1
+
+    if not all(lpo_greater(left, arg, precedence) for arg in right.args):
+        return False  # без этого не работают ни случай 2, ни случай 3
+
+    here, there = _rank_of(left.head, precedence), _rank_of(right.head, precedence)
+    if here < there:
+        return True  # случай 2
+    if here > there:
+        return False
+    if left.arity != right.arity:
+        return left.arity > right.arity
+    for mine, yours in zip(left.args, right.args):
+        if mine == yours:
+            continue
+        return lpo_greater(mine, yours, precedence)  # случай 3
+    return False
