@@ -147,6 +147,7 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | принадлежит ли слово языку грамматики | `parse.recognize` (Эрли), `parse.cyk` |
 | LL(1), LR(0), SLR(1), левая рекурсия | `cfg.is_ll1`, `cfg.slr1_conflicts`, `cfg.left_recursive` |
 | детерминирован ли **автомат**, принимает ли слово | `pda.PDA.nondeterminism`, `pda.PDA.accepts` |
+| real-time ли автомат, снимает ли он цепочки | `pda.PDA.is_real_time`, `pda.PDA.multi_pop_transitions` |
 | беспрефиксность | `parse.prefix_free` |
 | регулярная аппроксимация сверху и пересечение | `approx.lr0_automaton`, `approx.intersect` |
 | язык как предикат, пересечение с регулярным | `lang.from_predicate`, `Language.restrict` |
@@ -385,5 +386,5 @@ python tools/lab3_report.py 1 --pda my.pda   # ЛР3
 
 ```bash
 export PYTHONIOENCODING=utf-8   # иначе консоль Windows роняет вывод в CP1251
-python -m pytest -q             # 808 тестов
+python -m pytest -q             # 814 тестов
 ```

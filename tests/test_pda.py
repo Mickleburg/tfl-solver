@@ -242,3 +242,91 @@ def test_dot_output_mentions_every_transition():
 def test_iter_words_covers_alphabet():
     """Страховка от опечатки в алфавите тестов выше."""
     assert set(iter_words("ab", 1)) == {"", "a", "b"}
+
+
+# --------------------------------------------------------------------------
+# Real-time свойство и слияние снимаемых символов
+# --------------------------------------------------------------------------
+#
+# Авторский разбор РК2 (`2023/RK2_probe_tasks_solutions`) на задаче
+# про real-time формулирует и ограничение, и приём:
+#
+# > А сбросить сразу несколько символов за один шаг мы не можем
+# > по определению. Остаётся ввести символы M2, соответствующие парным M
+# > <…> Слияние нескольких снимаемых подряд стековых символов и введение
+# > символа, находящегося непосредственно перед дном — довольно типичные
+# > приёмы построения таких автоматов.
+#
+# Ниже три автомата для одного языка `{a²ⁿbⁿ}`, различающиеся ровно тем,
+# какой ценой они обходят это ограничение.
+
+
+def _double_a_language(word: str) -> bool:
+    letters = word.count("a")
+    return (
+        word == "a" * letters + "b" * (len(word) - letters)
+        and letters % 2 == 0
+        and len(word) - letters == letters // 2
+    )
+
+
+def multi_pop_pda() -> PDA:
+    """Кладёт `A` на каждую `a` и снимает две за шаг — так курс не разрешает."""
+    return PDA("q", (), (
+        Transition("q", "a", (), ("A",), "q"),
+        Transition("q", "b", ("A", "A"), (), "r"),
+        Transition("r", "b", ("A", "A"), (), "r"),
+    ), frozenset({"q", "r"}), "both")
+
+
+def merged_pda() -> PDA:
+    """Слияние: `A` кладётся на каждую вторую `a`, снимается по одному."""
+    return PDA("qe", (), (
+        Transition("qe", "a", (), (), "qo"),
+        Transition("qo", "a", (), ("A",), "qe"),
+        Transition("qe", "b", ("A",), (), "qb"),
+        Transition("qb", "b", ("A",), (), "qb"),
+    ), frozenset({"qe", "qb"}), "both")
+
+
+def epsilon_pop_pda() -> PDA:
+    """Второй символ снимается ε-переходом — real-time теряется."""
+    return PDA("q", (), (
+        Transition("q", "a", (), ("A",), "q"),
+        Transition("q", "b", ("A",), (), "r1"),
+        Transition("r1", "", ("A",), (), "r"),
+        Transition("r", "b", ("A",), (), "r1"),
+    ), frozenset({"q", "r"}), "both")
+
+
+@pytest.mark.parametrize(
+    "build", [multi_pop_pda, merged_pda, epsilon_pop_pda], ids=["multi", "merged", "eps"]
+)
+def test_all_three_recognise_the_same_language(build):
+    """Автоматы различаются устройством, а не языком — иначе сравнивать нечего."""
+    machine = build()
+    for word in iter_words("ab", 9):
+        assert (machine.accepts(word).value is True) == _double_a_language(word), word
+
+
+def test_merging_buys_both_properties_at_once():
+    """Слияние даёт и real-time, и снятие по одному символу."""
+    machine = merged_pda()
+    assert machine.is_deterministic()
+    assert machine.is_real_time()
+    assert machine.multi_pop_transitions() == []
+
+
+def test_multi_pop_is_real_time_but_outside_the_definition():
+    machine = multi_pop_pda()
+    assert machine.is_real_time()
+    assert len(machine.multi_pop_transitions()) == 2
+
+
+def test_epsilon_pop_loses_real_time():
+    """Снять второй символ ε-переходом можно, но автомат перестаёт быть real-time."""
+    machine = epsilon_pop_pda()
+    assert not machine.is_real_time()
+    assert machine.multi_pop_transitions() == []
+    assert len(machine.epsilon_transitions()) == 1
+    assert machine.is_deterministic()  # DPDA, но не Real-Time DPDA
