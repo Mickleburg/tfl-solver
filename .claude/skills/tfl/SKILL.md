@@ -155,6 +155,7 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | матричные интерпретации (SMT) | `matrix.MatrixInterpretation.check`, `srs.SRS.find_matrix_interpretation` |
 | переписывания регулярок по Конвею–Кробу | `conway.shorten`, `conway.is_minimal` |
 | Jumping Lemma против DMFL | `mfa.nondmfl_by_jumping`, `mfa.jump_holds` |
+| счёт покрытия по классам | `python tools/eval_suite.py`, `evals/coverage_report.md` |
 | инварианты SRS вида `Σ cₓ·|w|ₓ mod m` | `srs.linear_invariants` |
 | принадлежит ли слово языку грамматики | `parse.recognize` (Эрли), `parse.cyk` |
 | LL(1), LR(0), SLR(1), левая рекурсия | `cfg.is_ll1`, `cfg.slr1_conflicts`, `cfg.left_recursive` |
@@ -398,5 +399,5 @@ python tools/lab3_report.py 1 --pda my.pda   # ЛР3
 
 ```bash
 export PYTHONIOENCODING=utf-8   # иначе консоль Windows роняет вывод в CP1251
-python -m pytest -q             # 954 теста
+python -m pytest -q             # 995 тестов
 ```
