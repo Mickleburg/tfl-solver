@@ -103,7 +103,7 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | `EXAM-2` | `docs/recipes/EXAM-2.md` | `tfl/{cfg,pda,parse,pump,approx}.py` |
 | `EXAM-3` | `docs/recipes/EXAM-3.md` | `tfl/{srs,monoid,myhill,attr,conj}.py` |
 | `LAB-4` | `docs/recipes/LAB-4.md` | `tfl/{extre,cfg,parse,attr}.py` |
-| `PHARMA` | `docs/recipes/PHARMA.md` | `tfl/{srs,prefix,lang,monoid,myhill}.py` |
+| `PHARMA` | `docs/recipes/PHARMA.md` | `tfl/{srs,trs,prefix,lang,monoid,myhill}.py` |
 
 Рецепты есть для всех 14 классов. Общая схема S3–S7 остаётся запасным
 путём для задачи, которая не легла ни в один класс.
@@ -143,6 +143,7 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | минимален ли ДКА; классы Майхилла–Нероуда | `automata.minimize`, `myhill.class_table` |
 | нижняя оценка размера НКА | `myhill.extended_fooling_set` (треугольная!) |
 | завершима ли SRS, критические пары, Кнут–Бендикс | `srs.terminates`, `srs.complete` |
+| термы: унификация, переписывание, интерпретации | `trs.unify`, `trs.TRS.terminates`, `trs.TRS.as_srs` |
 | инварианты SRS вида `Σ cₓ·|w|ₓ mod m` | `srs.linear_invariants` |
 | принадлежит ли слово языку грамматики | `parse.recognize` (Эрли), `parse.cyk` |
 | LL(1), LR(0), SLR(1), левая рекурсия | `cfg.is_ll1`, `cfg.slr1_conflicts`, `cfg.left_recursive` |
@@ -386,5 +387,5 @@ python tools/lab3_report.py 1 --pda my.pda   # ЛР3
 
 ```bash
 export PYTHONIOENCODING=utf-8   # иначе консоль Windows роняет вывод в CP1251
-python -m pytest -q             # 814 тестов
+python -m pytest -q             # 835 тестов
 ```
