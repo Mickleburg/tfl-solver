@@ -55,6 +55,11 @@ __all__ = [
     "parse_mfa",
     "RefWord",
     "parse_ref_word",
+    "JumpCandidate",
+    "jumping_candidates",
+    "jump_holds",
+    "defeats_jumping",
+    "nondmfl_by_jumping",
 ]
 
 OPEN = "o"
@@ -391,3 +396,173 @@ def parse_ref_word(text: str) -> RefWord:
         elif not letter.isspace():
             tokens.append(("letter", letter))
     return RefWord(tuple(tokens))
+
+
+# --------------------------------------------------------------------------
+# Jumping Lemma для детерминированных MFA (лекция 12, слайд 10)
+# --------------------------------------------------------------------------
+#
+# Формулировка со слайда, дословно:
+#
+# > Язык `L ∈ REGEX` детерминированный, если либо он является регулярным,
+# > либо `∀m ∃n, pₙ, vₙ` такие, что `n ⩾ m`, `pₙ, vₙ ∈ Σ⁺`, причём:
+# > `|vₙ| = n`; `vₙ` — подслово `pₙ`; `pₙvₙ` — префикс какого-то слова
+# > из `L`; `∀u ∈ Σ⁺ (pₙu ∈ L ⇒ vₙ — префикс u)`.
+#
+# **Так, как напечатано, лемма не работает, и это проверено оракулом.**
+# При квантификации `∃pₙ, vₙ` язык `{aⁿbⁿ}` условию удовлетворяет: годится
+# `p = a²ᵐbᵐ`, `v = bᵐ`. Все три первых требования выполнены (`|v| = m ⩾ m`,
+# `v` — подслово `p`, `pv = a²ᵐb²ᵐ` лежит в языке, а значит и является
+# префиксом слова из него), а четвёртое выполнено потому, что из `pu ∈ L`
+# следует `u = bᵐ`, и `v` — его префикс. Между тем сама лекция разбирает
+# `{aⁿbⁿ}` как пример языка **не** из DMFL.
+#
+# Разбор лекции сходится при другой квантификации — `∀pₙ, vₙ`: тогда
+# достаточно одной плохой пары, и пара `p = aⁿ⁺ᵏ`, `v = aⁿ` из лекции
+# как раз такая (`u = bⁿ⁺ᵏ` не начинается с `aⁿ`). Поэтому здесь
+# реализованы **оба прочтения**, а какое имелось в виду — вопрос
+# к преподавателю (`docs/OPEN-GAPS.md`).
+
+
+@dataclass(frozen=True)
+class JumpCandidate:
+    """Пара `(pₙ, vₙ)` из условия леммы вместе с исходом проверки прыжка."""
+
+    prefix: str
+    factor: str
+    holds: bool
+    counterexample: str | None = None
+
+    def __str__(self) -> str:
+        if self.holds:
+            return f"p = «{self.prefix}», v = «{self.factor}»: прыжок выполнен"
+        return (
+            f"p = «{self.prefix}», v = «{self.factor}»: прыжок нарушен, "
+            f"«{self.prefix}{self.counterexample}» в языке, а «{self.counterexample}» "
+            f"не начинается с «{self.factor}»"
+        )
+
+
+def jumping_candidates(language, n: int, max_prefix: int = 8, max_tail: int = 8):
+    """Пары `(p, v)`, удовлетворяющие первым трём условиям леммы.
+
+    То есть `|v| = n`, `v` — подслово `p`, и `pv` — префикс какого-то слова
+    языка. Последнее проверяется поиском продолжения длины не больше
+    `max_tail`: полностью это условие неразрешимо, и граница честно
+    ограничивает перебор сверху.
+    """
+    for prefix in _words_upto(language.alphabet, max_prefix):
+        if not prefix or len(prefix) < n:
+            continue
+        seen = set()
+        for start in range(len(prefix) - n + 1):
+            factor = prefix[start : start + n]
+            if factor in seen:
+                continue
+            seen.add(factor)
+            if _extends_to_a_word(language, prefix + factor, max_tail):
+                yield prefix, factor
+
+
+def jump_holds(language, prefix: str, factor: str, max_tail: int = 8) -> JumpCandidate:
+    """Четвёртое условие: всякое продолжение до слова языка начинается с `v`.
+
+    Нарушение — доказательство: предъявляется конкретное `u`. Выполнение
+    проверено только до длины `max_tail`, и это ограничение существенно.
+    """
+    for tail in _words_upto(language.alphabet, max_tail):
+        if not tail or not (prefix + tail) in language:
+            continue
+        if not tail.startswith(factor):
+            return JumpCandidate(prefix, factor, False, tail)
+    return JumpCandidate(prefix, factor, True)
+
+
+def defeats_jumping(
+    language,
+    m: int,
+    upto: int = 6,
+    max_prefix: int = 8,
+    max_tail: int = 8,
+    every: bool = True,
+) -> Verdict:
+    """Опровергает ли лемма принадлежность языка к DMFL при данном `m`.
+
+    `every=True` — прочтение «∀pₙ, vₙ», при котором воспроизводится разбор
+    лекции: достаточно одной пары с нарушенным прыжком, чтобы `n` не годилось.
+    `every=False` — прочтение «∃pₙ, vₙ», напечатанное на слайде: `n` годится,
+    если нашлась хоть одна пара с выполненным прыжком.
+
+    `True` означает «ни одно `n` от `m` до `upto` не годится» — довод против
+    DMFL в пределах перебора. `False` — нашлось годное `n`, лемма молчит.
+    """
+    for n in range(m, upto + 1):
+        candidates = list(jumping_candidates(language, n, max_prefix, max_tail))
+        if not candidates:
+            continue
+        checked = [jump_holds(language, p, v, max_tail) for p, v in candidates]
+        if every:
+            good = all(candidate.holds for candidate in checked)
+        else:
+            good = any(candidate.holds for candidate in checked)
+        if good:
+            witness = next(c for c in checked if c.holds) if not every else checked[0]
+            return refuted(
+                f"при n = {n} условие леммы выполнено ({witness}), "
+                f"значит опровергнуть принадлежность к DMFL ею нельзя",
+                witness,
+            )
+    return proved(
+        f"ни при одном n от {m} до {upto} условие леммы не выполняется "
+        f"(префиксы до {max_prefix}, продолжения до {max_tail})"
+    )
+
+
+def nondmfl_by_jumping(
+    language,
+    upto: int = 4,
+    max_n: int = 6,
+    max_prefix: int = 8,
+    max_tail: int = 8,
+    every: bool = True,
+) -> Verdict:
+    """Довод «язык не DMFL» по Jumping Lemma, при всех `m` до `upto`.
+
+    Исходов два. `False` — при каком-то `m` условие выполнено, и лемма
+    не срабатывает. `None` — условие не выполнилось нигде в пределах
+    перебора; это довод, но не доказательство: лемма квантифицирована
+    по **всем** `m`, а перебор конечен. `True` тут быть не может.
+
+    Отдельно проверять нерегулярность языка лемма не освобождает:
+    регулярный язык детерминирован по определению, и к нему её вывод
+    неприменим вовсе.
+    """
+    for m in range(1, upto + 1):
+        verdict = defeats_jumping(language, m, max_n, max_prefix, max_tail, every)
+        if verdict.value is False:
+            return refuted(
+                f"при m = {m} лемма не срабатывает: {verdict.reason}", verdict.witness
+            )
+    return unknown(
+        f"условие Jumping Lemma не выполнено ни при одном m ⩽ {upto} "
+        f"(n до {max_n}, префиксы до {max_prefix}). Это довод против DMFL, "
+        f"но не доказательство: лемма говорит про все m сразу"
+    )
+
+
+def _words_upto(alphabet: str, limit: int):
+    """Все слова длины не больше `limit`, по возрастанию длины."""
+    frontier = [""]
+    for _ in range(limit + 1):
+        following = []
+        for word in frontier:
+            yield word
+            for letter in alphabet:
+                following.append(word + letter)
+        frontier = following
+
+
+def _extends_to_a_word(language, prefix: str, max_tail: int) -> bool:
+    return any(
+        (prefix + tail) in language for tail in _words_upto(language.alphabet, max_tail)
+    )

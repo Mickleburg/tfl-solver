@@ -477,6 +477,19 @@ class SRS:
             f"или другой аргумент",
         )
 
+    def find_matrix_interpretation(
+        self, dimension: int = 2, max_entry: int = 3, timeout_ms: int = 20_000
+    ) -> Verdict:
+        """Искать матричную интерпретацию SMT-решателем (`tfl/matrix.py`).
+
+        Отдельно от `terminates` нарочно: решатель необязателен, а вызов
+        небесплатен. Проверка готовой интерпретации от решателя не зависит
+        и живёт в `tfl.matrix.MatrixInterpretation.check`.
+        """
+        from tfl.matrix import find_matrix_interpretation
+
+        return find_matrix_interpretation(self, dimension, max_entry, timeout_ms)
+
     def find_interpretation(
         self,
         max_slope: int = 3,

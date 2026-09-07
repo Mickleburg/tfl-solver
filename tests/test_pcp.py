@@ -130,20 +130,40 @@ def test_nonnegative_is_the_right_condition_not_positive():
 # --------------------------------------------------------------------------
 
 
-def test_adjacency_equations_narrow_the_endpoints():
-    """Вопрос 3 билета 2024: счётные уравнения молчат, парные — говорят.
+def test_the_2024_ticket_has_no_solution():
+    """Вопрос 3 билета 2024: счётные уравнения молчат, усиленные — решают.
 
-    `⟨ab,bba⟩ ⟨aba,a⟩ ⟨b,ba⟩` уравнения на буквы не опровергают: они дают
-    `M₁ = M₂ = M₃`. Уравнения на пары букв вместе с балансом соседств
-    отсеивают восемь вариантов из девяти: первым и последним может быть
-    только домино 2.
+    `⟨ab,bba⟩ ⟨aba,a⟩ ⟨b,ba⟩`. Уравнения на буквы дают лишь `M₁ = M₂ = M₃`
+    и ничего не запрещают. Дальше работают три вещи разом:
+
+    * последним может быть только домино 2 — последние буквы совпадают
+      лишь у него;
+    * уравнения на пары букв дают `N₁₃ + N₃₃ = M₁`, а баланс столбца —
+      `N₁₃ + N₂₃ + N₃₃ = M₃ − [первое = 3]`, откуда `N₂₃ = 0`
+      и первое ≠ 3;
+    * значит первое — домино 2, но после него **единственное** возможное
+      продолжение это домино 3, то есть `N₂₃ ⩾ 1`.
+
+    Противоречие: решения нет. Прежде эта задача оставалась открытой —
+    поиск исключал решения из ста двадцати домино, но не доказывал ничего.
     """
     instance = parse_pcp("(ab,bba)\n(aba,a)\n(b,ba)")
     assert instance.refute_by_counting().value is None
 
     verdict = instance.refute_by_adjacency()
-    assert verdict.value is None
-    assert verdict.witness == [(2, 2)]
+    assert verdict.value is False
+    assert "не существует" in verdict.reason
+
+
+def test_the_first_domino_and_its_only_continuation():
+    """Разбор того же билета по шагам — именно эти факты дают противоречие."""
+    instance = parse_pcp("(ab,bba)\n(aba,a)\n(b,ba)")
+    assert [i for i in range(3) if instance.can_start(i)] == [1, 2]
+    assert [i for i in range(3) if instance.can_end(i)] == [1]
+    assert instance.followers(1) == frozenset({2})
+    assert instance.followers(2) == frozenset({0})
+    assert instance.followers(0) == frozenset()  # первым быть не может
+
 
 
 def test_adjacency_keeps_the_endpoints_of_a_real_solution():

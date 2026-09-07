@@ -277,3 +277,97 @@ def test_zero_power_is_excluded():
     positive = from_predicate(lambda w: len(w) > 0 and set(w) <= {"a"}, "ab")
     verdict = defeats_csy(positive, "aaa", 2)
     assert verdict.value is False
+
+
+# --------------------------------------------------------------------------
+# Jumping Lemma для DMFL (слайд 10 лекции 12)
+# --------------------------------------------------------------------------
+
+
+def anbn():
+    from tfl.lang import from_predicate
+
+    return from_predicate(
+        lambda w: len(w) % 2 == 0 and w == "a" * (len(w) // 2) + "b" * (len(w) // 2),
+        "ab",
+        "aⁿbⁿ",
+    )
+
+
+def test_the_jump_condition_is_refuted_by_a_concrete_word():
+    """Нарушение прыжка — доказательство: предъявляется само `u`.
+
+    Пара из разбора лекции: `p = aⁿ⁺ᵏ`, `v = aⁿ`. Слово `aⁿ⁺ᵏbⁿ⁺ᵏ` лежит
+    в языке, а его хвост `bⁿ⁺ᵏ` с `aⁿ` не начинается.
+    """
+    from tfl.mfa import jump_holds
+
+    verdict = jump_holds(anbn(), "aaa", "aa", 6)
+    assert not verdict.holds
+    assert verdict.counterexample == "bbb"
+
+
+def test_candidates_satisfy_the_first_three_conditions():
+    from tfl.mfa import jumping_candidates
+
+    for prefix, factor in jumping_candidates(anbn(), 2, max_prefix=6, max_tail=6):
+        assert len(factor) == 2
+        assert factor in prefix
+        assert any(
+            (prefix + factor + tail) in anbn()
+            for tail in ("", "b", "bb", "bbb", "bbbb", "bbbbb", "bbbbbb")
+        )
+
+
+def test_the_forall_reading_reproduces_the_lecture():
+    """> Слово `aⁿ⁺ᵏbⁿ⁺ᵏ ∈ L′`, но его суффикс `bⁿ⁺ᵏ` не начинается с `vₙ`.
+    > Что доказывает непринадлежность `L′` (а значит, и `L`) к DMFL.
+
+    При квантификации «∀pₙ, vₙ» достаточно одной плохой пары, и разбор
+    лекции воспроизводится: ни одно `n` не годится.
+    """
+    from tfl.mfa import nondmfl_by_jumping
+
+    verdict = nondmfl_by_jumping(anbn(), upto=3, max_n=4, max_prefix=7, every=True)
+    assert verdict.value is None
+    assert "не выполнено ни при одном m" in verdict.reason
+
+
+def test_the_printed_reading_does_not_refute_the_lectures_own_example():
+    """**Найдено оракулом: со слайда лемма не работает.**
+
+    Напечатано «`∀m ∃n, pₙ, vₙ`», то есть достаточно одной хорошей пары.
+    При таком чтении `{aⁿbⁿ}` условию удовлетворяет: годится `p = a²ᵐbᵐ`,
+    `v = bᵐ`. Все требования выполнены — `|v| = m ⩾ m`, `v` подслово `p`,
+    `pv = a²ᵐb²ᵐ` само лежит в языке, а из `pu ∈ L` следует `u = bᵐ`,
+    и `v` — его префикс. Между тем лекция разбирает `{aⁿbⁿ}` как пример
+    языка **не** из DMFL.
+    """
+    from tfl.mfa import defeats_jumping, jump_holds
+
+    language = anbn()
+    for m in (2, 3):
+        found = jump_holds(language, "a" * (2 * m) + "b" * m, "b" * m, 7)
+        assert found.holds, m
+
+        verdict = defeats_jumping(
+            language, m, upto=m, max_prefix=3 * m, max_tail=7, every=False
+        )
+        assert verdict.value is False
+        assert "b" * m in str(verdict.witness)
+
+
+def test_bounds_of_the_search_are_not_hidden():
+    """Слишком короткий перебор даёт «условие не выполнено» — и это не вывод.
+
+    При `m = 3` свидетель имеет длину 9, и с границей 8 он не находится.
+    Вердикт остаётся «не выяснено», а не превращается в опровержение.
+    """
+    from tfl.mfa import defeats_jumping
+
+    short = defeats_jumping(anbn(), 3, upto=3, max_prefix=8, max_tail=7, every=False)
+    assert short.value is True  # «ни одно n не годится» — в пределах перебора
+    assert "префиксы до 8" in short.reason
+
+    long = defeats_jumping(anbn(), 3, upto=3, max_prefix=9, max_tail=7, every=False)
+    assert long.value is False

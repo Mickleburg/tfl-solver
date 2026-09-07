@@ -236,6 +236,34 @@ class PCP:
             strong,
         )
 
+    def can_start(self, index: int) -> bool:
+        """Может ли домино стоять первым: одно слово — префикс другого."""
+        domino = self.dominoes[index]
+        return domino.top.startswith(domino.bottom) or domino.bottom.startswith(domino.top)
+
+    def can_end(self, index: int) -> bool:
+        """Может ли домино стоять последним: последние буквы обязаны совпасть."""
+        domino = self.dominoes[index]
+        return bool(domino.top) and bool(domino.bottom) and domino.top[-1] == domino.bottom[-1]
+
+    def followers(self, index: int) -> frozenset[int]:
+        """Какое домино может стоять **вторым**, если первым стоит данное.
+
+        Первая позиция — единственная, где продолжение считается точно:
+        начальная конфигурация пуста, поэтому хвост после первого домино
+        определён однозначно. Дальше хвост зависит от всей предыстории,
+        и такого перебора уже не выйдет.
+        """
+        head = self.dominoes[index]
+        if not self.can_start(index):
+            return frozenset()
+        found = set()
+        for other, domino in enumerate(self.dominoes):
+            top, bottom = head.top + domino.top, head.bottom + domino.bottom
+            if top.startswith(bottom) or bottom.startswith(top):
+                found.add(other)
+        return frozenset(found)
+
     def adjacency_system(self, first: int, last: int):
         """Уравнения метода преподавателя целиком, при заданных крайних домино.
 
@@ -289,6 +317,18 @@ class PCP:
                         ) - _joint(left_domino.bottom, right_domino.bottom, pair)
                 if any(row):
                     system.append((row, 0))
+
+        # За первым домино что-то стоит, и это «что-то» перебирается точно:
+        # начальная конфигурация пуста. Ограничение записывается как
+        # `Σ N[first][j] − s = 1` со свободной добавкой `s ⩾ 0`.
+        followers = self.followers(first)
+        size += 1
+        system = [(row + [0], rhs) for row, rhs in system]
+        row = [0] * size
+        for j in followers:
+            row[index_n(first, j)] = 1
+        row[size - 1] = -1
+        system.append((row, 1))
         return system, size
 
     def refute_by_adjacency(self) -> Verdict:
@@ -298,6 +338,12 @@ class PCP:
         свою систему, и если ни одна не разрешима в неотрицательных числах,
         решения нет. Домино с пустым словом ломают счёт стыков, поэтому
         на них метод не применяется — условие ЛР0 их и запрещает.
+
+        Сверх уравнений условия работают три отсева. Первое домино обязано
+        начинаться одинаково сверху и снизу, последнее — одинаково
+        кончаться, и **за первым домино обязано что-то стоять**: начальная
+        конфигурация пуста, поэтому множество вторых домино считается точно.
+        Последнее и решает билет 2024.
 
         Побочный, но полезный результат: список **выживших** пар. Он сам
         по себе необходимое условие и годится в отчёт.
@@ -309,7 +355,11 @@ class PCP:
             )
         survivors = []
         for first in range(len(self)):
+            if not self.can_start(first) or not self.followers(first):
+                continue
             for last in range(len(self)):
+                if not self.can_end(last):
+                    continue
                 system, size = self.adjacency_system(first, last)
                 lower = [Fraction(0)] * size
                 lower[first] = Fraction(1)
