@@ -602,6 +602,89 @@ def _mat_nlstar():
         "не реализовано; сделан только L* для ДКА"
     )
 
+
+# --------------------------------------------------------------------------
+# CODE — кодировки, морфизмы, образцы
+# --------------------------------------------------------------------------
+
+
+def _code_sardinas():
+    from tfl.code import Code
+
+    good = Code(("0", "01", "11")).uniquely_decodable()
+    bad = Code(("a", "ab", "ba")).uniquely_decodable()
+    ok = good.value is True and bad.value is False
+    return (
+        SOLVED if ok else "ошибка",
+        f"однозначность решается точно: {{0,01,11}} — да, "
+        f"{{a,ab,ba}} — нет, свидетель {bad.witness}",
+    )
+
+
+def _code_delay():
+    from tfl.code import parse_morphism
+
+    morphism = parse_morphism("x -> 0; y -> 01; z -> 11")
+    curve = morphism.delay_growth(6)
+    return PARTIAL, (
+        f"кривая задержки {curve} — растёт, но неограниченность доказывается "
+        f"серией xzᵏ / yzᵏ⁻¹, а не срезом"
+    )
+
+
+def _code_patterns():
+    import itertools
+
+    from tfl.pattern import parse_patterns
+
+    system = parse_patterns("aXb -> bXa\nXb -> aaX", variables="X")
+    words = [
+        "".join(letters)
+        for length in range(1, 4)
+        for letters in itertools.product("ab", repeat=length)
+    ]
+    invariant = system.check_invariant(lambda w: w.count("a") + 2 * w.count("b"), words, 9)
+    measure = system.check_measure(
+        lambda w: (w.count("b"), sum(i for i, c in enumerate(w) if c == "b")), words, 9
+    )
+    ok = invariant.value is True and measure.value is True
+    return (
+        SOLVED if ok else "ошибка",
+        "мера и инвариант семинара проверены исполнением; нормальная форма "
+        "единственна и равна a^μ(w)",
+    )
+
+
+def _code_marker_model():
+    import itertools
+
+    from tfl.pattern import parse_patterns
+    from tfl.srs import parse_srs
+
+    system = parse_patterns("aXb -> bXa\nXb -> aaX", variables="X")
+    markers = parse_srs(
+        "b -> Ma\naM -> Ma\nbM -> Mb\naM -> b\n"
+        "b -> N\naN -> Na\nbN -> Nb\nN -> aa"
+    )
+    words = [
+        "".join(letters)
+        for length in range(1, 4)
+        for letters in itertools.product("ab", repeat=length)
+    ]
+    verdict = system.agrees_with_srs(markers, words, wrap=lambda w: f"^{w}$", max_len=7)
+    return (
+        SOLVED if verdict.value is True else "ошибка",
+        f"маркер-долг моделирует образец: {verdict.reason[:80]}",
+    )
+
+
+def _code_recover_rules():
+    return MANUAL, (
+        "восстановить кодирующие правила по строке (задача 1 семинара) — "
+        "содержательный шаг: оракул проверяет предъявленный ответ "
+        "(раскодировать, посчитать вложенность и типы термов), но не придумывает его"
+    )
+
 # --------------------------------------------------------------------------
 # Набор
 # --------------------------------------------------------------------------
@@ -678,6 +761,16 @@ CASES: tuple[Case, ...] = (
          "сравнить стратегии обработки контрпримера", PARTIAL, _mat_strategies),
     Case("mat-nlstar", "MAT", "ЛР3 2023",
          "вывести НКА алгоритмом NL*", MANUAL, _mat_nlstar),
+    Case("code-сардинас", "CODE", "семинар 05.09.2026, задача 4",
+         "однозначно ли декодируется код", SOLVED, _code_sardinas),
+    Case("code-задержка", "CODE", "семинар 05.09.2026, задача 4",
+         "морфизм с неограниченной задержкой", PARTIAL, _code_delay),
+    Case("code-образцы", "CODE", "семинар 05.09.2026, 52-Б задача 1",
+         "завершима ли система образцов aXb → bXa, Xb → aaX", SOLVED, _code_patterns),
+    Case("code-маркеры", "CODE", "семинар 05.09.2026, 52-Б задача 2",
+         "строковая система, эквивалентная системе образцов", SOLVED, _code_marker_model),
+    Case("code-восстановление", "CODE", "семинар 05.09.2026, задача 1",
+         "восстановить кодирующие правила по строке", MANUAL, _code_recover_rules),
     Case("pharma-псп-1", "PHARMA", "Pharma_2022, вопрос 1",
          "решить ПСП ⟨a,ba⟩ ⟨aa,ba⟩ ⟨b,ba⟩", SOLVED, _pharma_pcp_one, 1),
     Case("pharma-псп-11", "PHARMA", "Pharma_2022, вопрос 11",
