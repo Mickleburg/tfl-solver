@@ -33,6 +33,8 @@ import re
 from collections import Counter
 from dataclasses import dataclass, field
 
+from tfl.hints import Hint, match as match_hints
+
 __all__ = [
     "Evidence",
     "Candidate",
@@ -93,12 +95,12 @@ FEATURES: dict[str, re.Pattern[str]] = {
 
 #: Что именно спрашивают. Глагол вопроса определяет метод не меньше, чем объект.
 ASKS: dict[str, re.Pattern[str]] = {
-    "регулярность": re.compile(r"регулярн", re.I),
+    "регулярность": re.compile(r"регуляр", re.I),  # «регулярен», «регулярна» тоже
     "КС-свойство": re.compile(r"\bКС\b|контекстно-свободн|контекстно свободн"),
     "детерминизм": re.compile(r"детерминиз|детерминирован|DPDA"),
     "LL-свойство": re.compile(r"\bLL\b|LL\(|LL-язык"),
     "минимальность": re.compile(r"минимальн"),
-    "завершимость": re.compile(r"завершим|терминир"),
+    "завершимость": re.compile(r"завершим|заверша\w*\s+ли|\bтерминир"),
     "замкнутость класса": re.compile(r"замкнут"),
     "беспрефиксность": re.compile(r"беспрефиксн|префиксн"),
     "построить распознаватель": re.compile(r"построить\s+(мин\w*\s+)?(ДКА|НКА|КА|автомат|PDA|грамматик|регул)"),
@@ -123,6 +125,14 @@ ASKS: dict[str, re.Pattern[str]] = {
     # Спрашивают при этом всегда одно: описать язык и поместить его
     # в иерархию классов.
     "описать язык": re.compile(r"(?:^|\n)\s*(?:\d[.)]\s*)?Язык[\s,]", re.M),
+}
+
+# Глагол вопроса часто открывает предложение («Детерминирован ли язык?»),
+# поэтому регистр решать не должен. Флаг дописывается здесь, а не в каждой
+# строке: так его не забудешь у очередной записи.
+ASKS = {
+    name: re.compile(pattern.pattern, pattern.flags | re.I)
+    for name, pattern in ASKS.items()
 }
 
 
@@ -346,6 +356,7 @@ class Analysis:
     asks: tuple[Evidence, ...]
     candidates: tuple[Candidate, ...]
     similar: tuple[tuple[float, dict], ...] = ()
+    hints: tuple[Hint, ...] = ()
 
     @property
     def confident(self) -> bool:
@@ -380,6 +391,14 @@ class Analysis:
             lines.append("> Отрыва у лидера нет: класс не определён, "
                          "выбирать метод по этому списку нельзя.")
             lines.append("")
+        if self.hints:
+            lines.append("**Структурные образцы** (гипотезы, не вердикты):")
+            lines.append("")
+            for hint in self.hints:
+                lines.append(f"* {hint}")
+                if hint.note:
+                    lines.append(f"  * оговорка: {hint.note}")
+            lines.append("")
         if self.similar:
             lines.append("**Похожие условия из корпуса:**")
             lines.append("")
@@ -404,4 +423,5 @@ def analyse(
         asks=tuple(find_asks(text)),
         candidates=tuple(classify(text, hint)),
         similar=similar,
+        hints=tuple(match_hints(text)),
     )
