@@ -168,6 +168,7 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | переписывание образцов `aXb → bXa` | `pattern.parse_patterns`, `pattern.PatternSystem.check_measure` |
 | счёт покрытия по классам | `python tools/eval_suite.py`, `evals/coverage_report.md` |
 | инварианты SRS вида `Σ cₓ·|w|ₓ mod m` | `srs.linear_invariants` |
+| инварианты, видящие **порядок** букв | `srs.monoid_invariants`, `srs.matrix_invariants` |
 | принадлежит ли слово языку грамматики | `parse.recognize` (Эрли), `parse.cyk` |
 | LL(1), LR(0), SLR(1), левая рекурсия | `cfg.is_ll1`, `cfg.slr1_conflicts`, `cfg.left_recursive` |
 | детерминирован ли **автомат**, принимает ли слово | `pda.PDA.nondeterminism`, `pda.PDA.accepts` |

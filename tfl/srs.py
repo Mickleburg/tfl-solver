@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import random
+from collections import Counter
 from dataclasses import dataclass, field
 from typing import Callable, Iterable, Iterator
 
@@ -32,6 +33,7 @@ __all__ = [
     "Verdict",
     "shortlex_key",
     "Interpretation",
+    "MonoidInvariant",
     "ARROWS",
 ]
 
@@ -135,6 +137,155 @@ class Interpretation:
             else:
                 parts.append(f"[{char}](x) = {m}x + {c}")
         return "; ".join(parts)
+
+@dataclass(frozen=True)
+class MonoidInvariant:
+    """Гомоморфизм алфавита в конечный моноид.
+
+    Поддержаны два моноида, и они не заменяют друг друга:
+
+    * `преобразования` — каждой букве отображение множества `{0, …, k−1}`
+      в себя, слову — их композиция слева направо. Такой моноид содержит
+      **все** моноиды порядка `⩽ k` (теорема Кэли);
+    * `матрицы` — каждой букве матрица `k × k` над `Z_m`, слову —
+      произведение. Здесь живут совсем другие моноиды, в том числе
+      коммутативные вроде диагональных: именно диагональным
+      гомоморфизмом обходят вариант 20 в чужом отчёте.
+
+    В обоих случаях `φ` — гомоморфизм моноидов, поэтому если
+    `φ(lhs) = φ(rhs)` для каждого правила, то `φ(w)` **сохраняется
+    при переписывании**:
+
+        w = u·lhs·v ⇒ φ(w) = φ(u)·φ(lhs)·φ(v) = φ(u)·φ(rhs)·φ(v) = φ(w′)
+
+    Это доказательство для всех слов сразу, а не проверка на выборке —
+    как и у `linear_invariants`, и в отличие от `check_invariant`.
+
+    Зачем такие инварианты нужны. Условие ЛР1 просит «как минимум два
+    разных инварианта», а за нетривиальные — те, что «нельзя увидеть
+    по SRS за пять минут внимательного рассматривания» — обещает
+    **до 2 дополнительных баллов**. Счётные инварианты вида
+    `Σ cₓ·|w|ₓ mod m` видно сразу; гомоморфизм в моноид видит **порядок**
+    букв, а не только их количество, и потому бывает строго сильнее.
+
+    Проверка нетривиальности здесь механическая и точная: инвариант
+    не счётный тогда и только тогда, когда он различает два слова
+    с **одинаковым набором букв** (`counting_witness`).
+    """
+
+    images: tuple[tuple[str, tuple], ...]
+    size: int
+    kind: str = "преобразования"
+    modulus: int = 0
+
+    @property
+    def table(self) -> dict:
+        return dict(self.images)
+
+    def identity(self):
+        if self.kind == "матрицы":
+            return tuple(
+                tuple(1 if i == j else 0 for j in range(self.size))
+                for i in range(self.size)
+            )
+        return tuple(range(self.size))
+
+    def multiply(self, left, right):
+        """Произведение в моноиде: композиция либо умножение матриц."""
+        if self.kind == "матрицы":
+            m = self.modulus
+            return tuple(
+                tuple(
+                    sum(left[i][k] * right[k][j] for k in range(self.size)) % m
+                    for j in range(self.size)
+                )
+                for i in range(self.size)
+            )
+        return tuple(right[point] for point in left)
+
+    def value(self, word: str):
+        """Произведение образов букв слева направо. Пустое слово — единица."""
+        current = self.identity()
+        table = self.table
+        for letter in word:
+            current = self.multiply(current, table[letter])
+        return current
+
+    def preserved_by(self, rules) -> bool:
+        """Сохраняется ли инвариант всеми правилами. По определению — да."""
+        return all(self.value(rule.lhs) == self.value(rule.rhs) for rule in rules)
+
+    def classes(self, alphabet: str, max_len: int = 6) -> int:
+        """Сколько разных значений инвариант принимает на коротких словах."""
+        from tfl.words import iter_words
+
+        return len({self.value(word) for word in iter_words(alphabet, max_len)})
+
+    def counting_witness(
+        self, alphabet: str, max_len: int = 6
+    ) -> tuple[str, str] | None:
+        """Пара слов с одинаковым набором букв и разными значениями.
+
+        Есть такая пара — инвариант **не** сводится к счёту букв, то есть
+        нетривиален в смысле условия. Нет — на этом срезе он от счётного
+        неотличим, и вывод осторожный: «не найдено», а не «не существует».
+        """
+        from collections import Counter
+
+        from tfl.words import iter_words
+
+        seen: dict[tuple, tuple[str, tuple[int, ...]]] = {}
+        for word in iter_words(alphabet, max_len):
+            key = tuple(sorted(Counter(word).items()))
+            value = self.value(word)
+            if key in seen:
+                other, before = seen[key]
+                if before != value:
+                    return (other, word)
+            else:
+                seen[key] = (word, value)
+        return None
+
+    def __str__(self) -> str:
+        if self.kind == "матрицы":
+            parts = [
+                f"[{letter}] = "
+                + "/".join("".join(str(x) for x in row) for row in image)
+                for letter, image in self.images
+            ]
+            return (
+                f"φ: Σ* → M_{self.size}(Z_{self.modulus}), " + "; ".join(parts)
+            )
+        parts = [
+            f"[{letter}] = {''.join(str(point) for point in image)}"
+            for letter, image in self.images
+        ]
+        return f"φ: Σ* → T_{self.size}, " + "; ".join(parts)
+
+    def markdown(self, alphabet: str = "", max_len: int = 6) -> str:
+        """Инвариант в виде таблицы — так его и предъявляют в отчёте."""
+        lines = [f"Гомоморфизм в моноид преобразований `T_{self.size}`:", ""]
+        header = " | ".join(str(point) for point in range(self.size))
+        lines.append(f"| буква | {header} |")
+        lines.append("|---" * (self.size + 1) + "|")
+        for letter, image in self.images:
+            row = " | ".join(str(point) for point in image)
+            lines.append(f"| `{letter}` | {row} |")
+        if alphabet:
+            lines.append("")
+            lines.append(f"Различает {self.classes(alphabet, max_len)} классов слов.")
+            witness = self.counting_witness(alphabet, max_len)
+            if witness:
+                lines.append(
+                    f"Не сводится к счёту букв: `{witness[0]}` и `{witness[1]}` "
+                    "состоят из одних и тех же букв, а значения разные."
+                )
+            else:
+                lines.append(
+                    "На словах этой длины от счётного инварианта неотличим."
+                )
+        return "\n".join(lines)
+
 
 @dataclass
 class Search:
@@ -1012,6 +1163,164 @@ class SRS:
             for vector in basis
         ]
 
+    def monoid_invariants(
+        self,
+        size: int = 2,
+        limit: int = 6,
+        max_len: int = 6,
+        budget: int = 2_000_000,
+    ) -> list["MonoidInvariant"]:
+        """Найти инварианты-гомоморфизмы в моноид преобразований `T_size`.
+
+        Перебираются все сопоставления «буква → преобразование множества
+        из `size` точек»; годятся те, при которых `φ(lhs) = φ(rhs)`
+        для каждого правила. Перебор **исчерпывающий** в пределах
+        размера: правило проверяется, как только все его буквы назначены,
+        и это отсекает большую часть дерева.
+
+        Результат отсортирован так, чтобы полезное шло первым: сначала
+        инварианты, различающие слова с одинаковым набором букв (их
+        по условию и считают нетривиальными), затем — по числу
+        различаемых классов.
+
+        Тождественный и любой другой инвариант, не различающий вообще
+        ничего, отбрасывается: он выполняется у всякой системы и баллов
+        не стоит.
+        """
+        if size < 2:
+            raise ValueError("моноид из одной точки инвариантов не даёт")
+        letters = sorted(self.alphabet)
+        if not letters:
+            return []
+        space = (size**size) ** len(letters)
+        if space > budget:
+            raise ValueError(
+                f"перебор {space} сопоставлений превышает бюджет {budget}: "
+                f"уменьшите size (сейчас {size}) или сократите алфавит"
+            )
+
+        import itertools
+
+        points = range(size)
+        transformations = [tuple(image) for image in itertools.product(points, repeat=size)]
+        blank = MonoidInvariant((), size)
+        found: list[MonoidInvariant] = []
+
+        def compose(word: str, table: dict):
+            current = blank.identity()
+            for letter in word:
+                current = blank.multiply(current, table[letter])
+            return current
+
+        def assign(index: int, table: dict) -> None:
+            if index == len(letters):
+                found.append(
+                    MonoidInvariant(
+                        tuple((letter, table[letter]) for letter in letters), size
+                    )
+                )
+                return
+            letter = letters[index]
+            ready = set(letters[: index + 1])
+            checkable = [
+                rule
+                for rule in self.rules
+                if set(rule.lhs) <= ready and set(rule.rhs) <= ready
+            ]
+            for image in transformations:
+                table[letter] = image
+                if all(
+                    compose(rule.lhs, table) == compose(rule.rhs, table)
+                    for rule in checkable
+                ):
+                    assign(index + 1, table)
+            table.pop(letter, None)
+
+        assign(0, {})
+
+        return _rank_invariants(found, "".join(letters), max_len, limit)
+
+    def matrix_invariants(
+        self,
+        size: int = 2,
+        modulus: int = 2,
+        limit: int = 6,
+        max_len: int = 6,
+        budget: int = 2_000_000,
+    ) -> list["MonoidInvariant"]:
+        """Инварианты-гомоморфизмы в моноид `size × size` матриц над `Z_modulus`.
+
+        Тот же приём, что и `monoid_invariants`, но моноид другой.
+        Разница не декоративная: моноид преобразований `k` точек содержит
+        все моноиды порядка `⩽ k`, а матричный — совсем другие, в том числе
+        коммутативные вроде диагональных матриц. Именно диагональным
+        гомоморфизмом обходится вариант 20 ЛР1 2025 в чужом отчёте
+        (`reports/vendor-repos/NOTES.md`), у которого нет ни счётных
+        инвариантов, ни малых моноидов преобразований.
+
+        `modulus` не обязан быть простым: кольцо `Z_m` годится любое,
+        нужна только ассоциативность умножения.
+        """
+        if size < 1:
+            raise ValueError("размер матрицы должен быть положительным")
+        if modulus < 2:
+            raise ValueError("модуль должен быть не меньше двух")
+        letters = sorted(self.alphabet)
+        if not letters:
+            return []
+        space = (modulus ** (size * size)) ** len(letters)
+        if space > budget:
+            raise ValueError(
+                f"перебор {space} сопоставлений превышает бюджет {budget}: "
+                f"уменьшите size ({size}) или modulus ({modulus})"
+            )
+
+        import itertools
+
+        cells = itertools.product(range(modulus), repeat=size * size)
+        matrices = [
+            tuple(tuple(flat[row * size : (row + 1) * size]) for row in range(size))
+            for flat in cells
+        ]
+        blank = MonoidInvariant((), size, "матрицы", modulus)
+        found: list[MonoidInvariant] = []
+
+        def compose(word: str, table: dict):
+            current = blank.identity()
+            for letter in word:
+                current = blank.multiply(current, table[letter])
+            return current
+
+        def assign(index: int, table: dict) -> None:
+            if index == len(letters):
+                found.append(
+                    MonoidInvariant(
+                        tuple((letter, table[letter]) for letter in letters),
+                        size,
+                        "матрицы",
+                        modulus,
+                    )
+                )
+                return
+            letter = letters[index]
+            ready = set(letters[: index + 1])
+            checkable = [
+                rule
+                for rule in self.rules
+                if set(rule.lhs) <= ready and set(rule.rhs) <= ready
+            ]
+            for image in matrices:
+                table[letter] = image
+                if all(
+                    compose(rule.lhs, table) == compose(rule.rhs, table)
+                    for rule in checkable
+                ):
+                    assign(index + 1, table)
+            table.pop(letter, None)
+
+        assign(0, {})
+        return _rank_invariants(found, "".join(letters), max_len, limit)
+
     def length_is_monotone(self) -> Verdict:
         """Не удлиняет ли переписывание слова — простейший монотонный инвариант."""
         growing = [r for r in self.rules if len(r.rhs) > len(r.lhs)]
@@ -1053,6 +1362,58 @@ class SRS:
 # --------------------------------------------------------------------------
 # Разбор
 # --------------------------------------------------------------------------
+
+
+def _rank_invariants(
+    found: list["MonoidInvariant"], alphabet: str, max_len: int, limit: int
+) -> list["MonoidInvariant"]:
+    """Отобрать полезные инварианты и поставить нужные вперёд.
+
+    Порядок: сначала те, что различают слова с одинаковым набором букв
+    (по условию ЛР1 именно они «нетривиальные»), потом — по числу
+    различаемых классов. Инвариант, не различающий непустых слов,
+    отбрасывается: он выполняется у всякой системы.
+    """
+    sample = _scoring_words(alphabet, max_len)
+    scored = []
+    for invariant in found:
+        seen: dict[tuple, tuple[str, object]] = {}
+        classes = set()
+        witness = None
+        for word in sample:
+            value = invariant.value(word)
+            classes.add(value)
+            key = tuple(sorted(Counter(word).items()))
+            if key in seen:
+                other, before = seen[key]
+                if before != value and witness is None:
+                    witness = (other, word)
+            else:
+                seen[key] = (word, value)
+        if len(classes) < 2:
+            continue
+        scored.append((witness is None, -len(classes), str(invariant), invariant))
+    scored.sort()
+    return [invariant for *_, invariant in scored[:limit]]
+
+
+def _scoring_words(alphabet: str, max_len: int, cap: int = 1500) -> list[str]:
+    """Непустые слова для оценки инварианта, не больше `cap` штук.
+
+    Оценка «сколько классов различает» и поиск свидетеля — это не часть
+    доказательства, а способ отранжировать найденное. Поэтому срез можно
+    ограничивать: на широком алфавите полный перебор до длины 5 даёт
+    десятки тысяч слов на каждый инвариант, и время уходит туда, где
+    от него нет проку.
+    """
+    found: list[str] = []
+    for word in iter_words(alphabet, max_len):
+        if not word:
+            continue
+        found.append(word)
+        if len(found) >= cap:
+            break
+    return found
 
 
 def parse_srs(text: str, alphabet: str = "") -> SRS:

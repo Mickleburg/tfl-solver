@@ -12,6 +12,7 @@ import pathlib
 
 import pytest
 
+from tfl.words import iter_words
 from tfl.srs import Interpretation, Rule, SRS, Verdict, parse_srs, shortlex_key
 
 VARIANT_20 = pathlib.Path(__file__).parent.parent / "evals" / "lab1_2025" / "variant-20.srs"
@@ -557,3 +558,145 @@ def test_loop_witness_is_shortest():
 
 def test_terminating_system_has_no_loop():
     assert parse_srs("a a -> a").find_loop() is None
+
+
+# --------------------------------------------------------------------------
+# Инварианты-гомоморфизмы в конечный моноид
+# --------------------------------------------------------------------------
+
+
+def test_monoid_invariant_is_proved_not_sampled():
+    """`φ(lhs) = φ(rhs)` влечёт сохранение для **всех** слов сразу.
+
+    Доказательство в одну строку: `w = u·lhs·v`, значит
+    `φ(w) = φ(u)φ(lhs)φ(v) = φ(u)φ(rhs)φ(v) = φ(w′)`. Здесь проверяется,
+    что найденное действительно выдерживает настоящее переписывание.
+    """
+    system = parse_srs("aab -> b")
+    invariants = system.monoid_invariants(size=2, limit=6, max_len=6)
+    assert invariants
+    words = list(iter_words("ab", 6))
+    for invariant in invariants:
+        assert invariant.preserved_by(system.rules)
+        verdict = system.check_invariant(invariant.value, words)
+        assert verdict.value is True, (str(invariant), verdict.reason)
+
+
+def test_a_monoid_invariant_can_see_the_order_of_letters():
+    """Ради этого всё и делается: счётные инварианты порядка не видят.
+
+    У системы `aab → b` есть счётные инварианты (`|w|_a mod 2`, `|w|_b mod 2`),
+    но они не отличают `ab` от `ba`. Гомоморфизм `[a] = 10`, `[b] = 00`
+    отличает: `a` действует перестановкой, `b` — константой, и они
+    не коммутируют.
+    """
+    system = parse_srs("aab -> b")
+    assert system.linear_invariants(2)  # счётные есть
+    best = system.monoid_invariants(size=2, limit=6, max_len=6)[0]
+    witness = best.counting_witness("ab", 6)
+    assert witness == ("ab", "ba")
+    assert best.value("ab") != best.value("ba")
+    assert sorted("ab") == sorted("ba")  # набор букв один и тот же
+
+
+def test_useful_invariants_come_first():
+    """Порядок выдачи: сначала различающие порядок букв, потом по числу классов."""
+    system = parse_srs("aab -> b")
+    found = system.monoid_invariants(size=2, limit=6, max_len=6)
+    beyond = [i for i in found if i.counting_witness("ab", 6)]
+    assert beyond
+    assert found[: len(beyond)] == beyond
+    counts = [i.classes("ab", 6) for i in beyond]
+    assert counts == sorted(counts, reverse=True)
+
+
+def test_constant_homomorphisms_are_dropped():
+    """Инвариант, не различающий непустые слова, баллов не стоит.
+
+    Отображение всех букв в одну константу выполняется у любой системы
+    и отличает только `ε` от остального.
+    """
+    system = parse_srs("abbaba -> aabbbaa\naaa -> abab\nabba -> baaab\nbbbb -> ba")
+    for invariant in system.monoid_invariants(size=3, limit=10, max_len=5):
+        values = {invariant.value(word) for word in iter_words("ab", 5) if word}
+        assert len(values) > 1, str(invariant)
+
+
+def test_commutation_admits_no_order_sensitive_invariant():
+    """`ab → ba` разрешает любую перестановку, значит образы обязаны коммутировать.
+
+    А коммутирующий гомоморфизм зависит только от количества букв —
+    то есть беднее счётного и ничего сверх него не даёт.
+    """
+    system = parse_srs("ab -> ba")
+    for invariant in system.monoid_invariants(size=2, limit=20, max_len=6):
+        assert invariant.counting_witness("ab", 6) is None, str(invariant)
+
+
+def test_the_search_refuses_a_hopeless_size():
+    system = parse_srs("ab -> ba")
+    with pytest.raises(ValueError, match="бюджет"):
+        system.monoid_invariants(size=6, budget=1000)
+    with pytest.raises(ValueError, match="одной точки"):
+        system.monoid_invariants(size=1)
+
+
+def test_the_invariant_prints_as_a_table():
+    system = parse_srs("aab -> b")
+    text = system.monoid_invariants(size=2, limit=1, max_len=6)[0].markdown("ab", 6)
+    assert "T_2" in text
+    assert "| буква |" in text
+    assert "Не сводится к счёту букв" in text
+
+
+def test_matrix_invariants_are_a_different_monoid():
+    """Моноид матриц — не то же самое, что моноид преобразований.
+
+    Моноид преобразований `k` точек содержит все моноиды порядка `⩽ k`;
+    матричный содержит другие, в том числе коммутативные вроде
+    диагональных. Именно диагональным гомоморфизмом обходится вариант 20
+    в чужом отчёте, поэтому оба поиска нужны.
+    """
+    system = parse_srs("aab -> b")
+    found = system.matrix_invariants(size=2, modulus=2, limit=4, max_len=6)
+    assert found
+    best = found[0]
+    assert best.kind == "матрицы"
+    assert best.counting_witness("ab", 6) == ("ab", "ba")
+    assert best.preserved_by(system.rules)
+    verdict = system.check_invariant(best.value, list(iter_words("ab", 6)))
+    assert verdict.value is True, verdict.reason
+
+
+def test_the_matrix_identity_is_the_unit():
+    system = parse_srs("aab -> b")
+    invariant = system.matrix_invariants(size=2, modulus=2, limit=1, max_len=5)[0]
+    assert invariant.value("") == invariant.identity()
+    assert invariant.value("ab") == invariant.multiply(
+        invariant.value("a"), invariant.value("b")
+    )
+
+
+def test_matrix_search_refuses_a_hopeless_space():
+    system = parse_srs("ab -> ba")
+    with pytest.raises(ValueError, match="бюджет"):
+        system.matrix_invariants(size=3, modulus=5, budget=1000)
+    with pytest.raises(ValueError, match="модуль"):
+        system.matrix_invariants(modulus=1)
+
+
+def test_variant_20_has_no_small_invariant_at_all():
+    """Измерено, а не предположено: у варианта 20 их нет ни в одном виде.
+
+    Ни счётных по модулю 2, 3, 5, 7, ни гомоморфизмов в моноид
+    преобразований на 2 и 3 точках, ни в матрицы 2×2 над `Z₂` и `Z₃`.
+    Это и объясняет, почему в чужом отчёте под него строили отдельный
+    матричный гомоморфизм вручную.
+    """
+    path = pathlib.Path("evals/lab1_2025/variant-20.srs")
+    system = parse_srs(path.read_text(encoding="utf-8"))
+    assert all(not system.linear_invariants(m) for m in (2, 3, 5, 7))
+    assert system.monoid_invariants(size=2, max_len=4) == []
+    assert system.monoid_invariants(size=3, max_len=4) == []
+    assert system.matrix_invariants(size=2, modulus=2, max_len=4) == []
+    assert system.matrix_invariants(size=2, modulus=3, max_len=4) == []

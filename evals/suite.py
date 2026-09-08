@@ -73,6 +73,39 @@ def _lab1_variants():
     )
 
 
+def _lab1_invariants():
+    from tfl.srs import parse_srs
+    from tfl.words import iter_words
+
+    system = parse_srs("aab -> b")
+    counting = system.linear_invariants(2)
+    found = system.monoid_invariants(size=2, limit=4, max_len=6)
+    if not counting or not found:
+        return "ошибка", "инварианты не найдены там, где они есть"
+    best = found[0]
+    if best.counting_witness("ab", 6) != ("ab", "ba"):
+        return "ошибка", "первым должен идти инвариант, видящий порядок букв"
+    verdict = system.check_invariant(best.value, list(iter_words("ab", 6)))
+    if verdict.value is not True:
+        return "ошибка", f"инвариант не выдержал переписывание: {verdict.reason}"
+
+    # Вариант 20 — граница: у него нет ни счётных, ни малых моноидных.
+    twenty = parse_srs(open("evals/lab1_2025/variant-20.srs", encoding="utf-8").read())
+    if any(twenty.linear_invariants(m) for m in (2, 3, 5, 7)):
+        return "ошибка", "у варианта 20 счётных инвариантов быть не должно"
+    if twenty.monoid_invariants(size=3, max_len=4) or twenty.matrix_invariants(
+        size=2, modulus=3, max_len=4
+    ):
+        return "ошибка", "у варианта 20 малых моноидных инвариантов быть не должно"
+
+    return SOLVED, (
+        f"«aab → b»: счётные инварианты есть, но `ab` и `ba` не различают, "
+        f"а {best} различает. Замер по всем 28 вариантам — "
+        "`python tools/lab1_invariants.py`, там же граница: у варианта 20 "
+        "нет ни счётных, ни малых моноидных инвариантов"
+    )
+
+
 def _lab1_loop():
     from tfl.srs import parse_srs
 
@@ -850,6 +883,8 @@ def _code_recover_rules():
 CASES: tuple[Case, ...] = (
     Case("lab1-2025-все", "LAB-1", "lab_tfl_2025_*.pdf",
          "исследовать SRS на завершимость", PARTIAL, _lab1_variants),
+    Case("lab1-инварианты", "LAB-1", "ЛР1 2025, метаморфное тестирование",
+         "предъявить нетривиальные инварианты", SOLVED, _lab1_invariants, 2),
     Case("lab1-петля", "LAB-1", "лекция 2 / ЛР1",
          "правило с вложенной левой частью", SOLVED, _lab1_loop),
     Case("lab1-матрица", "LAB-1", "Pharma_2022, вопрос 12",
