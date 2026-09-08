@@ -542,6 +542,66 @@ def _pharma_f8():
     )
 
 
+
+# --------------------------------------------------------------------------
+# MAT — активное обучение
+# --------------------------------------------------------------------------
+
+
+def _mat_learn():
+    from tfl.automata import dfa_of, equivalent
+    from tfl.lstar import DFATeacher, learn
+
+    target = dfa_of("(a|b)*abb", "ab").minimize()
+    result = learn(DFATeacher(target=target), "ab")
+    ok = result.converged and equivalent(result.dfa.minimize(), target)
+    return (SOLVED if ok else "ошибка", result.summary())
+
+
+def _mat_maze():
+    from tfl.automata import equivalent
+    from tfl.lstar import DFATeacher, learn
+    from tfl.maze import random_planar_maze
+
+    learned = 0
+    for seed in range(6):
+        target = random_planar_maze(8, 3, seed=seed).to_dfa().minimize()
+        result = learn(DFATeacher(target=target), "LR")
+        learned += result.converged and equivalent(result.dfa.minimize(), target)
+    return (
+        SOLVED if learned == 6 else "ошибка",
+        f"случайных планарных лабиринтов выучено {learned} из 6",
+    )
+
+
+def _mat_strategies():
+    from tfl.automata import dfa_of
+    from tfl.lstar import PREFIXES, SUFFIXES, DFATeacher, learn
+    from tfl.maze import random_planar_maze
+
+    target = random_planar_maze(8, 3, seed=0).to_dfa().minimize()
+    on_maze = {
+        name: learn(DFATeacher(target=target), "LR", name).membership_queries
+        for name in (SUFFIXES, PREFIXES)
+    }
+    regex = dfa_of("(a|b)*abb", "ab").minimize()
+    on_regex = {
+        name: learn(DFATeacher(target=regex), "ab", name).membership_queries
+        for name in (SUFFIXES, PREFIXES)
+    }
+    return PARTIAL, (
+        f"на лабиринте суффиксы/префиксы = {on_maze[SUFFIXES]}/{on_maze[PREFIXES]} "
+        f"запросов, на регулярке {on_regex[SUFFIXES]}/{on_regex[PREFIXES]}: "
+        f"ни одна стратегия не выигрывает всегда, выбирать надо замером"
+    )
+
+
+def _mat_nlstar():
+    return MANUAL, (
+        "NL* — активное обучение НКА через вычетные автоматы (ЛР3 2023) — "
+        "не реализовано; сделан только L* для ДКА"
+    )
+
 # --------------------------------------------------------------------------
 # Набор
 # --------------------------------------------------------------------------
@@ -610,6 +670,14 @@ CASES: tuple[Case, ...] = (
          "лемма Огдена против КС-свойства", PARTIAL, _exam_ogden),
     Case("exam-замкнутость", "EXAM-3", "билеты 2022-2025",
          "замкнут ли класс относительно операции", MANUAL, _exam_closure),
+    Case("mat-обучение", "MAT", "ЛР2 2024",
+         "выучить автомат запросами к МАТу", SOLVED, _mat_learn),
+    Case("mat-лабиринт", "MAT", "ЛР2 2024, слайд 8",
+         "планарный лабиринт: сгенерировать и выучить", SOLVED, _mat_maze),
+    Case("mat-стратегии", "MAT", "issue #31",
+         "сравнить стратегии обработки контрпримера", PARTIAL, _mat_strategies),
+    Case("mat-nlstar", "MAT", "ЛР3 2023",
+         "вывести НКА алгоритмом NL*", MANUAL, _mat_nlstar),
     Case("pharma-псп-1", "PHARMA", "Pharma_2022, вопрос 1",
          "решить ПСП ⟨a,ba⟩ ⟨aa,ba⟩ ⟨b,ba⟩", SOLVED, _pharma_pcp_one, 1),
     Case("pharma-псп-11", "PHARMA", "Pharma_2022, вопрос 11",
