@@ -91,7 +91,7 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | Класс | Рецепт | Оракулы |
 |---|---|---|
 | `LAB-1` | `docs/recipes/LAB-1.md` | `tfl/srs.py` |
-| `LAB-2` | `docs/recipes/LAB-2.md` | `tfl/{regex,automata,myhill,glushkov,afa}.py` |
+| `LAB-2` | `docs/recipes/LAB-2.md` | `tfl/{regex,automata,myhill,glushkov,afa,lookaround}.py` |
 | `LAB-3` | `docs/recipes/LAB-3.md` | `tfl/{cfg,parse,pda,approx}.py` |
 | `RK1-A` | `docs/recipes/RK1-A.md` | `tfl/{automata,myhill,monoid,lang}.py` |
 | `RK1-B` | `docs/recipes/RK1-B.md` | `tfl/{lang,pump,myhill,automata}.py` |
@@ -161,6 +161,7 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | активное обучение автомата (`L*`, МАТ) | `lstar.learn`, `lstar.DFATeacher`, `maze.random_planar_maze` |
 | активное обучение НКА (`NL*`), канонический RFSA | `nlstar.learn_nfa`, `nlstar.canonical_rfsa`, `nlstar.residual_primes` |
 | Generic-разбор гиперстеком, упакованный лес | `glr.parse`, `glr.parse_ll`, `glr.SPPF` |
+| расширенные регулярки с проверками, ПКА по ним | `lookaround.parse_extended`, `lookaround.accepts`, `lookaround.to_afa` |
 | образец языка → гипотеза о вердикте и методе | `hints.match` |
 | однозначность кода, инъективность морфизма | `code.Code.uniquely_decodable`, `code.Morphism.is_injective` |
 | задержка раскодирования | `code.Morphism.delay_growth`, `code.Morphism.bounded_delay` |

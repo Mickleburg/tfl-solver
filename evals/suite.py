@@ -151,6 +151,62 @@ def _lab2_afa():
     )
 
 
+def _lab2_extended():
+    from tfl.lookaround import accepts, check_equations, parse_extended
+
+    first = parse_extended("^(?= .* a .* $) .* b .* $")
+    second = parse_extended("^((?=(b*ab*ab*)*$)a*b)*$")
+
+    def teacher(word: str) -> bool:
+        """Описание языка второго примера, данное самой преподавательницей."""
+        if word == "":
+            return True
+        if not word.endswith("b"):
+            return False
+        blocks = word.split("b")[:-1]
+        return all(len(block) % 2 == 0 for block in blocks) and len(blocks[-1]) > 0
+
+    import itertools
+
+    words = [
+        "".join(letters)
+        for length in range(0, 10)
+        for letters in itertools.product("ab", repeat=length)
+    ]
+    wrong = [w for w in words if accepts(second, w, "ab") != teacher(w)]
+    if wrong:
+        return "ошибка", f"расхождение с разбором преподавателя на {wrong[:3]}"
+    if any(accepts(first, w, "ab") != ("a" in w and "b" in w) for w in words):
+        return "ошибка", "первый пример распознаётся неверно"
+    verdict = check_equations(first, "ab", 7)
+    if verdict.value is not True:
+        return "ошибка", f"печатные равенства не сошлись: {verdict.reason}"
+    return SOLVED, (
+        f"распознаватель сверен с разбором преподавателя на всех {len(words)} словах "
+        "длины ⩽ 9, расхождений 0; печатные равенства условия сошлись "
+        "с позиционным прочтением"
+    )
+
+
+def _lab2_extended_afa():
+    from tfl.lookaround import parse_extended, to_afa
+
+    built = []
+    for text in ("^(?= .* a .* $) .* b .* $", "^((?=(b*ab*ab*)*$)a*b)*$"):
+        verdict = to_afa(parse_extended(text), "ab")
+        if verdict.value is not True:
+            return "ошибка", f"«{text}»: {verdict.reason}"
+        built.append(f"{len(verdict.witness)} состояний")
+    middle = to_afa(parse_extended("^a(?= b .* $) .* $"), "ab")
+    if middle.value is not None:
+        return "ошибка", "перевод в произвольном месте не должен считаться сделанным"
+    return PARTIAL, (
+        f"оба примера преподавателя переведены в ПКА ({', '.join(built)}) и сверены "
+        "с распознавателем; проверка в произвольном месте механически "
+        "не переводится — инвариант придумывает человек"
+    )
+
+
 def _lab2_minimality():
     from tfl.automata import dfa_of
     from tfl.myhill import extended_fooling_set
@@ -806,6 +862,10 @@ CASES: tuple[Case, ...] = (
          "позиционный автомат по регулярке", SOLVED, _lab2_glushkov),
     Case("lab2-пка", "LAB-2", "issue #40",
          "переключающийся автомат для конъюнкции", SOLVED, _lab2_afa),
+    Case("lab2-расширенная", "LAB-2", "ЛР2 2025, третий пункт",
+         "распознаватель расширенной регулярки", SOLVED, _lab2_extended, 1),
+    Case("lab2-расширенная-пка", "LAB-2", "issue #40",
+         "ПКА по расширенной регулярке", PARTIAL, _lab2_extended_afa, 2),
     Case("lab2-минимальность", "LAB-2", "ЛР2 2025",
          "обосновать минимальность НКА", PARTIAL, _lab2_minimality),
     Case("lab3-свойства", "LAB-3", "ЛР3 2025",
