@@ -624,8 +624,9 @@ class SRS:
             f"петли из слов длины ≤ {max_len + 2} не найдено; убывающего армейского порядка "
             f"не существует ни при каком приоритете букв; линейной интерпретации "
             f"с малыми коэффициентами нет; рекурсивный путевой порядок правила "
-            f"тоже не ориентирует. Нужна матричная интерпретация через SMT "
-            f"или другой аргумент",
+            f"тоже не ориентирует. Дальше — пары зависимостей "
+            f"(`prove_by_dependency_pairs`) либо матричная интерпретация "
+            f"(`find_matrix_interpretation`); обе требуют SMT-решателя",
         )
 
     def find_matrix_interpretation(
@@ -640,6 +641,30 @@ class SRS:
         from tfl.matrix import find_matrix_interpretation
 
         return find_matrix_interpretation(self, dimension, max_entry, timeout_ms)
+
+    def dependency_pairs(self):
+        """Пары зависимостей системы (`tfl/deppair.py`)."""
+        from tfl.deppair import dependency_pairs
+
+        return dependency_pairs(self)
+
+    def prove_by_dependency_pairs(
+        self, dimension: int = 1, ceiling: int = 4, timeout_ms: int = 20_000
+    ) -> Verdict:
+        """Доказать завершимость парами зависимостей (`tfl/deppair.py`).
+
+        Отдельно от `terminates` по той же причине, что и матричная
+        интерпретация: решатель необязателен, а вызов небесплатен.
+        Метод только доказывает: «не выяснено» не значит «не завершима».
+
+        Сила против прямой интерпретации в том, что правила требуется
+        уронить лишь **нестрого**, а строго — по одной паре на каждую
+        циклическую компоненту графа зависимостей. Замер на ЛР1 2025 —
+        `python tools/lab1_termination.py`.
+        """
+        from tfl.deppair import prove_termination
+
+        return prove_termination(self, dimension, ceiling, timeout_ms)
 
     def find_interpretation(
         self,

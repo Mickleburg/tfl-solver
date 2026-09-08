@@ -160,6 +160,7 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | Jumping Lemma против DMFL | `mfa.nondmfl_by_jumping`, `mfa.jump_holds` |
 | активное обучение автомата (`L*`, МАТ) | `lstar.learn`, `lstar.DFATeacher`, `maze.random_planar_maze` |
 | активное обучение НКА (`NL*`), канонический RFSA | `nlstar.learn_nfa`, `nlstar.canonical_rfsa`, `nlstar.residual_primes` |
+| Завершимость SRS парами зависимостей | `srs.prove_by_dependency_pairs`, `deppair.*` |
 | Generic-разбор гиперстеком, упакованный лес | `glr.parse`, `glr.parse_ll`, `glr.SPPF` |
 | Конъюнктивная грамматика гиперстеком (бонус ЛР5) | `glr.parse_conj`, `glr.relaxed_cfg` |
 | расширенные регулярки с проверками, ПКА по ним | `lookaround.parse_extended`, `lookaround.accepts`, `lookaround.to_afa` |

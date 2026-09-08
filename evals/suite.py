@@ -67,9 +67,9 @@ def _lab1_variants():
     return status, (
         f"{total} вариантов: незавершимость доказана для {counts[False]}, "
         f"завершимость для {counts[True]}, «не выяснено» {counts[None]}. "
-        f"Матричный поиск сюда не входит — он платный по времени и вызывается "
-        f"отдельно; с ним завершимых становится {counts[True] + 1} "
-        f"(`evals/lab1_2025_report.md`)"
+        f"Пары зависимостей и матричный поиск сюда не входят — они платные "
+        f"по времени и вызываются отдельно; с ними завершимых становится "
+        f"{counts[True] + 5} (`python tools/lab1_termination.py`)"
     )
 
 
@@ -786,6 +786,44 @@ def _lab5_error():
     )
 
 
+def _lab1_dependency_pairs():
+    """Вариант 8 ЛР1 2025: завершимость, которую не берут ни порядок, ни лес мер.
+
+    Проверяется не только «доказал», но и «не доказал лишнего»: на варианте
+    с найденной петлёй метод обязан промолчать.
+    """
+    import pathlib
+
+    from tfl.deppair import have_solver
+    from tfl.srs import parse_srs
+
+    def variant(number):
+        path = pathlib.Path(f"evals/lab1_2025/variant-{number:02d}.srs")
+        return parse_srs(path.read_text(encoding="utf-8"))
+
+    if not have_solver():
+        return PARTIAL, (
+            "пары зависимостей строятся и проверяются без решателя, "
+            "но поиск редукционной пары требует Z3 (`pip install .[smt]`)"
+        )
+    system = variant(8)
+    if system.terminates().value is not None:
+        return "ошибка", "вариант 8 перестал быть «не выяснено» — замер устарел"
+    verdict = system.prove_by_dependency_pairs()
+    if verdict.value is not True:
+        return "ошибка", f"пары зависимостей больше не берут вариант 8: {verdict.reason}"
+    if verdict.witness.check(system).value is not True:
+        return "ошибка", "арбитр не принял собственное доказательство"
+    looping = variant(13)
+    if looping.prove_by_dependency_pairs(1, 3, 5_000).value is True:
+        return "ошибка", "доказана завершимость системы с найденной петлёй"
+    return SOLVED, (
+        f"вариант 8: {len(verdict.witness.pairs)} пар зависимостей, "
+        f"{len(verdict.witness.steps)} компонент разобрано, доказательство "
+        "перепроверено арбитром; на варианте 13 с петлёй метод молчит"
+    )
+
+
 def _lab5_conjunctive():
     """Бонус +4: конъюнктивная грамматика разбирается тем же гиперстеком.
 
@@ -1017,6 +1055,8 @@ CASES: tuple[Case, ...] = (
          "разбор с графовидным стеком", SOLVED, _lab5_stacks),
     Case("lab5-ошибка", "LAB-5", "ЛР5 2023, слайд 3",
          "указать первую ошибочную позицию", SOLVED, _lab5_error),
+    Case("lab1-пары-зависимостей", "LAB-1", "ЛР1 2025, вариант 8",
+         "завершима ли система переписывания", SOLVED, _lab1_dependency_pairs),
     Case("lab5-лес-сверху-вниз", "LAB-5", "ЛР5 2023, слайд 9",
          "построить лес при нисходящем разборе (+6)", SOLVED,
          _lab5_top_down_forest),
