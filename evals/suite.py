@@ -597,9 +597,111 @@ def _mat_strategies():
 
 
 def _mat_nlstar():
+    from tfl.automata import dfa_of, equivalent
+    from tfl.lstar import DFATeacher
+    from tfl.nlstar import learn_nfa, residual_primes
+
+    target = dfa_of("(a|b)*a(a|b)(a|b)(a|b)", "ab").minimize()
+    result = learn_nfa(DFATeacher(target=target), "ab")
+    if not (result.converged and equivalent(result.nfa.determinize().minimize(), target)):
+        return "ошибка", "NL* не сошёлся к цели"
+    if result.states != len(residual_primes(target)):
+        return "ошибка", "выучен не канонический RFSA"
+    return SOLVED, (
+        f"«4-я буква с конца — a»: ДКА {len(target)} состояний, "
+        f"RFSA {result.states}; выучен канонический, сверен с эталоном"
+    )
+
+
+def _rk2_variant_28():
+    import itertools
+
+    from tools.rk2_variant_28 import belongs, check_derivation, derivation, language
+
+    limit = 8
+    exact = language(limit)
+    words = [
+        "".join(letters)
+        for length in range(1, limit + 1)
+        for letters in itertools.product("ab", repeat=length)
+    ]
+    wrong = [word for word in words if (word in exact) != belongs(word)]
+    if wrong:
+        return "ошибка", f"описание расходится с обходом на {wrong[:3]}"
+    built = 0
+    for word in sorted(exact):
+        chain = derivation(word)
+        if chain is None or chain[-1] != word or not check_derivation(chain):
+            return "ошибка", f"вывод не построен для «{word}»"
+        built += 1
+    return SOLVED, (
+        f"описание сверено с точным обходом на всех {len(words)} словах длины ⩽ {limit}, "
+        f"расхождений 0; вывод из базиса построен и сверен с системой для {built} слов"
+    )
+
+
+# --------------------------------------------------------------------------
+# ЛР5 — недетерминированный разбор
+# --------------------------------------------------------------------------
+
+
+def _lab5_forest():
+    from tfl.cfg import parse_cfg
+    from tfl.glr import SLR1, parse
+
+    grammar = parse_cfg("S -> S S | a")
+    catalan = [1, 1, 2, 5, 14, 42]
+    counts = [parse(grammar, "a" * n, SLR1).parses for n in range(1, 7)]
+    if counts != catalan:
+        return "ошибка", f"разборов {counts}, ожидалось {catalan}"
+    return SOLVED, (
+        f"S → SS | a: разборов слова aⁿ = {counts} (числа Каталана), "
+        "лес упакован, число вынуто из него"
+    )
+
+
+def _lab5_stacks():
+    from tfl.cfg import parse_cfg
+    from tfl.glr import GRAPH, SLR1, TREE, parse
+
+    grammar = parse_cfg("S -> S S | a")
+    shared = [parse(grammar, "a" * n, SLR1, GRAPH).nodes for n in range(1, 7)]
+    solo = [parse(grammar, "a" * n, SLR1, TREE).nodes for n in range(1, 7)]
+    growth = {second - first for first, second in zip(shared, shared[1:])}
+    if len(growth) != 1:
+        return "ошибка", f"графовидный стек растёт неравномерно: {shared}"
+    return SOLVED, (
+        f"вершин: графовидный {shared} (линейно, +{growth.pop()} на букву), "
+        f"древовидный {solo} — вдвое на каждую букву"
+    )
+
+
+def _lab5_error():
+    from tfl.cfg import parse_cfg
+    from tfl.glr import SLR1, parse, parse_ll
+
+    grammar = parse_cfg("S -> a S b | a b")
+    cases = {"abb": 2, "ba": 0, "a": 1, "aabbb": 4}
+    wrong = [
+        (word, parse(grammar, word, SLR1).error_position)
+        for word, expected in cases.items()
+        if parse(grammar, word, SLR1).error_position != expected
+    ]
+    if wrong:
+        return "ошибка", f"позиции не совпали: {wrong}"
+    if parse_ll(grammar, "abb").accepted:
+        return "ошибка", "нисходящий разбор принял слово не из языка"
+    return SOLVED, (
+        "первая невозможная позиция найдена для всех проверенных слов; "
+        "восходящий и нисходящий разбор согласны с Эрли"
+    )
+
+
+def _lab5_conjunctive():
     return MANUAL, (
-        "NL* — активное обучение НКА через вычетные автоматы (ЛР3 2023) — "
-        "не реализовано; сделан только L* для ДКА"
+        "бонусы задания: конъюнктивные грамматики гиперстеком (+4) "
+        "и лес для нисходящего разбора (+6) не реализованы; "
+        "разбор конъюнктивных грамматик есть отдельно в tfl/conj.py"
     )
 
 
@@ -731,6 +833,9 @@ CASES: tuple[Case, ...] = (
          "древесный язык", SOLVED, _rk1_tree),
     Case("rk2-счётный-инвариант", "RK2-A", "пробная РК2",
          "пуст ли язык грамматики при числовом условии", SOLVED, _rk2_counting),
+    Case("rk2-вариант-28", "RK2-A", "РК2 2025, вариант 28, задача 1",
+         "описать язык SRS ba²→ba, ab→ba, a→ab над базисом aⁿbⁿaⁿ",
+         SOLVED, _rk2_variant_28, 5),
     Case("rk2-конъюнктивная", "RK2-B", "лекция 11",
          "конъюнктивная грамматика для языка", SOLVED, _rk2_conjunctive, 3),
     Case("rk2-mfa", "RK2-B", "лекция 12",
@@ -760,7 +865,15 @@ CASES: tuple[Case, ...] = (
     Case("mat-стратегии", "MAT", "issue #31",
          "сравнить стратегии обработки контрпримера", PARTIAL, _mat_strategies),
     Case("mat-nlstar", "MAT", "ЛР3 2023",
-         "вывести НКА алгоритмом NL*", MANUAL, _mat_nlstar),
+         "вывести НКА алгоритмом NL*", SOLVED, _mat_nlstar),
+    Case("lab5-лес", "LAB-5", "ЛР5 2023, бонус +6",
+         "построить запакованный лес разбора", SOLVED, _lab5_forest),
+    Case("lab5-стек", "LAB-5", "ЛР5 2023, слайды 1-2",
+         "разбор с графовидным стеком", SOLVED, _lab5_stacks),
+    Case("lab5-ошибка", "LAB-5", "ЛР5 2023, слайд 3",
+         "указать первую ошибочную позицию", SOLVED, _lab5_error),
+    Case("lab5-бонусы", "LAB-5", "ЛР5 2023, слайд 9",
+         "конъюнктивные грамматики гиперстеком", MANUAL, _lab5_conjunctive),
     Case("code-сардинас", "CODE", "семинар 05.09.2026, задача 4",
          "однозначно ли декодируется код", SOLVED, _code_sardinas),
     Case("code-задержка", "CODE", "семинар 05.09.2026, задача 4",

@@ -103,11 +103,12 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | `EXAM-2` | `docs/recipes/EXAM-2.md` | `tfl/{cfg,pda,parse,pump,approx}.py` |
 | `EXAM-3` | `docs/recipes/EXAM-3.md` | `tfl/{srs,monoid,myhill,attr,conj}.py` |
 | `LAB-4` | `docs/recipes/LAB-4.md` | `tfl/{extre,cfg,parse,attr}.py` |
-| `MAT` | `docs/recipes/MAT.md` | `tfl/{lstar,maze,automata}.py` |
+| `LAB-5` | `docs/recipes/LAB-5.md` | `tfl/{glr,cfg,parse}.py` |
+| `MAT` | `docs/recipes/MAT.md` | `tfl/{lstar,nlstar,maze,automata}.py` |
 | `CODE` | `docs/recipes/CODE.md` | `tfl/{code,pattern,srs}.py` |
 | `PHARMA` | `docs/recipes/PHARMA.md` | `tfl/{srs,trs,prefix,lang,monoid,myhill}.py` |
 
-Рецепты есть для всех 14 классов. Общая схема S3–S7 остаётся запасным
+Рецепты есть для всех 17 классов. Общая схема S3–S7 остаётся запасным
 путём для задачи, которая не легла ни в один класс.
 
 Отдельно про экзамен: **номер вопроса в билете темы не определяет.**
@@ -159,6 +160,7 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | Jumping Lemma против DMFL | `mfa.nondmfl_by_jumping`, `mfa.jump_holds` |
 | активное обучение автомата (`L*`, МАТ) | `lstar.learn`, `lstar.DFATeacher`, `maze.random_planar_maze` |
 | активное обучение НКА (`NL*`), канонический RFSA | `nlstar.learn_nfa`, `nlstar.canonical_rfsa`, `nlstar.residual_primes` |
+| Generic-разбор гиперстеком, упакованный лес | `glr.parse`, `glr.parse_ll`, `glr.SPPF` |
 | образец языка → гипотеза о вердикте и методе | `hints.match` |
 | однозначность кода, инъективность морфизма | `code.Code.uniquely_decodable`, `code.Morphism.is_injective` |
 | задержка раскодирования | `code.Morphism.delay_growth`, `code.Morphism.bounded_delay` |
