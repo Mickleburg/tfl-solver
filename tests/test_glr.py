@@ -16,6 +16,7 @@ import itertools
 import pytest
 
 from tfl.cfg import CFG, parse_cfg
+from tfl.conj import parse_conjunctive
 from tfl.glr import (
     ACCEPT,
     GRAPH,
@@ -26,9 +27,12 @@ from tfl.glr import (
     TREE,
     actions_table,
     parse,
+    parse_conj,
     parse_ll,
+    relaxed_cfg,
 )
 from tfl.parse import recognize
+from tfl.words import iter_words
 
 CATALAN = [1, 1, 2, 5, 14, 42, 132]
 
@@ -37,18 +41,17 @@ def count_trees(grammar: CFG, word: str) -> int:
     """Независимый счёт деревьев вывода: перебор разбиений отрезка.
 
     Реализация нарочно прямая и медленная — она арбитр, а не парсер.
-    Работает только для грамматик без ε-правил и без циклов `A ⇒⁺ A`,
-    и обе оговорки в наших грамматиках выполнены.
+    ε-правила допускаются (нисходящий разбор их разрешает), а вот циклы
+    `A ⇒⁺ A` нет: развёрнутый вход даёт ноль. Для грамматик без левой
+    рекурсии и без ε-правил цикла и не бывает.
     """
     memo: dict[tuple[str, int, int], int] = {}
 
     def splits(symbols, start, end):
         if not symbols:
             return 1 if start == end else 0
-        if len(symbols) == 1:
-            return count(symbols[0], start, end)
         total = 0
-        for middle in range(start + 1, end):
+        for middle in range(start, end + 1):
             left = count(symbols[0], start, middle)
             if left:
                 total += left * splits(symbols[1:], middle, end)
@@ -389,12 +392,193 @@ def test_top_down_counts_rule_applications_as_steps():
     assert result.snapshot_by_action(1) is not None
 
 
-def test_top_down_says_it_builds_no_forest():
-    """Честная граница: лес для нисходящего разбора не строится."""
+# --------------------------------------------------------------------------
+# Бонус +6: лес для нисходящего разбора
+# --------------------------------------------------------------------------
+
+#: Грамматики без левой рекурсии, на которых сверяется нисходящий лес.
+TOP_DOWN = [
+    ("S -> a S b | a b", "ab", 7),
+    ("S -> a S S | a", "a", 9),
+    ("S -> a B | a C\nB -> b\nC -> b", "ab", 4),
+    ("S -> a S b S | ε", "ab", 6),
+    ("S -> A B C\nA -> a | ε\nB -> b | ε\nC -> c | ε", "abc", 4),
+]
+
+
+@pytest.mark.parametrize("rules,alphabet,cap", TOP_DOWN)
+def test_the_top_down_forest_counts_exactly_as_many_trees(rules, alphabet, cap):
+    """Та же приёмочная точка, что у восходящего: лес и перебор сходятся.
+
+    Перебор ничего не знает ни про гиперстек, ни про бинаризацию —
+    он просто режет отрезок по правилам, — поэтому совпадение чисел
+    и есть проверка конструкции.
+    """
+    grammar = parse_cfg(rules)
+    for length in range(cap + 1):
+        for letters in itertools.product(alphabet, repeat=length):
+            word = "".join(letters)
+            result = parse_ll(grammar, word, GRAPH)
+            expected = count_trees(grammar, word)
+            assert result.accepted == (expected > 0), (rules, word)
+            assert result.parses == expected, (rules, word)
+
+
+def test_the_top_down_forest_is_binarised():
+    """Узлы на пункты `A → α • β` — то, чего при восходящем разборе нет."""
+    grammar = parse_cfg("S -> a S S | a")
+    result = parse_ll(grammar, "aaaaa")
+    assert result.forest.intermediate
+    assert all("•" in label[0] for label in result.forest.intermediate)
+    bottom = parse(parse_cfg("S -> S S | a"), "aaa", SLR1)
+    assert not bottom.forest.intermediate
+
+
+def test_binarisation_does_not_leak_into_the_trees():
+    """Узлы бинаризации вклеиваются в родителя: у `S → aSS` три потомка."""
+    grammar = parse_cfg("S -> a S S | a")
+    result = parse_ll(grammar, "aaaaa")
+    trees = result.forest.trees(result.root)
+    assert len(trees) == result.parses == 2
+    assert all(tree[0] == "S" for tree in trees)
+    assert {len(tree) - 1 for tree in trees} == {3}
+
+    def symbols(tree):
+        return {tree[0]} | {s for child in tree[1:] for s in symbols(child)}
+
+    assert symbols(trees[0]) <= grammar.nonterminals | grammar.terminals
+
+
+def test_binarised_forest_stays_small_while_parses_explode():
+    """Ради чего лес и пакуется: разборов Каталаново много, узлов — `O(n²)`."""
+    grammar = parse_cfg("S -> a S S | a")
+    counted, sizes = [], []
+    for length in range(1, 12, 2):
+        result = parse_ll(grammar, "a" * length)
+        counted.append(result.parses)
+        sizes.append(len(result.forest.families))
+    assert counted == CATALAN[:6]
+    assert sizes == [1, 6, 15, 28, 45, 66]
+
+
+def test_a_single_symbol_prefix_gets_no_node_of_its_own():
+    """`A → x • β` при непустом `β` отдаёт наверх узел самого `x`."""
     grammar = parse_cfg("S -> a S b | a b")
     result = parse_ll(grammar, "aabb")
+    starts = {label[0] for label in result.forest.intermediate}
+    assert not any(text.startswith("S → a •") for text in starts)
+
+
+def test_the_empty_right_hand_side_becomes_a_leaf():
+    """ε-правила при нисходящем разборе разрешены, и в лесу у них лист."""
+    grammar = parse_cfg("S -> a S b S | ε")
+    result = parse_ll(grammar, "ab")
+    assert ("ε", 2, 2) in {
+        child
+        for group in result.forest.families.values()
+        for _, children in group
+        for child in children
+    }
+    assert result.forest.yield_of(result.root) == "ab"
+
+
+@pytest.mark.parametrize("word", ["ab", "aabb", "aaabbb"])
+def test_children_are_stored_left_to_right(word):
+    """Порядок потомков в лесу — порядок символов правой части.
+
+    Проверка нужна именно такая: число разборов от перестановки
+    потомков не меняется, поэтому счёт её не ловит. Ловит только
+    слово, собранное обратно по листьям.
+    """
+    grammar = parse_cfg("S -> a S b | a b")
+    for result in (parse(grammar, word, SLR1), parse_ll(grammar, word)):
+        assert result.forest.yield_of(result.root) == word
+
+
+def test_the_yield_of_an_asymmetric_rule_is_not_mirrored():
+    grammar = parse_cfg("S -> a B c\nB -> b")
+    result = parse(grammar, "abc", SLR1)
+    assert result.forest.trees(result.root) == [("S", ("a",), ("B", ("b",)), ("c",))]
+
+
+# --------------------------------------------------------------------------
+# Бонус +4: конъюнктивные грамматики гиперстеком
+# --------------------------------------------------------------------------
+
+#: Грамматика лекции 11 для `{(aⁿb)ᵏ | n, k ⩾ 1}`: блоки обязаны быть равными.
+BLOCKS = """
+    S -> S A & C b | A
+    A -> a A | a b
+    C -> a C a | B
+    B -> B A | b
+"""
+
+
+def test_relaxed_grammar_replaces_conjunction_with_alternative():
+    grammar = parse_conjunctive("A -> B & C | B\nB -> b\nC -> b")
+    relaxed, origin = relaxed_cfg(grammar)
+    assert [str(p) for p in relaxed.productions] == ["A → B", "A → C", "B → b", "C → b"]
+    # `A → B` — это и конъюнкт первого правила, и всё второе правило целиком.
+    assert origin[relaxed.productions[0]] == ((0, 0), (1, 0))
+
+
+@pytest.mark.parametrize("mode", [SLR1, LR0])
+def test_the_conjunctive_parser_agrees_with_the_recogniser(mode):
+    """Арбитр — обобщённый CYK из `tfl/conj.py`: другой алгоритм, тот же ответ."""
+    grammar = parse_conjunctive(BLOCKS)
+    for word in iter_words("ab", 8):
+        assert parse_conj(grammar, word, mode).accepted == grammar.recognize(word), word
+
+
+def test_a_single_conjunct_is_not_enough_to_push():
+    """Проверка того, ради чего всё и делается: `&` строже, чем `|`.
+
+    Слово `abaab` разбирается по послаблению (блок `ab`, потом `aab`),
+    но конъюнкцию не проходит: блоки разной длины.
+    """
+    grammar = parse_conjunctive(BLOCKS)
+    relaxed, _ = relaxed_cfg(grammar)
+    assert recognize(relaxed, "abaab")
+    assert not grammar.recognize("abaab")
+    result = parse_conj(grammar, "abaab")
+    assert not result.accepted
+    assert result.error_position is not None
+
+
+def test_the_tree_has_one_subtree_per_conjunct():
+    """У узла `A` столько поддеревьев, сколько конъюнктов, и все — про одно слово."""
+    grammar = parse_conjunctive(BLOCKS)
+    result = parse_conj(grammar, "aabaab")
     assert result.accepted
-    assert result.root is None
-    assert result.parses == 0
-    assert result.forest.families == {}
-    assert "LL(1)" in result.summary()
+    assert result.parses == 1
+    families = result.forest.families[result.root]
+    assert len(families) == 1
+    _, children = next(iter(families))
+    assert len(children) == 2
+    assert all(child[1:] == (0, 6) for child in children)
+    assert {result.forest.yield_of(child) for child in children} == {"aabaab"}
+    assert result.forest.yield_of(result.root) == "aabaab"
+
+
+def test_a_grammar_without_conjunction_parses_exactly_as_a_context_free_one():
+    text = "S -> S S | a"
+    plain = parse_cfg(text)
+    grammar = parse_conjunctive(text)
+    for length in range(1, 6):
+        word = "a" * length
+        assert parse_conj(grammar, word).parses == parse(plain, word, SLR1).parses
+
+
+def test_conjunctive_parsing_refuses_epsilon_rules():
+    """Ограничение условия то же, что у восходящего разбора."""
+    grammar = parse_conjunctive("S -> a S & S a | ε")
+    with pytest.raises(ValueError, match="без ε-правил"):
+        parse_conj(grammar, "aa")
+
+
+def test_the_conjunctive_stack_is_graph_shaped_by_the_statement():
+    """> Актуальны… только если реализуется графовидный стек."""
+    grammar = parse_conjunctive(BLOCKS)
+    result = parse_conj(grammar, "aabaab")
+    assert result.sharing == GRAPH
+    assert "конъюнктивная" in result.summary()

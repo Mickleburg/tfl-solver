@@ -787,10 +787,60 @@ def _lab5_error():
 
 
 def _lab5_conjunctive():
-    return MANUAL, (
-        "бонусы задания: конъюнктивные грамматики гиперстеком (+4) "
-        "и лес для нисходящего разбора (+6) не реализованы; "
-        "разбор конъюнктивных грамматик есть отдельно в tfl/conj.py"
+    """Бонус +4: конъюнктивная грамматика разбирается тем же гиперстеком.
+
+    Арбитр — обобщённый CYK из `tfl/conj.py`: другой алгоритм, поэтому
+    совпадение ответов что-то значит.
+    """
+    from tfl.conj import parse_conjunctive
+    from tfl.glr import parse_conj, relaxed_cfg
+    from tfl.parse import recognize
+    from tfl.words import iter_words
+
+    grammar = parse_conjunctive(
+        "S -> S A & C b | A\nA -> a A | a b\nC -> a C a | B\nB -> B A | b"
+    )
+    words = list(iter_words("ab", 7))
+    wrong = [
+        word
+        for word in words
+        if parse_conj(grammar, word).accepted != grammar.recognize(word)
+    ]
+    if wrong:
+        return "ошибка", f"расхождение с CYK на словах {wrong[:3]}"
+    relaxed, _ = relaxed_cfg(grammar)
+    if not recognize(relaxed, "abaab") or grammar.recognize("abaab"):
+        return "ошибка", "потерян показательный пример «послабление берёт, конъюнкция нет»"
+    return SOLVED, (
+        f"конъюнктивный разбор гиперстеком сошёлся с CYK на всех {len(words)} "
+        "словах длины ⩽ 7; «abaab» послабление принимает, конъюнкция отвергает"
+    )
+
+
+def _lab5_top_down_forest():
+    """Бонус +6 для нисходящих вариантов: бинаризованный лес GLL.
+
+    Проверка — против независимого перебора деревьев: он ничего не знает
+    ни про гиперстек, ни про бинаризацию.
+    """
+    from tfl.cfg import parse_cfg
+    from tfl.glr import parse_ll
+
+    grammar = parse_cfg("S -> a S S | a")
+    catalan = [1, 1, 2, 5, 14, 42]
+    counts = [parse_ll(grammar, "a" * n).parses for n in range(1, 13, 2)]
+    if counts != catalan:
+        return "ошибка", f"разборов {counts}, ожидалось {catalan}"
+    sizes = [len(parse_ll(grammar, "a" * n).forest.families) for n in range(1, 13, 2)]
+    result = parse_ll(grammar, "aaaaa")
+    if not result.forest.intermediate:
+        return "ошибка", "лес не бинаризован"
+    trees = result.forest.trees(result.root)
+    if {len(tree) - 1 for tree in trees} != {3}:
+        return "ошибка", f"узлы бинаризации протекли в дерево: {trees}"
+    return SOLVED, (
+        f"S → aSS | a: разборов {counts} (Каталан), узлов леса {sizes} — "
+        "растёт как O(n²); в деревьях узлов бинаризации нет"
     )
 
 
@@ -967,8 +1017,12 @@ CASES: tuple[Case, ...] = (
          "разбор с графовидным стеком", SOLVED, _lab5_stacks),
     Case("lab5-ошибка", "LAB-5", "ЛР5 2023, слайд 3",
          "указать первую ошибочную позицию", SOLVED, _lab5_error),
-    Case("lab5-бонусы", "LAB-5", "ЛР5 2023, слайд 9",
-         "конъюнктивные грамматики гиперстеком", MANUAL, _lab5_conjunctive),
+    Case("lab5-лес-сверху-вниз", "LAB-5", "ЛР5 2023, слайд 9",
+         "построить лес при нисходящем разборе (+6)", SOLVED,
+         _lab5_top_down_forest),
+    Case("lab5-конъюнктивная", "LAB-5", "ЛР5 2023, слайд 9",
+         "разобрать конъюнктивную грамматику гиперстеком (+4)", SOLVED,
+         _lab5_conjunctive),
     Case("code-сардинас", "CODE", "семинар 05.09.2026, задача 4",
          "однозначно ли декодируется код", SOLVED, _code_sardinas),
     Case("code-задержка", "CODE", "семинар 05.09.2026, задача 4",

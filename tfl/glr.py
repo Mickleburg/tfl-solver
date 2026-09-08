@@ -59,7 +59,8 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass, field
 
-from tfl.cfg import END, CFG, LRItem, Production
+from tfl.cfg import END, EPSILON, CFG, LRItem, Production
+from tfl.conj import ConjunctiveGrammar
 
 __all__ = [
     "LR0",
@@ -77,6 +78,8 @@ __all__ = [
     "ParseResult",
     "parse",
     "parse_ll",
+    "parse_conj",
+    "relaxed_cfg",
     "LL1",
     "BOTTOM",
 ]
@@ -184,6 +187,10 @@ class SPPF:
 
     families: dict[Label, set[Family]] = field(default_factory=lambda: defaultdict(set))
 
+    #: Узлы бинаризации нисходящего разбора: у дерева их быть не должно,
+    #: поэтому при выдаче деревьев их потомки вклеиваются в родителя.
+    intermediate: set[Label] = field(default_factory=set)
+
     def add(self, label: Label, production: Production | None, children: tuple[Label, ...]) -> bool:
         """Добавить семейство. `True`, если оно новое."""
         before = len(self.families[label])
@@ -195,18 +202,61 @@ class SPPF:
         return sorted(label for label, group in self.families.items() if len(group) > 1)
 
     def count(self, label: Label, seen: frozenset[Label] = frozenset()) -> int:
-        """Число деревьев под узлом. Циклов здесь быть не может: без
-        ε-правил всякое семейство разбивает отрезок на непустые куски."""
-        group = self.families.get(label)
-        if not group:
-            return 1  # лист
-        total = 0
-        for _, children in group:
-            product = 1
+        """Число деревьев под узлом.
+
+        Считается по лесу, а не перебором деревьев, поэтому числа
+        Каталана достаются из линейного по размеру графа. Общий подлес
+        считается один раз — без этого счёт был бы экспоненциальным
+        на том же самом лесу.
+
+        Цикл в лесу означал бы, что разборов бесконечно много (`A ⇒⁺ A`).
+        В наших грамматиках его быть не может — при восходящем разборе
+        ε-правила запрещены условием, при нисходящем запрещена левая
+        рекурсия, — но если он появится, лучше сказать об этом, чем
+        уйти в рекурсию.
+        """
+        memo: dict[Label, int] = {}
+
+        def go(node: Label, path: frozenset[Label]) -> int:
+            if node in path:
+                raise ValueError(f"в лесу цикл через «{node[0]}»: разборов бесконечно много")
+            if node in memo:
+                return memo[node]
+            group = self.families.get(node)
+            if not group:
+                return 1  # лист
+            total = 0
+            for _, children in group:
+                product = 1
+                for child in children:
+                    product *= go(child, path | {node})
+                total += product
+            memo[node] = total
+            return total
+
+        return go(label, frozenset(seen))
+
+    def _branches(self, label: Label, limit: int) -> list[tuple]:
+        """Наборы поддеревьев, которые узел вносит в родителя.
+
+        Обычный узел вносит ровно одно поддерево; узел бинаризации —
+        целый набор, и его потомки вклеиваются в родителя. Так дерево
+        получается таким, каким его рисуют по грамматике, а лес внутри
+        остаётся бинарным.
+        """
+        if label not in self.intermediate:
+            return [(tree,) for tree in self.trees(label, limit)]
+        found: list[tuple] = []
+        for _, children in sorted(self.families.get(label, ()), key=repr):
+            combinations: list[tuple] = [()]
             for child in children:
-                product *= self.count(child, seen | {label})
-            total += product
-        return total
+                combinations = [
+                    prefix + piece
+                    for prefix in combinations
+                    for piece in self._branches(child, limit)
+                ][:limit]
+            found.extend(combinations)
+        return found[:limit]
 
     def trees(self, label: Label, limit: int = 200) -> list[tuple]:
         """Деревья под узлом как вложенные кортежи `(символ, потомки…)`."""
@@ -215,13 +265,14 @@ class SPPF:
             return [(label[0],)]
         found: list[tuple] = []
         for _, children in sorted(group, key=repr):
-            options = [self.trees(child, limit) for child in children]
-            stack: list[list[tuple]] = [[]]
-            for choices in options:
-                stack = [prefix + [item] for prefix in stack for item in choices]
-                if len(stack) > limit:
-                    stack = stack[:limit]
-            for combination in stack:
+            combinations: list[tuple] = [()]
+            for child in children:
+                combinations = [
+                    prefix + piece
+                    for prefix in combinations
+                    for piece in self._branches(child, limit)
+                ][:limit]
+            for combination in combinations:
                 found.append((label[0], *combination))
                 if len(found) >= limit:
                     return found
@@ -231,8 +282,12 @@ class SPPF:
         """Слово, выводимое узлом — для сверки границ."""
         group = self.families.get(label)
         if not group:
-            return label[0]
+            return "" if label[0] == EPSILON else label[0]
         _, children = next(iter(group))
+        if children and all(child[1:] == label[1:] for child in children):
+            # Конъюнкция: потомки покрывают **один и тот же** кусок слова,
+            # а не разные его части, поэтому склеивать их нельзя.
+            return self.yield_of(children[0])
         return "".join(self.yield_of(child) for child in children)
 
     def to_dot(self, name: str = "SPPF") -> str:
@@ -240,6 +295,8 @@ class SPPF:
         packed = 0
         for label, group in sorted(self.families.items(), key=repr):
             head = f'"{label[0]}, {label[1]}..{label[2]}"'
+            if label in self.intermediate:
+                lines.append(f"  {head} [style=dashed];")
             for _, children in sorted(group, key=repr):
                 if len(group) > 1:
                     packed += 1
@@ -425,7 +482,13 @@ def parse(
         )
 
     def paths(node: GSSNode, length: int):
-        """Все пути длины `length` вниз от вершины: конец и метки рёбер."""
+        """Все пути длины `length` вниз от вершины: конец и метки рёбер.
+
+        Метки возвращаются **слева направо**, в порядке символов правой
+        части: обход идёт сверху вниз, то есть от последнего символа
+        к первому, и метка верхнего ребра дописывается в конец уже
+        собранного нижнего куска.
+        """
         if length == 0:
             yield node, ()
             return
@@ -453,7 +516,7 @@ def parse(
                     production = action.production
                     for end, labels in paths(node, len(production.rhs)):
                         label: Label = (production.lhs, end.level, position)
-                        fresh = forest.add(label, production, tuple(reversed(labels)))
+                        fresh = forest.add(label, production, labels)
                         target_state = transitions.get((end.state, production.lhs))
                         if target_state is None:
                             continue
@@ -555,10 +618,32 @@ def parse_ll(
     Левая рекурсия запрещена условием, и проверяется явно: с ней разбор
     не зациклится (вершины конечны), но и правильного ответа не даст.
 
-    Лес разбора здесь **не строится**: упаковка для нисходящего разбора
-    требует отдельной конструкции (бинаризованный SPPF алгоритма GLL),
-    и бонус задания на неё отдельный. Базовое требование — сообщение
-    об успехе либо первая ошибочная позиция и рисунок стека — выполнено.
+    ## Лес разбора: бинаризация
+
+    Бонус на +6 баллов здесь строится тоже, но лес получается
+    **бинаризованным** — иначе при разборе сверху вниз его не собрать.
+    Причина простая: нисходящий разбор дочитывает правую часть слева
+    направо и в момент прочтения `i`-го символа ещё не знает, где
+    кончится `(i+1)`-ый. Поэтому вместо узла на всё правило заводится
+    цепочка узлов на **пункты** `A → x₁…xᵢ • xᵢ₊₁…`, каждый ровно
+    с двумя потомками: «что уже разобрано» и «что разобрано сейчас».
+    Это конструкция Скотта и Джонстона для GLL.
+
+    Два узла, которых при восходящем разборе не бывает:
+
+    * `A → α • β` при `|α| ⩾ 2` — узел бинаризации; в дереве его быть
+      не должно, поэтому `SPPF.trees` вклеивает его потомков в родителя;
+    * `(ε, i, i)` — лист для пустой правой части. При восходящем разборе
+      ε-правила запрещены условием, при нисходящем разрешены.
+
+    Узел на один символ не заводится вовсе: пункт `A → x • β` при
+    непустом `β` отдаёт наверх узел самого `x`. Без этой оговорки лес
+    распухает вдвое, а число разборов не меняется.
+
+    Счёт разборов от бинаризации не страдает: узел бинаризации имеет
+    столько семейств, сколько способов разрезать разобранный кусок,
+    и произведение по потомкам даёт то же число, что перебор деревьев.
+    Это и проверяется в тестах — против независимого перебора.
     """
     if sharing not in (GRAPH, TREE):
         raise ValueError(f"стек должен быть «{GRAPH}» либо «{TREE}»")
@@ -576,6 +661,7 @@ def parse_ll(
     counter = [0]
     branches: dict[tuple[object, int, GSSNode], GSSNode] = {}
     bottom = GSSNode(BOTTOM, 0)
+    forest = SPPF()
 
     def make(slot: LRItem, level: int, below: GSSNode) -> GSSNode:
         if sharing == GRAPH:
@@ -586,21 +672,40 @@ def parse_ll(
             branches[key] = GSSNode(slot, level, counter[0])
         return branches[key]
 
-    edges: dict[GSSNode, set[GSSNode]] = defaultdict(set)
-    popped: set[tuple[GSSNode, int]] = set()
-    descriptors: set[tuple[LRItem, GSSNode, int]] = set()
-    pending: list[tuple[LRItem, GSSNode, int]] = []
+    def joined(slot: LRItem, left: Label | None, right: Label) -> Label:
+        """Узел леса для пункта `slot` из разобранного `left` и нового `right`.
+
+        `slot` — пункт уже **после** очередного символа. Если до него
+        разобран ровно один символ и правило не кончилось, узел не нужен:
+        наверх идёт сам `right`. Иначе заводится узел — на всё правило
+        (`A`, если точка в конце) либо промежуточный (сам пункт).
+        """
+        if slot.dot == 1 and not slot.at_end:
+            return right
+        symbol = slot.production.lhs if slot.at_end else str(slot)
+        start = right[1] if left is None else left[1]
+        label: Label = (symbol, start, right[2])
+        forest.add(label, slot.production, (right,) if left is None else (left, right))
+        if not slot.at_end:
+            forest.intermediate.add(label)
+        return label
+
+    edges: dict[GSSNode, dict[GSSNode, Label | None]] = defaultdict(dict)
+    popped: set[tuple[GSSNode, int, Label]] = set()
+    descriptors: set[tuple[LRItem, GSSNode, int, Label | None]] = set()
+    pending: list[tuple[LRItem, GSSNode, int, Label | None]] = []
 
     snapshots: list[Snapshot] = []
     performed = 0
     accepted = False
     reached = 0
+    root: Label | None = None
 
     def all_edges() -> tuple[tuple[GSSNode, GSSNode, Label], ...]:
         return tuple(
-            (source, target, (str(source.state), source.level, source.level))
+            (source, target, label or (str(source.state), source.level, source.level))
             for source, group in sorted(edges.items(), key=repr)
-            for target in sorted(group, key=repr)
+            for target, label in sorted(group.items(), key=repr)
         )
 
     def record(detail: str, position: int) -> None:
@@ -613,41 +718,45 @@ def parse_ll(
                 position,
                 REDUCE,
                 detail,
-                tuple(sorted({node for _, node, _ in descriptors} | {bottom}, key=repr)),
+                tuple(sorted({item[1] for item in descriptors} | {bottom}, key=repr)),
                 all_edges(),
             )
         )
 
-    def add(slot: LRItem, node: GSSNode, position: int) -> None:
-        key = (slot, node, position)
+    def add(slot: LRItem, node: GSSNode, position: int, made: Label | None) -> None:
+        key = (slot, node, position, made)
         if key not in descriptors:
             descriptors.add(key)
             pending.append(key)
 
     for production in grammar.rules_for(grammar.start):
-        add(LRItem(production, 0), bottom, 0)
+        add(LRItem(production, 0), bottom, 0, None)
 
     while pending and performed < max_actions:
-        slot, node, position = pending.pop()
+        slot, node, position, left = pending.pop()
         reached = max(reached, position)
 
         if slot.at_end:
-            popped.add((node, position))
+            done = left if left is not None else joined(slot, None, (EPSILON, position, position))
+            popped.add((node, position, done))
             if (
                 node == bottom
                 and position == length
                 and slot.production.lhs == grammar.start
             ):
                 accepted = True
+                root = done
             if node != bottom:
-                for below in list(edges[node]):
-                    add(node.state, below, position)
+                for below, carried in list(edges[node].items()):
+                    add(node.state, below, position, joined(node.state, carried, done))
             continue
 
         symbol = slot.next_symbol
         if symbol not in grammar.nonterminals:
             if position < length and stream[position] == symbol:
-                add(slot.advance(), node, position + 1)
+                leaf: Label = (symbol, position, position + 1)
+                ahead = slot.advance()
+                add(ahead, node, position + 1, joined(ahead, left, leaf))
                 reached = max(reached, position + 1)
             continue
 
@@ -657,22 +766,265 @@ def parse_ll(
             continue
         top = make(slot.advance(), position, node)
         fresh = node not in edges[top]
-        edges[top].add(node)
+        edges[top][node] = left
         if fresh:
-            for done in [step for known, step in popped if known == top]:
-                add(top.state, node, done)
+            for known, step, made in list(popped):
+                if known == top:
+                    add(top.state, node, step, joined(top.state, left, made))
         for production in chosen:
-            add(LRItem(production, 0), top, position)
+            add(LRItem(production, 0), top, position, None)
             record(f"{production} на позиции {position}", position)
 
     return ParseResult(
         accepted=accepted,
         error_position=None if accepted else min(reached, length),
-        forest=SPPF(),
-        root=None,
+        forest=forest,
+        root=root if accepted else None,
         snapshots=tuple(snapshots),
         nodes=len(set(edges) | {bottom}),
         edges=sum(len(group) for group in edges.values()),
         mode=LL1,
         sharing=sharing,
+    )
+
+
+# --------------------------------------------------------------------------
+# Конъюнктивные грамматики гиперстеком — бонус +4
+# --------------------------------------------------------------------------
+
+
+def relaxed_cfg(
+    grammar: ConjunctiveGrammar,
+) -> tuple[CFG, dict[Production, tuple[tuple[int, int], ...]]]:
+    """Дизъюнктивное послабление: каждый конъюнкт становится отдельным правилом.
+
+    `A → Φ₁ & Φ₂` превращается в `A → Φ₁ | Φ₂`. Язык при этом только
+    растёт (`&` заменён на `|`), поэтому таблица LR послабления годится
+    для конъюнктивного разбора: она разрешает **не меньше** свёрток,
+    чем нужно, а лишние отсекает сама конъюнкция.
+
+    Возвращается ещё и обратное отображение «правило послабления → все
+    пары (номер конъюнктивного правила, номер конъюнкта)». Оно не
+    однозначно нарочно: у `A → B & C | B` конъюнкт `B` и отдельное
+    правило `B` дают одно и то же правило послабления, и свёртка по нему
+    засчитывается сразу обоим.
+    """
+    productions: list[Production] = []
+    origin: dict[Production, list[tuple[int, int]]] = {}
+    for index, rule in enumerate(grammar.rules):
+        for number, conjunct in enumerate(rule.conjuncts):
+            production = Production(rule.lhs, tuple(conjunct))
+            if production not in origin:
+                origin[production] = []
+                productions.append(production)
+            origin[production].append((index, number))
+    relaxed = CFG(
+        grammar.start,
+        tuple(productions),
+        frozenset(grammar.nonterminals),
+        frozenset(grammar.terminals),
+    )
+    return relaxed, {p: tuple(pairs) for p, pairs in origin.items()}
+
+
+def parse_conj(
+    grammar: ConjunctiveGrammar,
+    word: str,
+    mode: str = SLR1,
+    tokens: list[str] | None = None,
+    max_actions: int = 100_000,
+) -> ParseResult:
+    """Generic-разбор по **конъюнктивной** грамматике — бонус на +4 балла.
+
+    > Добавить возможность разбора конъюнктивных грамматик (+4 балла).
+    > Актуально… только если реализуется графовидный стек (не древовидный).
+
+    Идея в одну фразу: **свёртка конъюнкта вершину не кладёт**. Кладёт
+    её правило целиком, и только когда все его конъюнкты собраны над
+    одной и той же вершиной гиперстека и до одной и той же позиции.
+
+    Почему этого достаточно. Разбор идёт по таблице послабления
+    (`relaxed_cfg`), в котором `&` заменено на `|`. Всякий конъюнкт
+    всякого применения конъюнктивного правила встречается в каком-нибудь
+    полном разборе слова по послаблению — достаточно всюду выбирать
+    первый конъюнкт, а в интересующем месте нужный, — а Generic-разбор
+    перебирает все такие разборы. Значит ни одна нужная свёртка
+    не потеряется.
+
+    Почему это не даёт лишнего. Узел леса появляется у `A` над отрезком
+    только тогда, когда над этим отрезком собраны **все** конъюнкты,
+    а каждый из них собран из настоящих разборов подслов. Это ровно
+    определение конъюнктивного вывода.
+
+    Почему конъюнкты сходятся к **одной** вершине. Все конъюнкты одного
+    правила предсказываются одним и тем же замыканием: пункты
+    `A → • Φⱼ` лежат в одном состоянии LR, поэтому все они начинаются
+    в одной вершине уровня `j`, и путь свёртки любого из них приводит
+    обратно в неё же. В графовидном стеке вершины с одинаковыми
+    «состояние + позиция» слиты, значит вершина буквально одна и та же —
+    и в древовидном режиме приём не работает, что задание и оговаривает.
+
+    Дерево вывода здесь имеет вид, каким его и рисуют для конъюнктивных
+    грамматик: у узла `A` столько поддеревьев, сколько конъюнктов,
+    и все они выводят **одно и то же** слово, а не разные его части.
+    """
+    relaxed, origin = relaxed_cfg(grammar)
+    _, transitions, table = actions_table(relaxed, mode)
+
+    stream = list(tokens) if tokens is not None else list(word)
+    stream.append(END)
+    forest = SPPF()
+
+    levels: list[set[GSSNode]] = [set() for _ in range(len(stream) + 1)]
+    edges: dict[GSSNode, dict[GSSNode, Label]] = defaultdict(dict)
+    start = GSSNode(0, 0)
+    levels[0].add(start)
+
+    #: Какие конъюнкты правила уже собраны: (правило, вершина, конец) → номер → узел.
+    parts: dict[tuple[int, GSSNode, int], dict[int, Label]] = defaultdict(dict)
+
+    snapshots: list[Snapshot] = []
+    performed = 0
+
+    def all_edges() -> tuple[tuple[GSSNode, GSSNode, Label], ...]:
+        return tuple(
+            (source, target, label)
+            for source, group in sorted(edges.items(), key=repr)
+            for target, label in sorted(group.items(), key=repr)
+        )
+
+    def record(kind: str, detail: str, letters: int, level: int) -> None:
+        nonlocal performed
+        performed += 1
+        snapshots.append(
+            Snapshot(
+                performed,
+                letters,
+                kind,
+                detail,
+                tuple(sorted(levels[level], key=repr)),
+                all_edges(),
+            )
+        )
+
+    def paths(node: GSSNode, length: int):
+        if length == 0:
+            yield node, ()
+            return
+        for target, label in list(edges[node].items()):
+            for end, rest in paths(target, length - 1):
+                yield end, rest + (label,)
+
+    def push(end: GSSNode, symbol: str, label: Label, position: int) -> bool:
+        """Положить вершину по переходу `goto(end, symbol)`. `True`, если новая."""
+        target = transitions.get((end.state, symbol))
+        if target is None:
+            return False
+        top = GSSNode(target, position)
+        if top in levels[position] and end in edges[top]:
+            return False
+        levels[position].add(top)
+        edges[top][end] = label
+        return True
+
+    accepted = False
+    root: Label | None = None
+    error_position: int | None = None
+
+    for position, token in enumerate(stream):
+        changed = True
+        while changed and performed < max_actions:
+            changed = False
+            for node in sorted(levels[position], key=repr):
+                for action in table.get((node.state, token), ()):
+                    if action.kind == ACCEPT and position == len(stream) - 1:
+                        accepted = True
+                        root = (grammar.start, 0, len(stream) - 1)
+                        continue
+                    if action.kind != REDUCE:
+                        continue
+                    production = action.production
+                    for end, labels in paths(node, len(production.rhs)):
+                        children = labels
+                        for index, number in origin[production]:
+                            rule = grammar.rules[index]
+                            if rule.is_plain:
+                                label = (rule.lhs, end.level, position)
+                                fresh = forest.add(label, production, children)
+                                if push(end, rule.lhs, label, position) or fresh:
+                                    changed = True
+                                    record(
+                                        REDUCE,
+                                        f"{production} на позиции {position}",
+                                        position,
+                                        position,
+                                    )
+                                continue
+                            body = " ".join(rule.conjuncts[number])
+                            piece = (f"{rule.lhs}⟨{body}⟩", end.level, position)
+                            fresh = forest.add(piece, production, children)
+                            collected = parts[(index, end, position)]
+                            if number not in collected or fresh:
+                                collected[number] = piece
+                                changed = True
+                                record(
+                                    REDUCE,
+                                    f"конъюнкт {number + 1} правила «{rule}» "
+                                    f"на позиции {position}",
+                                    position,
+                                    position,
+                                )
+                            if len(collected) < len(rule.conjuncts):
+                                continue
+                            whole = tuple(
+                                collected[j] for j in range(len(rule.conjuncts))
+                            )
+                            label = (rule.lhs, end.level, position)
+                            fresh = forest.add(label, None, whole)
+                            if push(end, rule.lhs, label, position) or fresh:
+                                changed = True
+                                record(
+                                    REDUCE,
+                                    f"«{rule}» целиком на позиции {position}",
+                                    position,
+                                    position,
+                                )
+
+        if position == len(stream) - 1:
+            break
+        moved = False
+        for node in sorted(levels[position], key=repr):
+            for action in table.get((node.state, token), ()):
+                if action.kind != SHIFT:
+                    continue
+                label = (token, position, position + 1)
+                top = GSSNode(action.state, position + 1)
+                levels[position + 1].add(top)
+                edges[top][node] = label
+                moved = True
+                record(
+                    SHIFT,
+                    f"«{token}» в состояние {action.state}",
+                    position + 1,
+                    position + 1,
+                )
+        if not moved or not levels[position + 1]:
+            error_position = position
+            break
+
+    if not accepted and error_position is None:
+        error_position = len(stream) - 1
+    if accepted:
+        error_position = None
+
+    return ParseResult(
+        accepted=accepted,
+        error_position=error_position,
+        forest=forest,
+        root=root if accepted else None,
+        snapshots=tuple(snapshots),
+        nodes=sum(len(group) for group in levels),
+        edges=sum(len(group) for group in edges.values()),
+        mode=f"{mode}, конъюнктивная",
+        sharing=GRAPH,
     )
