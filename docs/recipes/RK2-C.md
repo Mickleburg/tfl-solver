@@ -4,7 +4,7 @@
 надо описать порождаемый язык и ответить, регулярен ли он и контекстно-свободен.
 
 Оракул — `tfl/attr.py`. Условия всех вариантов 2025 года лежат в
-`corpus/txt/FormalLanguageTheory_rk2_tfl_2025.txt`, разобранные работы
+`corpus/txt/FormalLanguageTheory_2025_rk2_tfl_2025.txt`, разобранные работы
 с баллами — в `reports/rk2-2026-photos/NOTES.md`.
 
 ## Как читать условие

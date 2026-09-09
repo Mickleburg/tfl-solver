@@ -66,7 +66,7 @@ python tools/intake.py --file task.txt --hint РК2
 |---|---|
 | `corpus/txt/FormalLanguageTheory_2023_RK1_probe_task_solutions.txt` | полный разбор задач РК1 |
 | `corpus/txt/FormalLanguageTheory_2023_RK2_probe_tasks_solutions.txt` | полный разбор задач РК2 |
-| `corpus/txt/FormalLanguageTheory_consa_rk2_2024.txt` | разбалловка РК2 |
+| `corpus/txt/FormalLanguageTheory_2025_consa_rk2_2024.txt` | разбалловка РК2 |
 | `corpus/txt/FormalLanguageTheory_2023_lect_tfl_*.txt` | лекции |
 
 `corpus/chat/FINDINGS.md` — выжимка из учебного чата: дословные ответы
@@ -162,6 +162,11 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | активное обучение НКА (`NL*`), канонический RFSA | `nlstar.learn_nfa`, `nlstar.canonical_rfsa`, `nlstar.residual_primes` |
 | Завершимость SRS парами зависимостей | `srs.prove_by_dependency_pairs`, `deppair.*` |
 | Цель МАТа из автоматов лексем (BF-Рефал, BF-Лисп) | `bflex.random_lexicon`, `bflex.automaton_for` |
+| Завершимость арктической интерпретацией | `srs.find_arctic_interpretation`, `arctic.*` |
+| Завершимость ограничением совпадениями | `srs.prove_by_match_bound`, `matchbound.*` |
+| Завершимость удалением правил | `srs.prove_by_removal`, `removal.*` |
+| Завершимость на коротких словах (не удлиняющая система) | `srs.terminates_by_exhaustion`, `srs.cycle_of_length` |
+| Копредставление группы или полугруппы, проблема равенства | `presentation.parse_presentation`, `Presentation.equal`, `Presentation.is_commutative` |
 | Generic-разбор гиперстеком, упакованный лес | `glr.parse`, `glr.parse_ll`, `glr.SPPF` |
 | Конъюнктивная грамматика гиперстеком (бонус ЛР5) | `glr.parse_conj`, `glr.relaxed_cfg` |
 | расширенные регулярки с проверками, ПКА по ним | `lookaround.parse_extended`, `lookaround.accepts`, `lookaround.to_afa` |

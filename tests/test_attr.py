@@ -1,6 +1,6 @@
 """Атрибутные грамматики: разбор, вычисление, язык.
 
-Условия взяты из `corpus/txt/FormalLanguageTheory_rk2_tfl_2025.txt`
+Условия взяты из `corpus/txt/FormalLanguageTheory_2025_rk2_tfl_2025.txt`
 (слой A) и сверены с проверенными работами из
 `reports/rk2-2026-photos/NOTES.md`.
 """

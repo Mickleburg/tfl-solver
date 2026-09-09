@@ -1,17 +1,28 @@
 """Замер: чем закрывается завершимость на 28 вариантах ЛР1 2025.
 
-Порядок попыток тот же, в каком их стоит делать руками:
+Порядок попыток тот же, в каком их стоит делать руками, и каждая
+следующая дороже предыдущей:
 
 1. **петля** `w →⁺ u·w·v` — опровержение, и оно дешёвое;
 2. **армейский порядок** — работает, пока правила не удлиняют слово;
 3. **линейная интерпретация** `x ↦ mx + c` — берёт часть удлиняющих;
 4. **пары зависимостей** — правила достаточно уронить нестрого,
    строго — по одной паре на циклическую компоненту (`tfl/deppair.py`);
-5. **матричная интерпретация** — многомерная мера (`tfl/matrix.py`).
+5. **матричная интерпретация** — многомерная мера (`tfl/matrix.py`);
+6. **удаление правил** — все правила роняются нестрого, строго хотя бы
+   одно, оно выбрасывается, и всё повторяется на остатке
+   (`tfl/removal.py`; шаги берутся и матричные, и арктические);
+7. **ограничение совпадениями** — регулярный язык слов с высотами
+   вместо меры (`tfl/matchbound.py`), пробуется и на зеркале системы.
 
-Шаги 1–3 сидят внутри `SRS.terminates`, шаги 4 и 5 требуют Z3 и потому
-вызываются отдельно. Таблица показывает, что чем закрыто, и это и есть
-ответ на вопрос «стоит ли метод того».
+Отдельная строка — **полный перебор по длинам**. У не удлиняющей системы
+длина слова не растёт, поэтому бесконечный вывод обязан застрять на одной
+длине и дать цикл; слов этой длины конечное число, значит «циклов нет» —
+доказанный факт, а не «не нашли». Вердикт всё равно неполный: он про слова
+до потолка длины, а не про все.
+
+Шаги 1–3 сидят внутри `SRS.terminates`, остальные требуют Z3 (кроме 7)
+и потому вызываются отдельно.
 
 ```bash
 export PYTHONPATH=.
@@ -20,8 +31,8 @@ python tools/lab1_termination.py --variant 8  # разобрать один ва
 python tools/lab1_termination.py --dimension 2 --ceiling 2
 ```
 
-Прогон всей таблицы идёт **минутами**: на неудачных компонентах Z3
-упирается в отведённый ему потолок времени.
+Прогон всей таблицы идёт **десятками минут**: на неудачных вариантах Z3
+упирается в отведённый ему потолок времени по нескольку раз.
 """
 
 from __future__ import annotations
@@ -54,6 +65,23 @@ def classify(system: SRS, dimension: int, ceiling: int, timeout: int):
     matrix = system.find_matrix_interpretation(2, 3, timeout)
     if matrix.value is True:
         return "матричная интерпретация", matrix.reason, None
+
+    removal = system.prove_by_removal((1, 2, 3), 3, timeout)
+    if removal.value is True:
+        return "удаление правил", removal.reason, removal
+
+    for bound in (1, 2, 3):
+        match = system.prove_by_match_bound(bound, 250, 40, timeout_s=20)
+        if match.value is True:
+            return "ограничение совпадениями", match.reason, match
+
+    # Ничего не доказано целиком — но у не удлиняющей системы можно
+    # доказать хотя бы кусок, и это лучше пустого «не выяснено».
+    if not system.is_lengthening():
+        partial = system.terminates_by_exhaustion(12)
+        if partial.value is False:
+            return "петля", " → ".join(partial.witness), None
+        return "перебор по длинам", partial.reason, None
     return "не выяснено", pairs.reason, None
 
 
@@ -101,13 +129,15 @@ def detail(number: int, dimension: int, ceiling: int, timeout: int) -> str:
         f"Определённые буквы: `{''.join(sorted(defined_symbols(system)))}`",
         f"Пар зависимостей: {len(pairs)}, циклических компонент: {len(parts)} "
         f"(размеры {[len(part) for part in parts]})",
+        f"Длину слова система {'удлиняет' if system.is_lengthening() else 'не удлиняет'}",
         "",
     ]
     method, reason, verdict = classify(system, dimension, ceiling, timeout)
     lines.append(f"**Чем закрыто:** {method} — {reason}")
-    if verdict is not None:
+    witness = getattr(verdict, "witness", None)
+    if witness is not None and hasattr(witness, "markdown"):
         lines.append("")
-        lines.append(verdict.witness.markdown())
+        lines.append(witness.markdown())
     return "\n".join(lines)
 
 

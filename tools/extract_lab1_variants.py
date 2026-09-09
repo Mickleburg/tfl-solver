@@ -28,7 +28,7 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SOURCE = ROOT / "corpus" / "txt" / "FormalLanguageTheory_lab_tfl_2025_1.txt"
+SOURCE = ROOT / "corpus" / "txt" / "FormalLanguageTheory_2025_lab_tfl_2025_1.txt"
 OUTDIR = ROOT / "evals" / "lab1_2025"
 EXPECTED_VARIANTS = 28
 

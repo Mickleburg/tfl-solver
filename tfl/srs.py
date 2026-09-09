@@ -20,9 +20,10 @@ from __future__ import annotations
 import random
 from collections import Counter
 from dataclasses import dataclass, field
+from itertools import product
 from typing import Callable, Iterable, Iterator
 
-from tfl.verdict import Verdict
+from tfl.verdict import Verdict, refuted, unknown
 from tfl.words import iter_words
 
 __all__ = [
@@ -665,6 +666,167 @@ class SRS:
         from tfl.deppair import prove_termination
 
         return prove_termination(self, dimension, ceiling, timeout_ms)
+
+    def find_arctic_interpretation(
+        self, dimension: int = 2, max_entry: int = 3, timeout_ms: int = 20_000
+    ) -> Verdict:
+        """Искать арктическую (max-plus) интерпретацию (`tfl/arctic.py`).
+
+        Отличается от обычной матричной полукольцом: «сложение» это
+        максимум, «умножение» — сложение, поэтому мера слова считает
+        самый длинный путь, а не сумму по всем. Методы **несравнимы**:
+        арктика ограничивает длину вывода линейно, обычная матрица —
+        полиномом степени `d`.
+        """
+        from tfl.arctic import find_arctic_interpretation
+
+        return find_arctic_interpretation(self, dimension, max_entry, timeout_ms)
+
+    def prove_by_removal(
+        self,
+        dimensions: tuple[int, ...] = (1, 2, 3),
+        max_entry: int = 3,
+        timeout_ms: int = 20_000,
+    ) -> Verdict:
+        """Доказать завершимость удалением правил (`tfl/removal.py`).
+
+        Сильнее прямой интерпретации по построению: прямое доказательство
+        это цепочка из одного шага. Требование «все правила строго» здесь
+        заменено на «все нестрого, хотя бы одно строго», строго убывающие
+        выбрасываются, и всё повторяется на остатке.
+        """
+        from tfl.removal import prove_by_removal
+
+        return prove_by_removal(self, dimensions, max_entry, timeout_ms)
+
+    def prove_by_match_bound(
+        self,
+        bound: int = 3,
+        max_states: int = 400,
+        max_rounds: int = 40,
+        timeout_s: float = 60.0,
+        mirrored: bool = True,
+    ) -> Verdict:
+        """Доказать завершимость ограничением совпадениями (`tfl/matchbound.py`).
+
+        Метод не ищет меру на словах, а строит регулярный язык слов
+        с высотами, замкнутый относительно помеченного переписывания.
+        При `mirrored` попытка повторяется на зеркале системы: завершимость
+        от разворота слов не зависит, а пополнение — зависит.
+        """
+        from tfl.matchbound import find_match_bound
+
+        direct = find_match_bound(self, bound, max_states, max_rounds, timeout_s)
+        if direct.value is True or not mirrored:
+            return direct
+        flipped = find_match_bound(
+            self.mirror(), bound, max_states, max_rounds, timeout_s
+        )
+        if flipped.value is not True:
+            return Verdict(
+                None,
+                f"ограничения совпадениями не нашлось ни на системе "
+                f"({direct.reason}), ни на её зеркале ({flipped.reason})",
+            )
+        return Verdict(
+            True,
+            f"зеркало системы ограничено совпадениями, а завершимость "
+            f"от разворота слов не зависит: {flipped.reason}",
+            flipped.witness,
+        )
+
+    def mirror(self) -> SRS:
+        """Зеркало: каждое правило читается справа налево.
+
+        Вывод исходной системы разворачивается пословно в вывод зеркала
+        и обратно, поэтому завершимость у них общая. Само по себе это
+        не приём, но методы, чувствительные к направлению чтения —
+        ограничение совпадениями, армейский порядок, — на зеркале берут
+        не то же самое, что на оригинале.
+
+        >>> parse_srs("ab -> bba").mirror().rules[0].lhs
+        'ba'
+        """
+        return SRS(
+            tuple(Rule(rule.lhs[::-1], rule.rhs[::-1]) for rule in self.rules),
+            self.alphabet,
+        )
+
+    def is_lengthening(self) -> bool:
+        """Есть ли правило, удлиняющее слово."""
+        return any(len(rule.rhs) > len(rule.lhs) for rule in self.rules)
+
+    def cycle_of_length(self, length: int) -> list[str] | None:
+        """Цикл среди слов ровно данной длины — полным перебором Σ^length.
+
+        Смысл в полноте: у **не удлиняющей** системы длина слова
+        не растёт, значит бесконечный вывод рано или поздно застревает
+        на одной длине, а там слов конечное число и бесконечность даёт
+        только цикл. Поэтому «цикла нет» на этой длине — не «не нашли»,
+        а доказанное отсутствие.
+        """
+        letters = "".join(sorted(self.alphabet))
+        if not letters:
+            return None
+        colour: dict[str, int] = {}
+        parent: dict[str, str] = {}
+        for start in ("".join(choice) for choice in product(letters, repeat=length)):
+            if colour.get(start):
+                continue
+            stack: list[tuple[str, object]] = [(start, None)]
+            while stack:
+                word, walker = stack[-1]
+                if walker is None:
+                    if colour.get(word) == 2:
+                        stack.pop()
+                        continue
+                    colour[word] = 1
+                    walker = iter(sorted(self.step(word)))
+                    stack[-1] = (word, walker)
+                nxt = next(walker, None)
+                if nxt is None:
+                    colour[word] = 2
+                    stack.pop()
+                    continue
+                if len(nxt) != length:
+                    continue  # шаг укоротил слово: в цикл этой длины он не входит
+                if colour.get(nxt) == 1:
+                    chain = [word]
+                    while chain[-1] != nxt:
+                        chain.append(parent[chain[-1]])
+                    return [*reversed(chain), nxt]
+                if colour.get(nxt, 0) == 0:
+                    parent[nxt] = word
+                    stack.append((nxt, None))
+        return None
+
+    def terminates_by_exhaustion(self, max_len: int = 12) -> Verdict:
+        """Точный ответ о завершимости на словах длины ⩽ `max_len`.
+
+        Работает только у **не удлиняющей** системы, и тогда результат
+        полный: либо предъявляется цикл (система не завершима), либо
+        доказано, что на словах до этой длины бесконечных выводов нет.
+        Про более длинные слова отсюда не следует ничего — вопрос в общем
+        случае неразрешим.
+        """
+        if self.is_lengthening():
+            return unknown(
+                "система удлиняет слова, поэтому перебор по длинам неполон: "
+                "бесконечный вывод может уходить в неограниченный рост, "
+                "а не в цикл"
+            )
+        for length in range(1, max_len + 1):
+            cycle = self.cycle_of_length(length)
+            if cycle is not None:
+                return refuted(
+                    "найден цикл переписывания: " + " → ".join(cycle), cycle
+                )
+        return unknown(
+            f"на всех словах длины ⩽ {max_len} бесконечных выводов нет — это "
+            f"доказано полным перебором: система не удлиняет слова, значит "
+            f"бесконечный вывод обязан застрять на одной длине и дать цикл, "
+            f"а циклов там нет. Про более длинные слова вывода нет"
+        )
 
     def find_interpretation(
         self,

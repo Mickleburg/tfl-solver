@@ -5,7 +5,7 @@
 выражение; проверить согласованность распознавателей фаззингом.
 
 Условие: `FormalLanguageTheory/lab_tfl_2025_2.pdf`
-(текст — `corpus/txt/FormalLanguageTheory_lab_tfl_2025_2.txt`).
+(текст — `corpus/txt/FormalLanguageTheory_2025_lab_tfl_2025_2.txt`).
 Варианты — `evals/lab2_2025_variants.txt`.
 
 ---
@@ -337,7 +337,7 @@ $$\tau_0(?{<}{=}\,\tau_1)\tau_2 \equiv \bigl(\tau_0 \cap (\tau_1.^*)\bigr)\tau_2
 | `dm800-TFLlabs/lab2/TFL2.md` | вариант 15: полный отчёт со всеми пунктами, включая ПКА и расширенную регулярку. Наиболее близкий к идеалу образец |
 | `Prrromanssss-formal-languages-labs/lab2` | вариант 2: `dfa.dot`, `nfa.dot`, `afa.dot`, `min_dfa.dot`, таблица приближённых классов для НКА |
 | `boomhaa-tfl-labs/lab2/report_lab2.md` | ещё один вариант, Rust |
-| `corpus/txt/FormalLanguageTheory_consa_rk2_2024.txt` | уточнённая теорема Глайстера–Шаллита с разобранным примером |
+| `corpus/txt/FormalLanguageTheory_2025_consa_rk2_2024.txt` | уточнённая теорема Глайстера–Шаллита с разобранным примером |
 
 Сверка с ними — единственная внешняя проверка, доступная до выхода заданий
 2026. Совпадение ничего не доказывает (ошибки у старшекурсников встречаются),

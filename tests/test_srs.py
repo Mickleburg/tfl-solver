@@ -700,3 +700,67 @@ def test_variant_20_has_no_small_invariant_at_all():
     assert system.monoid_invariants(size=3, max_len=4) == []
     assert system.matrix_invariants(size=2, modulus=2, max_len=4) == []
     assert system.matrix_invariants(size=2, modulus=3, max_len=4) == []
+
+
+# --------------------------------------------------------------------------
+# Зеркало и полный перебор по длинам
+# --------------------------------------------------------------------------
+
+
+def test_the_mirror_reverses_both_sides_of_every_rule():
+    system = parse_srs("abb -> ba\nc -> ε")
+    mirrored = system.mirror()
+    assert [str(rule) for rule in mirrored.rules] == ["bba → ab", "c → ε"]
+    assert mirrored.mirror().rules == system.rules
+
+
+def test_the_mirror_keeps_derivations_reversed():
+    """Слово переписывается тогда и только тогда, когда переписывается зеркало."""
+    system = parse_srs("ab -> bba")
+    for word in ("ab", "aab", "abab", "ba"):
+        direct = {w[::-1] for w in system.step(word)}
+        assert direct == system.mirror().step(word[::-1])
+
+
+def test_exhaustion_refuses_a_lengthening_system():
+    """Перебор по длинам полон только у не удлиняющей системы."""
+    verdict = parse_srs("a -> bb").terminates_by_exhaustion(6)
+    assert verdict.value is None
+    assert "удлиняет" in verdict.reason
+
+
+def test_exhaustion_finds_a_cycle_and_the_witness_is_a_real_derivation():
+    system = parse_srs("ab -> ba\nba -> ab")
+    verdict = system.terminates_by_exhaustion(4)
+    assert verdict.value is False
+    cycle = verdict.witness
+    assert cycle[0] == cycle[-1]
+    assert all(step in system.step(prev) for prev, step in zip(cycle, cycle[1:]))
+
+
+def test_exhaustion_proves_termination_up_to_a_length():
+    """Ответ неполный, но доказанный: на этих длинах бесконечных выводов нет."""
+    verdict = parse_srs("ab -> ba").terminates_by_exhaustion(8)
+    assert verdict.value is None
+    assert "доказано полным перебором" in verdict.reason
+
+
+def test_a_cycle_stays_inside_one_length():
+    """Шаг, укорачивающий слово, в цикл этой длины войти не может."""
+    system = parse_srs("aa -> a\nab -> ba\nba -> ab")
+    assert system.cycle_of_length(1) is None
+    assert system.cycle_of_length(2) == ["ab", "ba", "ab"]
+
+
+def test_length_preserving_variants_have_no_cycle_at_all():
+    """Варианты 11 и 15 ЛР1 сохраняют длину, и перебор по длинам полон.
+
+    Это не «петли не нашли», а доказанное отсутствие бесконечных выводов
+    на словах до этой длины: длина не растёт, значит бесконечный вывод
+    обязан застрять на одной длине и дать цикл.
+    """
+    for number, cap in ((11, 12), (15, 9)):
+        path = pathlib.Path(f"evals/lab1_2025/variant-{number:02d}.srs")
+        system = parse_srs(path.read_text(encoding="utf-8"))
+        assert not system.is_lengthening()
+        assert system.terminates_by_exhaustion(cap).value is None

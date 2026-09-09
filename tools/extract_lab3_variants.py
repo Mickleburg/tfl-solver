@@ -13,7 +13,7 @@ import pathlib
 import re
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SOURCE = ROOT / "corpus" / "txt" / "FormalLanguageTheory_lab_tfl_2025_3.txt"
+SOURCE = ROOT / "corpus" / "txt" / "FormalLanguageTheory_2025_lab_tfl_2025_3.txt"
 OUTDIR = ROOT / "evals" / "lab3_2025"
 MARKER = re.compile(r"^(\d{1,2})\.\s*(.*)$")
 ARROW = "→"

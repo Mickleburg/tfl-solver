@@ -1,7 +1,7 @@
 # Рецепт `LAB-3` — КС-языки: детерминизм, PDA, регулярные аппроксимации
 
 Задание 2025: `FormalLanguageTheory/lab_tfl_2025_3.pdf`,
-текст — `corpus/txt/FormalLanguageTheory_lab_tfl_2025_3.txt`.
+текст — `corpus/txt/FormalLanguageTheory_2025_lab_tfl_2025_3.txt`.
 
 Пункты задания и их цена:
 

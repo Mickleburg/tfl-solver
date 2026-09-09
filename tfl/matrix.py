@@ -43,6 +43,7 @@ __all__ = [
     "Matrix",
     "MatrixInterpretation",
     "find_matrix_interpretation",
+    "relative_step",
     "smtlib_model",
     "have_solver",
 ]
@@ -139,6 +140,14 @@ class MatrixInterpretation:
             for matrix in self.matrices.values()
         )
 
+    def weakly_decreases(self, left: str, right: str) -> bool:
+        """Не возрастает ли правило: `M(l) ⩾ M(r)` покоординатно.
+
+        Нужно для удаления правил: там строгое убывание требуется
+        не от всех правил сразу, а хотя бы от одного.
+        """
+        return self.value(left) >= self.value(right)
+
     def decreases(self, left: str, right: str) -> bool:
         """Строго ли убывает правило `left → right`."""
         first, second = self.value(left), self.value(right)
@@ -188,31 +197,20 @@ def have_solver() -> bool:
     return True
 
 
-def find_matrix_interpretation(
-    system,
-    dimension: int = 2,
-    max_entry: int = 3,
-    timeout_ms: int = 20_000,
-) -> Verdict:
-    """Искать матричную интерпретацию SMT-решателем.
+def _search(rules, dimension: int, max_entry: int, timeout_ms: int, relative: bool):
+    """Общая часть поиска: одна кодировка на два режима.
 
-    Элементы ограничены сверху нарочно: без границы задача уходит
-    в нелинейную целочисленную арифметику без конца, а с границей
-    становится конечной и решается быстро. Отрицательный ответ решателя
-    поэтому означает «нет интерпретации **с такими** элементами
-    и такой размерности», а не «нет вовсе».
+    `relative=False` — строго убывать обязаны **все** правила.
+    `relative=True` — все не возрастают, строго убывает **хотя бы одно**:
+    этого достаточно, чтобы строго убывающие из системы удалить.
+
+    Возвращает интерпретацию либо строку с причиной неудачи.
     """
-    if not have_solver():
-        return unknown(
-            "SMT-решателя Z3 в окружении нет, поиск матричной интерпретации "
-            "не выполнялся. Обязательной зависимостью он не сделан; модель "
-            "можно получить через smtlib_model и решить снаружи"
-        )
     import z3
 
-    letters = sorted({letter for rule in system.rules for letter in rule.lhs + rule.rhs})
+    letters = sorted({letter for rule in rules for letter in rule.lhs + rule.rhs})
     if not letters:
-        return unknown("в системе нет букв")
+        return "в системе нет букв"
     last = dimension - 1
     cells = {
         letter: [
@@ -248,36 +246,82 @@ def find_matrix_interpretation(
             ]
         return result
 
-    for rule in system.rules:
+    strict = []
+    for rule in rules:
         left, right = product(rule.lhs), product(rule.rhs)
         for i in range(dimension):
             for j in range(dimension):
                 solver.add(left[i][j] >= right[i][j])
-        solver.add(left[0][last] > right[0][last])
+        if relative:
+            strict.append(left[0][last] > right[0][last])
+        else:
+            solver.add(left[0][last] > right[0][last])
+    if relative:
+        solver.add(z3.Or(strict))
 
     outcome = solver.check()
     if outcome == z3.unsat:
-        return unknown(
+        return (
             f"матричной интерпретации размерности {dimension} с элементами "
             f"до {max_entry} не существует — это доказано решателем. "
             f"Про большие размерности и элементы отсюда не следует ничего"
         )
     if outcome != z3.sat:
-        return unknown(
-            f"решатель не уложился в {timeout_ms} мс на размерности {dimension}"
-        )
+        return f"решатель не уложился в {timeout_ms} мс на размерности {dimension}"
     model = solver.model()
-    found = MatrixInterpretation(
+    return MatrixInterpretation(
         {
             letter: Matrix(
                 tuple(
-                    tuple(model.eval(cells[letter][i][j]).as_long() for j in range(dimension))
+                    tuple(
+                        model.eval(cells[letter][i][j], model_completion=True).as_long()
+                        for j in range(dimension)
+                    )
                     for i in range(dimension)
                 )
             )
             for letter in letters
         }
     )
+
+
+def relative_step(
+    rules, dimension: int = 2, max_entry: int = 3, timeout_ms: int = 20_000
+):
+    """Интерпретация, роняющая все правила нестрого и хотя бы одно строго.
+
+    Возвращает интерпретацию либо `None`: проверяет её вызывающий,
+    здесь ничего не доказывается.
+    """
+    if not have_solver():
+        return None
+    found = _search(tuple(rules), dimension, max_entry, timeout_ms, relative=True)
+    return found if isinstance(found, MatrixInterpretation) else None
+
+
+def find_matrix_interpretation(
+    system,
+    dimension: int = 2,
+    max_entry: int = 3,
+    timeout_ms: int = 20_000,
+) -> Verdict:
+    """Искать матричную интерпретацию SMT-решателем.
+
+    Элементы ограничены сверху нарочно: без границы задача уходит
+    в нелинейную целочисленную арифметику без конца, а с границей
+    становится конечной и решается быстро. Отрицательный ответ решателя
+    поэтому означает «нет интерпретации **с такими** элементами
+    и такой размерности», а не «нет вовсе».
+    """
+    if not have_solver():
+        return unknown(
+            "SMT-решателя Z3 в окружении нет, поиск матричной интерпретации "
+            "не выполнялся. Обязательной зависимостью он не сделан; модель "
+            "можно получить через smtlib_model и решить снаружи"
+        )
+    found = _search(system.rules, dimension, max_entry, timeout_ms, relative=False)
+    if isinstance(found, str):
+        return unknown(found)
     # Ответ решателя перепроверяется своим арбитром: доверять чужому
     # «sat» на слово в этом проекте не принято.
     verified = found.check(system)

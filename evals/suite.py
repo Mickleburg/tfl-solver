@@ -53,6 +53,86 @@ class Case:
 # --------------------------------------------------------------------------
 
 
+def _lab1_exhaustion():
+    """ЛР1 2025, вариант 11: `aaa → bab`, `bbb → aaa`.
+
+    Единственная система набора, где ответ **частичный по построению**,
+    а не по нехватке приёма. Длину она сохраняет, поэтому перебор
+    по длинам полон на каждой длине по отдельности — и на словах
+    до длины 14 завершимость доказана. Про длиннее вывода нет.
+    """
+    from tfl.srs import parse_srs
+
+    system = parse_srs(open("evals/lab1_2025/variant-11.srs", encoding="utf-8").read())
+    if system.is_lengthening():
+        return "ошибка", "система обязана сохранять длину"
+    verdict = system.terminates_by_exhaustion(14)
+    if verdict.value is False:
+        return "ошибка", f"найден цикл там, где его не было: {verdict.reason}"
+    if verdict.value is not None:
+        return "ошибка", "перебор по длинам не может доказать завершимость целиком"
+    proved_by = [
+        name
+        for name, value in (
+            ("арктическая интерпретация",
+             system.find_arctic_interpretation(2, 3, 15_000).value),
+            ("ограничение совпадениями",
+             system.prove_by_match_bound(2, 200, 30, timeout_s=15).value),
+            ("удаление правил", system.prove_by_removal((1, 2), 3, 15_000).value),
+        )
+        if value is True
+    ]
+    if proved_by:
+        return "ошибка", f"{proved_by[0]} внезапно доказала завершимость — проверить"
+    return PARTIAL, (
+        "бесконечных выводов на словах длины ⩽ 14 нет, и это доказано полным "
+        "перебором: система не удлиняет слова, значит бесконечный вывод обязан "
+        "застрять на одной длине. Целиком не берётся ничем — ни арктической "
+        "интерпретацией, ни ограничением совпадениями, ни удалением правил"
+    )
+
+
+def _presentation_tseitin():
+    """Лекция 1 курса 2026, слайд 5: копредставление полугруппы Цейтина.
+
+    Проверяется, что **ориентация соотношений выбирается, а не берётся
+    из записи**: слева направо, как напечатано, система зацикливается
+    (`cca → ccae`), а по армейскому порядку — завершима. Дальше
+    завершимости упирается пополнение, и это ожидаемо: проблема
+    равенства в полугруппе Цейтина неразрешима.
+    """
+    from tfl.presentation import SEMIGROUP, parse_presentation
+    from tfl.srs import parse_srs
+
+    lines = [
+        "полугруппа: a, b, c, d, e",
+        "ac = ca", "ad = da", "bc = cb", "bd = db",
+        "eca = ce", "edb = de", "cca = ccae",
+    ]
+    presentation = parse_presentation(chr(10).join(lines), SEMIGROUP)
+    if len(presentation.relations) != 7:
+        return "ошибка", f"соотношений {len(presentation.relations)}, а не семь"
+    printed = parse_srs(chr(10).join(l.replace(" = ", " -> ") for l in lines[1:]))
+    looping = printed.terminates()
+    if looping.value is not False:
+        return "ошибка", f"петля в написанной ориентации не найдена: {looping.reason[:70]}"
+    oriented = presentation.rewriting().terminates()
+    if oriented.value is not True:
+        return "ошибка", f"армейская ориентация не завершима: {oriented.reason[:70]}"
+    equal = presentation.equal("ac", "ca", max_len=10)
+    if equal.value is not True:
+        return "ошибка", f"соотношение системы не выводится: {equal.reason[:70]}"
+    _, completed = presentation.complete(max_rules=40, max_rounds=12, max_len=12)
+    if completed.value is True:
+        return "ошибка", "пополнение сошлось — для полугруппы Цейтина это невозможно"
+    return SOLVED, (
+        f"ориентация выбирается, а не читается из записи: слева направо "
+        f"система зацикливается ({' → '.join(looping.witness)}), по армейскому "
+        f"порядку завершима. Пополнение при этом расходится, как и обязано: "
+        f"проблема равенства в полугруппе Цейтина неразрешима"
+    )
+
+
 def _lab1_variants():
     import glob
 
@@ -1053,6 +1133,11 @@ def _code_recover_rules():
 CASES: tuple[Case, ...] = (
     Case("lab1-2025-все", "LAB-1", "lab_tfl_2025_*.pdf",
          "исследовать SRS на завершимость", PARTIAL, _lab1_variants),
+    Case("lab1-перебор-по-длинам", "LAB-1", "ЛР1 2025, вариант 11",
+         "завершима ли система", PARTIAL, _lab1_exhaustion),
+    Case("exam3-копредставление", "EXAM-3", "лекция 1 курса 2026, слайд 5",
+         "перевести копредставление в SRS и проверить завершимость", SOLVED,
+         _presentation_tseitin),
     Case("lab1-инварианты", "LAB-1", "ЛР1 2025, метаморфное тестирование",
          "предъявить нетривиальные инварианты", SOLVED, _lab1_invariants, 2),
     Case("lab1-петля", "LAB-1", "лекция 2 / ЛР1",
