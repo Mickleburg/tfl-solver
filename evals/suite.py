@@ -92,6 +92,51 @@ def _lab1_exhaustion():
     )
 
 
+def _cayley_word_problem():
+    """Лекция 1 курса 2026, слайды 4–8: граф Кэли как автомат.
+
+    Вопрос ставится так, как он звучит в ТФЯ: регулярен ли язык проблемы
+    равенства. Ответ считается, а не проговаривается — через число
+    классов Майхилла–Нероуда, которое обязано совпасть с порядком группы.
+    """
+    from tfl.cayley import Action, cayley_graph
+    from tfl.presentation import parse_presentation
+
+    lines = ["группа: a, b", "aa = 1", "bb = 1", "ababab = 1"]
+    symmetric = parse_presentation(chr(10).join(lines))
+    verdict = cayley_graph(symmetric, 200)
+    if verdict.value is not True:
+        return "ошибка", f"граф Кэли не построился: {verdict.reason[:80]}"
+    graph = verdict.witness
+    if graph.order != 6:
+        return "ошибка", f"порядок {graph.order}, а у S₃ он шесть"
+    machine = graph.dfa()
+    if machine.class_count() != graph.order:
+        return "ошибка", (
+            f"классов {machine.class_count()}, а элементов {graph.order} — "
+            f"вычеты и элементы обязаны совпадать"
+        )
+    if not (machine.accepts("ababab") and not machine.accepts("ab")):
+        return "ошибка", "автомат проблемы равенства принимает не то"
+    action = Action(3, {"a": (1, 0, 2), "b": (0, 2, 1)})
+    if action.check(symmetric).value is not True:
+        return "ошибка", "перестановки не удовлетворяют соотношениям"
+    if action.separates("ab", "ba").value is not False:
+        return "ошибка", "действие обязано различать ab и ba"
+
+    infinite = parse_presentation(chr(10).join(lines[:-1]))
+    endless = cayley_graph(infinite, 60)
+    if endless.value is not False:
+        return "ошибка", f"бесконечность не доказана: {endless.reason[:80]}"
+    return SOLVED, (
+        f"группа конечна, {graph.order} элементов; язык проблемы равенства "
+        f"регулярен, и классов Майхилла–Нероуда ровно {machine.class_count()} — "
+        f"столько же, сколько элементов. Убрав соотношение (ab)³ = 1, получаем "
+        f"бесконечную группу, и бесконечность **доказана** циклом в автомате "
+        f"неприводимых слов, а не «обход не закрылся»"
+    )
+
+
 def _presentation_tseitin():
     """Лекция 1 курса 2026, слайд 5: копредставление полугруппы Цейтина.
 
@@ -1135,6 +1180,9 @@ CASES: tuple[Case, ...] = (
          "исследовать SRS на завершимость", PARTIAL, _lab1_variants),
     Case("lab1-перебор-по-длинам", "LAB-1", "ЛР1 2025, вариант 11",
          "завершима ли система", PARTIAL, _lab1_exhaustion),
+    Case("exam3-граф-кэли", "EXAM-3", "лекция 1 курса 2026, слайды 4-8",
+         "регулярен ли язык проблемы равенства группы", SOLVED,
+         _cayley_word_problem),
     Case("exam3-копредставление", "EXAM-3", "лекция 1 курса 2026, слайд 5",
          "перевести копредставление в SRS и проверить завершимость", SOLVED,
          _presentation_tseitin),

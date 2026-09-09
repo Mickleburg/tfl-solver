@@ -241,6 +241,28 @@ class Presentation:
             f"поэтому вывода нет: {verdict.reason}"
         )
 
+    def cayley(self, max_elements: int = 500) -> Verdict:
+        """Граф Кэли: конечен ли моноид, и если да — его таблица (`tfl/cayley.py`).
+
+        Вершины графа — элементы, рёбра — умножение справа, то есть это
+        детерминированный автомат. Объявив финальной единицу, получаем
+        распознаватель проблемы равенства.
+        """
+        from tfl.cayley import cayley_graph
+
+        return cayley_graph(self, max_elements)
+
+    def is_finite(self) -> Verdict:
+        """Конечен ли моноид копредставления (`tfl/cayley.py`).
+
+        У пополненной системы вопрос **разрешим**: элементы — это
+        неприводимые слова, они образуют регулярный язык, а конечность
+        регулярного языка проверяется отсутствием цикла в автомате.
+        """
+        from tfl.cayley import is_finite
+
+        return is_finite(self)
+
     def is_trivial(self, max_len: int = 16) -> Verdict:
         """Тривиальна ли группа: каждая образующая равна пустому слову."""
         for letter in self.generators:
