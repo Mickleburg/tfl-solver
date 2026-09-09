@@ -15,6 +15,12 @@ Xb → aaX}` — завершима ли, конфлюэнтна ли. `tfl/srs.
 * `check_measure` — проверить **предложенную** фундированную меру;
 * `check_invariant` — проверить **предложенный** инвариант.
 
+Критические пары (`overlaps`, `locally_confluent`) считаются, но перебор
+**ограничен по построению**: переменная покрывает кусок произвольной
+длины, поэтому наложений бесконечно много, и «сходятся ли все» — это
+словесные уравнения. Опровержение при этом доказательно, а подтверждение
+доказательно только для системы без переменных в левых частях.
+
 Меру и инвариант придумывает человек, оракул их проверяет на всех
 коротких словах. Ровно так семинар и разбирал задачу: мера
 `(|w|_b, Σ позиций b)` в лексикографическом порядке и инвариант
@@ -24,6 +30,7 @@ Xb → aaX}` — завершима ли, конфлюэнтна ли. `tfl/srs.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from itertools import product
 from typing import Callable, Iterator
 
 from tfl.verdict import Verdict, proved, refuted, unknown
@@ -31,6 +38,7 @@ from tfl.verdict import Verdict, proved, refuted, unknown
 __all__ = [
     "PatternRule",
     "PatternSystem",
+    "Overlap",
     "parse_patterns",
     "matches",
 ]
@@ -47,6 +55,16 @@ class PatternRule:
 
     def __str__(self) -> str:
         return f"{self.lhs or 'ε'} → {self.rhs or 'ε'}"
+
+    def is_linear(self, variables: frozenset[str]) -> bool:
+        """Входит ли каждая переменная в левую часть не больше одного раза.
+
+        У нелинейного образца (`XaX`) наложение внутри переменной
+        критическим быть **не перестаёт**: переписывание в одной копии
+        рушит совпадение с другой.
+        """
+        used = [symbol for symbol in self.lhs if symbol in variables]
+        return len(used) == len(set(used))
 
 
 def matches(
@@ -75,6 +93,24 @@ def matches(
         return
     if start < len(word) and word[start] == head:
         yield from matches(rest, word, start + 1, variables, binding)
+
+
+@dataclass(frozen=True)
+class Overlap:
+    """Наложение двух редексов: критическое слово и оба его потомка."""
+
+    word: str
+    left: str
+    right: str
+    first: PatternRule
+    second: PatternRule
+    shift: int
+
+    def __str__(self) -> str:
+        return (
+            f"«{self.word}»: ({self.first}) даёт «{self.left or 'ε'}», "
+            f"({self.second}) с позиции {self.shift} — «{self.right or 'ε'}»"
+        )
 
 
 @dataclass(frozen=True)
@@ -218,6 +254,173 @@ class PatternSystem:
                             (current, nxt),
                         )
         return proved(f"величина сохраняется на всех {checked} шагах из данных слов")
+
+    # -------------------------------------------------- критические пары
+
+    def instances(self, pattern: str, max_len: int = 1, letters: str = ""):
+        """Все подстановки образца словами до длины `max_len`.
+
+        Кроме самого слова возвращается **разметка**: какой кусок слова
+        какому символу образца отвечает. Без неё не отличить наложение
+        внутри переменной от настоящего.
+        """
+        alphabet = letters or "".join(sorted(self.alphabet))
+        pool = [
+            "".join(choice)
+            for length in range(max_len + 1)
+            for choice in product(alphabet, repeat=length)
+        ]
+        names = sorted({symbol for symbol in pattern if symbol in self.variables})
+        for values in product(pool, repeat=len(names)):
+            binding = dict(zip(names, values))
+            word = ""
+            layout: list[tuple[int, int, str]] = []
+            for symbol in pattern:
+                piece = binding.get(symbol, symbol) if symbol in self.variables else symbol
+                layout.append((len(word), len(word) + len(piece), symbol))
+                word += piece
+            yield word, tuple(layout), binding
+
+    def _inside_variable(self, layout, start: int, end: int) -> bool:
+        """Целиком ли отрезок лежит внутри куска, отвечающего переменной."""
+        return any(
+            symbol in self.variables and begin <= start and end <= finish
+            for begin, finish, symbol in layout
+        )
+
+    @property
+    def variable_free(self) -> bool:
+        """Нет переменных в левых частях — значит наложения перечислимы точно."""
+        return all(not (set(rule.lhs) & self.variables) for rule in self.rules)
+
+    def overlaps(self, max_var_len: int = 1, letters: str = "") -> tuple[Overlap, ...]:
+        """Критические наложения: два редекса делят хотя бы одну позицию.
+
+        Мирные применения правил сходятся всегда — в этом и смысл леммы
+        о критических парах, — поэтому перебираются только наложения.
+
+        **Перебор ограничен.** Переменная покрывает произвольный кусок
+        слова, поэтому наложений бесконечно много, и вопрос «сходятся ли
+        все» — это словесные уравнения. Здесь переменные пробегают слова
+        до длины `max_var_len`; исключение — система без переменных
+        в левых частях (`variable_free`), там перебор полон.
+
+        Наложение **внутри переменной** первого правила не критическое:
+        такая пара сходится сама, потому что переписывание идёт в куске,
+        который правило и так не разбирает. Оговорка снимается, если
+        левая часть нелинейна: там копии переменной обязаны совпадать,
+        и переписывание в одной ломает совпадение.
+        """
+        cache = {
+            rule: list(self.instances(rule.lhs, max_var_len, letters))
+            for rule in self.rules
+        }
+        found: dict[tuple[str, str, str], Overlap] = {}
+        for first in self.rules:
+            linear = first.is_linear(self.variables)
+            for outer, layout, outer_binding in cache[first]:
+                if not outer:
+                    continue
+                head = self.substitute(first.rhs, outer_binding)
+                for second in self.rules:
+                    for inner, _, inner_binding in cache[second]:
+                        if not inner:
+                            continue
+                        for shift in range(len(outer)):
+                            stop = shift + len(inner)
+                            if stop <= len(outer):
+                                if outer[shift:stop] != inner:
+                                    continue
+                                word = outer
+                            else:
+                                share = len(outer) - shift
+                                if outer[shift:] != inner[:share]:
+                                    continue
+                                word = outer + inner[share:]
+                            if linear and self._inside_variable(layout, shift, stop):
+                                continue
+                            left = head + word[len(outer):]
+                            right = (
+                                word[:shift]
+                                + self.substitute(second.rhs, inner_binding)
+                                + word[stop:]
+                            )
+                            if left == right:
+                                continue
+                            key = (word, left, right)
+                            if key not in found:
+                                found[key] = Overlap(
+                                    word, left, right, first, second, shift
+                                )
+        return tuple(found[key] for key in sorted(found))
+
+    def joinable(self, left: str, right: str, max_len: int = 12) -> Verdict:
+        """Сходятся ли два слова. Три исхода, как и в `tfl/srs.py`.
+
+        `False` возвращается **только** когда оба обхода прошли целиком:
+        пустое пересечение обрезанных множеств не доказывает ничего.
+        """
+        if left == right:
+            return proved("слова совпадают")
+        first, cut_first = self.reachable(left, max_len)
+        second, cut_second = self.reachable(right, max_len)
+        common = first & second
+        if common:
+            return proved(
+                f"общий потомок: «{sorted(common, key=len)[0] or 'ε'}»",
+                sorted(common, key=len)[0],
+            )
+        if cut_first or cut_second:
+            return unknown(
+                f"общего потомка не нашлось, но обход обрезан потолком "
+                f"длины {max_len} — вывода нет"
+            )
+        return refuted(
+            "множества потомков вычислены целиком и не пересекаются",
+            (sorted(first), sorted(second)),
+        )
+
+    def locally_confluent(
+        self, max_var_len: int = 1, max_len: int = 12, letters: str = ""
+    ) -> Verdict:
+        """Локальная конфлюэнтность через критические пары.
+
+        Опровержение доказательно: несходящаяся пара с полностью
+        вычисленными потомками — это контрпример. Подтверждение
+        доказательно **только** для системы без переменных в левых
+        частях; с переменными наложений бесконечно много, и «все
+        проверенные сошлись» остаётся «не выяснено».
+        """
+        pairs = self.overlaps(max_var_len, letters)
+        pending: list[Overlap] = []
+        for overlap in pairs:
+            verdict = self.joinable(overlap.left, overlap.right, max_len)
+            if verdict.value is False:
+                return refuted(
+                    f"критическая пара не сходится — {overlap}; "
+                    "множества потомков вычислены полностью и не пересекаются",
+                    overlap,
+                )
+            if verdict.value is None:
+                pending.append(overlap)
+        if pending:
+            return unknown(
+                f"из {len(pairs)} критических пар {len(pending)} не сошлись "
+                f"в пределах длины {max_len}, но обходы были обрезаны: "
+                f"первая — {pending[0]}",
+                tuple(pending),
+            )
+        if self.variable_free:
+            return proved(
+                f"все {len(pairs)} критических пар сходятся, а перебор наложений "
+                "полон: переменных в левых частях нет"
+            )
+        return unknown(
+            f"все {len(pairs)} критических пар с переменными до длины "
+            f"{max_var_len} сходятся. Доказательством это не является: "
+            "переменная покрывает кусок любой длины, наложений бесконечно "
+            "много, и вопрос сводится к словесным уравнениям"
+        )
 
     def confluent_on(self, words, max_len: int = 12) -> Verdict:
         """У каждого слова ровно одна нормальная форма — на данном срезе.

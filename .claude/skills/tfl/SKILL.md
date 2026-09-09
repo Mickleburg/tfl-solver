@@ -169,6 +169,7 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | однозначность кода, инъективность морфизма | `code.Code.uniquely_decodable`, `code.Morphism.is_injective` |
 | задержка раскодирования | `code.Morphism.delay_growth`, `code.Morphism.bounded_delay` |
 | переписывание образцов `aXb → bXa` | `pattern.parse_patterns`, `pattern.PatternSystem.check_measure` |
+| критические пары образцов | `pattern.PatternSystem.overlaps`, `locally_confluent` |
 | счёт покрытия по классам | `python tools/eval_suite.py`, `evals/coverage_report.md` |
 | инварианты SRS вида `Σ cₓ·|w|ₓ mod m` | `srs.linear_invariants` |
 | инварианты, видящие **порядок** букв | `srs.monoid_invariants`, `srs.matrix_invariants` |

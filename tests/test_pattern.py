@@ -180,3 +180,127 @@ def test_a_loop_is_found_when_the_left_side_is_nested_in_the_right():
     loop = system.find_loop(["ab"], max_len=8)
     assert loop is not None
     assert loop[0] == "ab" and "ab" in loop[-1] and loop[-1] != "ab"
+
+
+# --------------------------------------------------------------------------
+# Критические пары
+# --------------------------------------------------------------------------
+
+
+VARIABLE_FREE = [
+    "ab -> c\nbc -> a",
+    "aa -> b\nab -> a",
+    "ad -> (d\nda -> )a",
+    "abc -> d\nbc -> e\nc -> f",
+    "aa -> a",
+    "ab -> ba",
+    "ab -> c\nba -> c",
+]
+
+
+@pytest.mark.parametrize("text", VARIABLE_FREE)
+def test_without_variables_the_overlaps_are_the_srs_ones(text):
+    """Сверка с независимой реализацией: без переменных ответ обязан совпасть."""
+    patterns = parse_patterns(text, variables="")
+    system = parse_srs(text)
+    mine = {
+        (overlap.word, frozenset({overlap.left, overlap.right}))
+        for overlap in patterns.overlaps()
+    }
+    theirs = {
+        (word, frozenset({left, right}))
+        for word, left, right, _, _ in system.critical_pairs()
+    }
+    assert mine == theirs
+
+
+@pytest.mark.parametrize("text", VARIABLE_FREE)
+def test_without_variables_the_verdict_is_the_srs_one(text):
+    patterns = parse_patterns(text, variables="")
+    assert patterns.locally_confluent(0, 14).value == parse_srs(text).locally_confluent(14).value
+
+
+def test_without_variables_the_enumeration_is_complete_and_says_so():
+    """Только здесь вывод «локально конфлюэнтна» доказателен."""
+    verdict = parse_patterns("ab -> ba", variables="").locally_confluent(0, 14)
+    assert verdict.value is True
+    assert "перебор наложений полон" in verdict.reason
+
+
+def test_with_variables_a_positive_answer_stays_unproved():
+    """Наложений бесконечно много: «все проверенные сошлись» — не довод."""
+    verdict = seminar_system().locally_confluent(1, 12)
+    assert verdict.value is None
+    assert "словесным уравнениям" in verdict.reason
+
+
+def test_the_seminar_system_has_converging_critical_pairs():
+    """Разбор семинара: система конфлюэнтна — значит пары обязаны сходиться."""
+    system = seminar_system()
+    pairs = system.overlaps(1)
+    assert len(pairs) >= 10
+    for overlap in pairs:
+        assert system.joinable(overlap.left, overlap.right, 12).value is not False
+
+
+def test_a_diverging_critical_pair_is_a_proof():
+    """`aX → X` и `Xa → b` спорят за слово `a`: `ε` и `b` — разные Н.Ф."""
+    system = parse_patterns("aX -> X\nXa -> b", variables="X")
+    verdict = system.locally_confluent(1, 10)
+    assert verdict.value is False
+    assert "вычислены полностью" in verdict.reason
+    assert verdict.witness.word == "a"
+    assert {verdict.witness.left, verdict.witness.right} == {"", "b"}
+
+
+def test_two_matchings_at_one_position_are_a_critical_pair():
+    """Того, чего у строк не бывает: один редекс, два разбора.
+
+    `aXb` ложится на `abb` двумя способами — `X = ε` и `X = b`, —
+    и результаты разные.
+    """
+    system = parse_patterns("aXb -> bXa", variables="X")
+    found = [
+        overlap
+        for overlap in system.overlaps(1)
+        if overlap.word == "abb" and overlap.shift == 0
+    ]
+    assert {overlap.left for overlap in found} == {"bab", "bba"}
+
+
+def test_an_overlap_inside_a_variable_is_not_critical():
+    """Классическая оговорка: переписывание внутри переменной сходится само."""
+    system = parse_patterns("aXb -> c" + chr(10) + "aa -> d", variables="X")
+    pairs = system.overlaps(2)
+    # В слове `aaab` образец `aXb` ложится с `X = aa`: разметка a[0,1) X[1,3) b[3,4).
+    # Редекс `aa` на позиции 1 сидит целиком внутри `X` — не критический.
+    assert not [
+        overlap
+        for overlap in pairs
+        if overlap.word == "aaab" and overlap.shift == 1 and overlap.second.lhs == "aa"
+    ]
+    # А тот же `aa` на позиции 0 задевает букву самого образца — критический.
+    assert [
+        overlap
+        for overlap in pairs
+        if overlap.word == "aaab" and overlap.shift == 0 and overlap.second.lhs == "aa"
+    ]
+
+
+def test_a_non_linear_left_side_keeps_variable_overlaps():
+    """Если переменная повторяется, оговорка снимается — и пар становится больше."""
+    linear = parse_patterns("aXbY -> c\naa -> d", variables="XY")
+    repeated = parse_patterns("aXbX -> c\naa -> d", variables="X")
+    assert linear.rules[0].is_linear(linear.variables)
+    assert not repeated.rules[0].is_linear(repeated.variables)
+    assert len(repeated.overlaps(1)) > len(linear.overlaps(1))
+
+
+def test_joinable_has_three_outcomes():
+    system = seminar_system()
+    assert system.joinable("ab", "ab").value is True
+    assert system.joinable("ab", "aaa", 8).value is True
+    growing = parse_patterns("aXb -> aXbb", variables="X")
+    assert growing.joinable("ab", "ba", 6).value is None
+    dead = parse_patterns("a -> b\nc -> d", variables="")
+    assert dead.joinable("a", "c", 6).value is False

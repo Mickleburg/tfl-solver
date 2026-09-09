@@ -786,6 +786,37 @@ def _lab5_error():
     )
 
 
+def _code_critical_pairs():
+    """Локальная конфлюэнтность образцов через наложения.
+
+    Сверка в две стороны: без переменных ответ обязан совпасть
+    с `tfl/srs.py`, а с переменными положительный вывод обязан
+    остаться «не выяснено».
+    """
+    from tfl.pattern import parse_patterns
+    from tfl.srs import parse_srs
+
+    for text in ("ab -> c\nbc -> a", "ab -> ba", "ad -> (d\nda -> )a"):
+        mine = parse_patterns(text, variables="").locally_confluent(0, 14)
+        theirs = parse_srs(text).locally_confluent(14)
+        if mine.value != theirs.value:
+            return "ошибка", f"расхождение с tfl/srs.py на «{text}»"
+
+    seminar = parse_patterns("aXb -> bXa\nXb -> aaX", variables="X")
+    verdict = seminar.locally_confluent(1, 12)
+    if verdict.value is not None:
+        return "ошибка", f"с переменными вывод обязан быть осторожным: {verdict.reason}"
+    broken = parse_patterns("aX -> X\nXa -> b", variables="X").locally_confluent(1, 10)
+    if broken.value is not False:
+        return "ошибка", "несходящаяся пара не опознана"
+    return PARTIAL, (
+        f"наложения перебираются подстановкой: у системы семинара их "
+        f"{len(seminar.overlaps(1))}, все сходятся, но доказательством это "
+        "не является — символьной унификации образцов нет. Опровержение "
+        f"доказательно: {broken.witness}"
+    )
+
+
 def _mat_bflex():
     """ЛР2 2024, варианты 6, 8 и 2, 5, 7: цель собирается из автоматов лексем.
 
@@ -1106,6 +1137,9 @@ CASES: tuple[Case, ...] = (
          "разбор с графовидным стеком", SOLVED, _lab5_stacks),
     Case("lab5-ошибка", "LAB-5", "ЛР5 2023, слайд 3",
          "указать первую ошибочную позицию", SOLVED, _lab5_error),
+    Case("code-критические-пары", "CODE", "семинар 05.09.2026, 52-Б задача 1",
+         "локально конфлюэнтна ли система образцов", PARTIAL,
+         _code_critical_pairs),
     Case("mat-bf-лексемы", "MAT", "ЛР2 2024, слайды 10-15",
          "сгенерировать автоматы лексем и собрать автомат лексера", SOLVED,
          _mat_bflex),
