@@ -169,6 +169,8 @@ python tools/extract_corpus.py --render FILE.pdf 1 5
 | Копредставление группы или полугруппы, проблема равенства | `presentation.parse_presentation`, `Presentation.equal`, `Presentation.is_commutative` |
 | Граф Кэли, конечность группы, регулярность проблемы равенства | `Presentation.cayley`, `Presentation.is_finite`, `cayley.is_finite` |
 | Действие группы на множестве, доказательство неравенства слов | `cayley.Action`, `Action.check`, `Action.separates` |
+| Автоматы Мили и Мура, минимизация, различающее слово | `mealy.Mealy`, `mealy.Moore`, `Mealy.distinguishing` |
+| Нейронная сеть Мак-Каллока–Питтса, её язык | `mcculloch.Network`, `Network.to_moore`, `Network.to_dfa` |
 | Generic-разбор гиперстеком, упакованный лес | `glr.parse`, `glr.parse_ll`, `glr.SPPF` |
 | Конъюнктивная грамматика гиперстеком (бонус ЛР5) | `glr.parse_conj`, `glr.relaxed_cfg` |
 | расширенные регулярки с проверками, ПКА по ним | `lookaround.parse_extended`, `lookaround.accepts`, `lookaround.to_afa` |

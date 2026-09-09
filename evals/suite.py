@@ -92,6 +92,47 @@ def _lab1_exhaustion():
     )
 
 
+def _mcculloch_network():
+    """Лекция 1 курса 2026, слайды 1–2: сеть Мак-Каллока–Питтса.
+
+    Вопрос ставится по-нашему: какой язык распознаёт сеть. Ответ
+    сверяется с независимо построенным ДКА — по описанию языка,
+    а не по самой сети.
+    """
+    from tfl.automata import DFA, equivalent
+    from tfl.mcculloch import xor_network
+
+    net = xor_network()
+    machine = net.to_dfa("N3")
+
+    marks = {"0": "0", "1": "1", "2": "1", "3": "0"}  # наборы с x ≠ y
+    states = ["", "0", "1", "00", "01", "10", "11"]
+    delta = {
+        (state, letter): (state + marks[letter])[-2:]
+        for state in states
+        for letter in net.alphabet
+    }
+    finals = frozenset(x for x in states if len(x) == 2 and x[0] == "1")
+    reference = DFA(frozenset(net.alphabet), "", finals, delta)
+    if not equivalent(machine, reference):
+        return "ошибка", "язык сети разошёлся с независимым распознавателем"
+
+    for symbol in net.alphabet:
+        bits = net.decode(symbol)
+        if net.value(symbol, "N3") != 0:
+            return "ошибка", f"на «{symbol}» выход появился мгновенно"
+        if net.value(symbol + "0", "N3") != bits["x"] ^ bits["y"]:
+            return "ошибка", f"через два такта на «{symbol}» вышло не xor"
+    moore = net.to_moore("N3")
+    return SOLVED, (
+        f"сеть переведена в автомат Мура ({len(moore)} достижимых векторов "
+        f"из {2 ** len(net.names)}), язык совпал с независимым ДКА. "
+        f"Найдено: схема выглядит комбинационной, но обновление синхронное, "
+        f"и каждый слой стоит такта — x ⊕ y появляется на выходе через два "
+        f"шага, а не сразу"
+    )
+
+
 def _cayley_word_problem():
     """Лекция 1 курса 2026, слайды 4–8: граф Кэли как автомат.
 
@@ -1180,6 +1221,8 @@ CASES: tuple[Case, ...] = (
          "исследовать SRS на завершимость", PARTIAL, _lab1_variants),
     Case("lab1-перебор-по-длинам", "LAB-1", "ЛР1 2025, вариант 11",
          "завершима ли система", PARTIAL, _lab1_exhaustion),
+    Case("rk1-a-сеть-мак-каллока", "RK1-A", "лекция 1 курса 2026, слайды 1-2",
+         "какой язык распознаёт нейронная сеть", SOLVED, _mcculloch_network),
     Case("exam3-граф-кэли", "EXAM-3", "лекция 1 курса 2026, слайды 4-8",
          "регулярен ли язык проблемы равенства группы", SOLVED,
          _cayley_word_problem),
