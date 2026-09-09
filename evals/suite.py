@@ -786,6 +786,57 @@ def _lab5_error():
     )
 
 
+def _mat_bflex():
+    """ЛР2 2024, варианты 6, 8 и 2, 5, 7: цель собирается из автоматов лексем.
+
+    Сверка двусторонняя: ограничения ТЗ считаются операциями над языками,
+    а сама цель — против независимого вывода программ по грамматике.
+    """
+    from tfl.automata import equivalent
+    from tfl.bflex import (
+        LISP,
+        REFAL,
+        automaton_for,
+        random_lexicon,
+        sample_program,
+        teacher_for,
+    )
+    from tfl.lstar import learn
+
+    sizes = {}
+    for kind in (REFAL, LISP):
+        lexicon = random_lexicon(kind, seed=1)
+        verdict = lexicon.check()
+        if verdict.value is not True:
+            return "ошибка", f"{kind}: генератор нарушает ТЗ — {verdict.reason}"
+        for depth in (0, 1, 2):
+            machine = automaton_for(lexicon, depth)
+            sizes[(kind, depth)] = len(machine)
+            bad = [
+                word
+                for seed in range(20)
+                for word in [sample_program(lexicon, depth, seed)]
+                if not machine.accepts(word)
+            ]
+            if bad:
+                return "ошибка", f"{kind}, глубина {depth}: не принято «{bad[0][:40]}»"
+        if equivalent(automaton_for(lexicon, 0), automaton_for(lexicon, 1)):
+            return "ошибка", f"{kind}: вложенность не добавляет ни одного слова"
+
+    lexicon = random_lexicon(LISP, seed=1)
+    teacher = teacher_for(lexicon, 1)
+    result = learn(teacher, "".join(sorted(lexicon.alphabet)), max_rounds=60)
+    if not result.converged or not equivalent(result.dfa, automaton_for(lexicon, 1)):
+        return "ошибка", f"L* не сошёлся на цели: {result.summary()}"
+    return SOLVED, (
+        f"ограничения ТЗ проверены операциями над языками; цель сошлась "
+        f"с выводом по грамматике на всех глубинах "
+        f"(рефал {sizes[(REFAL, 2)]} состояний, лисп {sizes[(LISP, 2)]} "
+        f"при вложенности 2); L* выучил лисп за {result.rounds} раундов "
+        f"и {result.membership_queries} запросов"
+    )
+
+
 def _lab1_dependency_pairs():
     """Вариант 8 ЛР1 2025: завершимость, которую не берут ни порядок, ни лес мер.
 
@@ -1055,6 +1106,9 @@ CASES: tuple[Case, ...] = (
          "разбор с графовидным стеком", SOLVED, _lab5_stacks),
     Case("lab5-ошибка", "LAB-5", "ЛР5 2023, слайд 3",
          "указать первую ошибочную позицию", SOLVED, _lab5_error),
+    Case("mat-bf-лексемы", "MAT", "ЛР2 2024, слайды 10-15",
+         "сгенерировать автоматы лексем и собрать автомат лексера", SOLVED,
+         _mat_bflex),
     Case("lab1-пары-зависимостей", "LAB-1", "ЛР1 2025, вариант 8",
          "завершима ли система переписывания", SOLVED, _lab1_dependency_pairs),
     Case("lab5-лес-сверху-вниз", "LAB-5", "ЛР5 2023, слайд 9",
