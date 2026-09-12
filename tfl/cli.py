@@ -61,6 +61,13 @@ def _doctor(arguments: argparse.Namespace) -> int:
         "Codex skill": (ROOT / ".agents" / "skills" / "tfl-solver" / "SKILL.md").is_file(),
         "Claude adapter": (ROOT / ".claude" / "skills" / "tfl" / "SKILL.md").is_file(),
         "карта задач": (ROOT / "docs" / "02-TASK-TAXONOMY.md").is_file(),
+        "формат курса 2026": (ROOT / "docs" / "COURSE-2026.md").is_file(),
+        "раскрытие ИИ для лабораторной": (
+            ROOT / "docs" / "LAB-AI-DISCLOSURE.md"
+        ).is_file(),
+        "рецепт аудита ИИ-решения": (
+            ROOT / "docs" / "recipes" / "EXAM-ERROR.md"
+        ).is_file(),
         "индекс корпуса": (ROOT / "evals" / "tasks" / "index.jsonl").is_file(),
         "сквозной holdout": (
             (ROOT / "evals" / "agent_holdout" / "cases.jsonl").is_file()

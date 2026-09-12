@@ -90,7 +90,7 @@ def test_response_schema_restricts_route_to_canonical_values(cases):
     recipes = schema["properties"]["recipe"]["enum"]
     assert {case.task_class for case in cases} <= set(classes)
     assert {case.recipe for case in cases} <= set(recipes)
-    assert len(classes) == len(recipes) == 17
+    assert len(classes) == len(recipes) == 18
 
 
 def test_prompt_contains_task_but_not_expected_route(cases):
@@ -109,6 +109,14 @@ def test_complete_observed_trajectory_scores_ten(cases):
     assert score.total == 10
     assert score.passed
     assert not score.issues
+
+
+def test_quoted_powershell_python_command_counts_as_observed(cases):
+    case = cases[0]
+    command = 'powershell.exe -Command \'py -3 -m tfl doctor\''
+    score = score_response(case, good_response(case), [command])
+    assert score.total == 10
+    assert score.passed
 
 
 def test_claimed_but_unobserved_oracle_does_not_pass(cases):

@@ -1,11 +1,16 @@
 # tfl-solver
 
 Агент и набор Python-оракулов для задач по теории формальных языков: РК,
-лабораторных, экзамена и бонусных задач курса ИУ9 МГТУ.
+лабораторных и экзамена курса ИУ9 МГТУ.
 
 Агент получает полное условие текстом или фотографией, сам определяет класс
 задачи, подбирает рецепт и проверяет содержательные гипотезы исполняемыми
 оракулами. Номер варианта для запуска не требуется.
+
+Форма контроля 2026 года описана в [`docs/COURSE-2026.md`](docs/COURSE-2026.md):
+четыре лабораторные с обязательным раскрытием использования ИИ, карточки РК
+под таймер и экзаменационный поиск ошибки в готовом ИИ-решении. Big Pharma в
+текущем курсе нет; её старые задачи сохранены только как регрессии.
 
 ## Быстрый запуск
 
@@ -41,7 +46,7 @@ py -3 -m venv .venv
 ```powershell
 py -3 -m tfl doctor
 py -3 -m tfl intake --file task.txt
-py -3 -m tfl intake --text "Проверить завершимость SRS ..." --hint ЛР1
+py -3 -m tfl intake --text "Проверить завершимость SRS ..." --hint ЛР
 py -3 -m tfl eval
 py -3 -m tfl holdout list
 ```
@@ -59,12 +64,12 @@ py -3 -m tfl holdout list
 ```powershell
 py -3 -m tfl holdout run `
   --runner codex `
-  --case pharma-2022-A11 `
-  --output reports/agent-holdout/codex-smoke.jsonl
+  --case exam-2024-b15-q1 `
+  --output reports/agent-holdout/codex-exam-smoke.jsonl
 
 py -3 -m tfl holdout score `
-  --input reports/agent-holdout/codex-smoke.jsonl `
-  --report reports/agent-holdout/codex-smoke.md
+  --input reports/agent-holdout/codex-exam-smoke.jsonl `
+  --report reports/agent-holdout/codex-exam-smoke.md
 ```
 
 `--runner codex` (по умолчанию) запускает случай в read-only sandbox.
@@ -80,10 +85,12 @@ JSON Schema. Полный набор вызывается только явны�
 
 - `.agents/skills/tfl-solver/SKILL.md` — канонический цикл решения;
 - `tfl/` — проверяющие оракулы;
-- `docs/recipes/` — рецепты 17 классов задач;
+- `docs/recipes/` — рецепты 18 содержательных классов задач;
 - `corpus/` — версионируемое текстовое зеркало источников;
 - `evals/` — исполняемая оценка покрытия;
 - `evals/agent_holdout/` — замороженные задачи и контракт сквозного eval;
+- `docs/COURSE-2026.md` — актуальная форма контроля и неизвестные детали;
+- `docs/LAB-AI-DISCLOSURE.md` — обязательный раздел лабораторного отчёта;
 - `docs/PROJECT-STATE.md` — единое актуальное состояние;
 - `docs/OPEN-GAPS.md` — незакрытые задачи;
 - `references/` — локальные исходные материалы, не входящие в Git.

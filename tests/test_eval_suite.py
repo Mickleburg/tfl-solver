@@ -27,7 +27,7 @@ def test_every_class_of_the_taxonomy_is_represented():
         "LAB-1", "LAB-2", "LAB-3", "LAB-4",
         "RK1-A", "RK1-B", "RK1-C",
         "RK2-A", "RK2-B", "RK2-C",
-        "EXAM-1", "EXAM-2", "EXAM-3", "PHARMA", "MAT", "CODE",
+        "EXAM-1", "EXAM-2", "EXAM-3", "EXAM-ERROR", "PHARMA", "MAT", "CODE",
     }
     assert expected <= covered
 

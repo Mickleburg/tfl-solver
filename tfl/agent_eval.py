@@ -224,7 +224,12 @@ def validate_response(response: Any) -> tuple[str, ...]:
 
 
 def _observed_oracle(commands: Iterable[str]) -> bool:
-    pattern = re.compile(r"(?:^|[\\/\s])(py(?:thon)?(?:\.exe)?|pytest|tfl-agent)(?:\s|$)", re.I)
+    pattern = re.compile(
+        r"(?<![\w.-])"
+        r"(?:py(?:\.exe)?|python(?:3(?:\.\d+)?)?(?:\.exe)?|pytest(?:\.exe)?|tfl-agent)"
+        r"(?=\s|[\"']|$)",
+        re.I,
+    )
     return any(pattern.search(str(command)) for command in commands)
 
 

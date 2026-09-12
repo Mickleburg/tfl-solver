@@ -8,7 +8,7 @@
       "enum": [
         "LAB-1", "LAB-2", "LAB-3", "LAB-4", "LAB-5",
         "RK1-A", "RK1-B", "RK1-C", "RK2-A", "RK2-B", "RK2-C",
-        "EXAM-1", "EXAM-2", "EXAM-3", "MAT", "CODE", "PHARMA"
+        "EXAM-1", "EXAM-2", "EXAM-3", "EXAM-ERROR", "MAT", "CODE", "PHARMA"
       ]
     },
     "recipe": {
@@ -21,6 +21,7 @@
         "docs/recipes/RK2-A.md", "docs/recipes/RK2-B.md",
         "docs/recipes/RK2-C.md", "docs/recipes/EXAM-1.md",
         "docs/recipes/EXAM-2.md", "docs/recipes/EXAM-3.md",
+        "docs/recipes/EXAM-ERROR.md",
         "docs/recipes/MAT.md", "docs/recipes/CODE.md",
         "docs/recipes/PHARMA.md"
       ]

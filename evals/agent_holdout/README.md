@@ -13,13 +13,18 @@
 передаются агенту. `manifest.json` фиксирует число случаев и SHA-256 текста с
 нормализованными LF, поэтому набор нельзя незаметно подправить после запуска.
 
+Это исторический regression set, а не модель формы контроля 2026. Два случая
+`PHARMA` остаются замороженными для сравнимости v1, хотя Big Pharma в текущем
+курсе отменена. Новый формат оценивается отдельными будущими наборами карточек
+РК, лабораторных и ошибочных ИИ-решений после получения исходных материалов.
+
 ## Запуск
 
 Показать состав набора и сформировать одиночный prompt:
 
 ```powershell
 py -3 -m tfl holdout list
-py -3 -m tfl holdout prompt --case pharma-2022-A11
+py -3 -m tfl holdout prompt --case exam-2024-b15-q1
 ```
 
 Запустить установленный Codex или Claude Code и сохранить машинный транскрипт.
@@ -29,7 +34,7 @@ py -3 -m tfl holdout prompt --case pharma-2022-A11
 ```powershell
 py -3 -m tfl holdout run `
   --runner codex `
-  --case pharma-2022-A11 --output reports/agent-holdout/codex-smoke.jsonl
+  --case exam-2024-b15-q1 --output reports/agent-holdout/codex-smoke.jsonl
 ```
 
 Для Claude Code используется та же команда с `--runner claude`.
@@ -58,6 +63,8 @@ scorer. На машине ревизии CLI 2.1.205
 Первый зафиксированный smoke-run: `reports/agent-holdout/codex-smoke-2026-09-12.md`.
 Он прошёл 10/10, но показал слишком длинную траекторию; поэтому prompt теперь
 ограничивает агента десятью командами и запрещает чтение больших файлов целиком.
+Второй smoke `exam-2024-b15-q1` уложился в 9 команд и после исправления учёта
+кавычек PowerShell прошёл 10/10; его датированные JSONL и Markdown лежат рядом.
 
 ## Оценка
 

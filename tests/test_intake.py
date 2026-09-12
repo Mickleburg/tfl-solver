@@ -126,6 +126,21 @@ def test_hint_restricts_the_pool():
     assert classify(DESCRIPTION, "РК2")[0].code.startswith("RK2")
 
 
+def test_current_rk_hint_accepts_the_whole_known_bank():
+    assert classify(ATTRIBUTE, "РК")[0].code == "RK2-C"
+    assert classify(DESCRIPTION, "РК")[0].code.startswith("RK")
+
+
+def test_current_lab_number_does_not_force_an_old_recipe():
+    text = "Построить Generic GLR-разбор с графовидным стеком и лесом разбора."
+    assert classify(text, "ЛР1")[0].code == "LAB-5"
+
+
+def test_exam_error_is_a_separate_route():
+    candidates = classify("Найти первую ошибку в готовом решении задачи", "экзамен")
+    assert candidates[0].code == "EXAM-ERROR"
+
+
 def test_lab3_wording_classified():
     text = ("Проанализировать язык на детерминизм. Построить PDA. "
             "Проанализировать язык на беспрефиксность.")

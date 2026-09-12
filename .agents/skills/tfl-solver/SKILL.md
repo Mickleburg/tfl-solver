@@ -1,6 +1,6 @@
 ---
 name: tfl-solver
-description: "Solve and verify theory of formal languages tasks for BMSTU IU9: regular languages, automata, rewriting systems, grammars, parsing, pumping lemmas, attributes, exams, labs, RK and Pharma. Use when the user provides a full TFL problem as text or an image, asks to check a proposed solution, or requests a course-style report."
+description: "Solve and verify theory of formal languages tasks for BMSTU IU9: regular languages, automata, rewriting systems, grammars, parsing, pumping lemmas, attributes, timed RK/exam cards, labs, oral defense, and error finding in proposed or AI-generated solutions."
 ---
 
 # Решение задач по ТФЯ
@@ -14,7 +14,8 @@ description: "Solve and verify theory of formal languages tasks for BMSTU IU9: r
 1. Найди корень репозитория по `pyproject.toml` и читай пути ниже относительно
    него. Не используй абсолютные пользовательские пути.
 2. Прочитай `docs/PROJECT-STATE.md` и релевантную часть
-   `docs/02-TASK-TAXONOMY.md`.
+   `docs/02-TASK-TAXONOMY.md`. Для формы контроля прочитай
+   `docs/COURSE-2026.md`; старую разбалловку на 2026 год не переноси.
 3. Выполни `py -3 -m tfl doctor` на Windows или `python3 -m tfl doctor` на
    Unix. Отсутствие локальных `references/` является предупреждением, а не
    запретом: версионируемый `corpus/` остаётся доступен.
@@ -35,6 +36,10 @@ description: "Solve and verify theory of formal languages tasks for BMSTU IU9: r
 py -3 -m tfl intake --file task.txt
 ```
 
+В курсе 2026 четыре лабораторные, но их номер пока не задаёт исторический
+класс `LAB-*`: выбирай рецепт только по полному условию. Big Pharma в текущем
+курсе нет; `PHARMA` применяй лишь к явно присланной архивной задаче.
+
 Классификатор выдаёт кандидатов и улики, а окончательный класс определяется
 чтением условия.
 
@@ -46,14 +51,32 @@ py -3 -m tfl intake --file task.txt
 | `LAB-2` | `docs/recipes/LAB-2.md` |
 | `LAB-3` | `docs/recipes/LAB-3.md` |
 | `LAB-4` | `docs/recipes/LAB-4.md` |
-| `LAB-5` | `docs/recipes/LAB-5.md` |
+| `LAB-5` (архив) | `docs/recipes/LAB-5.md` |
 | `RK1-A`, `RK1-B`, `RK1-C` | одноимённые рецепты |
 | `RK2-A`, `RK2-B`, `RK2-C` | одноимённые рецепты |
 | `EXAM-1`, `EXAM-2`, `EXAM-3` | одноимённые рецепты |
-| `MAT`, `CODE`, `PHARMA` | одноимённые рецепты |
+| `EXAM-ERROR` | `docs/recipes/EXAM-ERROR.md` |
+| `MAT`, `CODE` | одноимённые рецепты |
+| `PHARMA` (архив) | `docs/recipes/PHARMA.md` |
 
 Если класс не совпал буквально, выбери рецепт по вопросу задачи и формальному
 объекту. Форма контроля сама по себе класс не определяет.
+
+## Режимы контроля 2026
+
+- **Лабораторная.** Помимо решения подготовь раздел «Использование ИИ» по
+  `docs/LAB-AI-DISCLOSURE.md`: назови инструмент, способ применения, дословные
+  пользовательские промпты, принятые/отвергнутые предложения и независимую
+  проверку. Не выдумывай отсутствующие промпты и не раскрывай скрытые
+  инструкции или chain-of-thought.
+- **РК и часть 1 экзамена.** Это тренировка по известной базе под таймер.
+  Сначала дай короткий защищаемый ответ, затем свидетель и подробности. Не
+  трать время на обзор всего корпуса: один рецепт, один основной оракул.
+- **Часть 2 экзамена.** Раздели условие и готовое ИИ-решение, найди первый
+  неверный шаг, предъяви минимальный контрпример/нарушенную предпосылку и
+  исправь этот шаг по `EXAM-ERROR`.
+- **Собеседование на 5.** После решения добавь краткое устное объяснение и
+  вероятные уточняющие вопросы по определениям, доказательству и границам.
 
 ## Цикл решения
 
@@ -123,6 +146,10 @@ py -3 -m tfl intake --file task.txt
 4. доказательство;
 5. самопроверка всех подпунктов;
 6. границы результата.
+
+Для лабораторной после этих пунктов обязателен раздел раскрытия использования
+ИИ. В него входят только фактически отправленные пользователем промпты;
+служебные инструкции платформы и внутренние рассуждения модели не цитируются.
 
 Используй статусы:
 
