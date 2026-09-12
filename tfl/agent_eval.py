@@ -24,6 +24,7 @@ HOLDOUT_ROOT = ROOT / "evals" / "agent_holdout"
 CASES_PATH = HOLDOUT_ROOT / "cases.jsonl"
 SCHEMA_PATH = HOLDOUT_ROOT / "response.schema.json"
 MANIFEST_PATH = HOLDOUT_ROOT / "manifest.json"
+COMMAND_BUDGET = 10
 
 STATUSES = frozenset(
     {"ДОКАЗАНО", "ПРОВЕРЕНО", "ЧАСТИЧНО", "ВРУЧНУЮ", "НЕ ПРОВЕРЕНО"}
@@ -94,6 +95,7 @@ class AgentScore:
             and self.components.get("маршрут", 0) == 2
             and self.components.get("запуск оракула", 0) == 1
             and self.components.get("ответ", 0) >= 1
+            and not any(issue.startswith("превышен бюджет команд") for issue in self.issues)
         )
 
 
@@ -159,6 +161,11 @@ AGENTS.md, docs/recipes, corpus и исходный код tfl; Python-орак�
 В oracle_calls укажи реально выполненные операции и результаты.
 ДОКАЗАНО/ПРОВЕРЕНО не ставь по одному ограниченному перебору; границы вынеси
 в limitations.
+
+Бюджет траектории: не более {COMMAND_BUDGET} команд. Не читай целиком файлы длиннее 250
+строк — сначала найди релевантный фрагмент через rg. Не запускай полный pytest
+или весь eval-набор. Достаточно одного предметного оракула и одной независимой
+проверки его результата; после доказательства сразу формируй ответ.
 
 case_id: {case.id}
 Контекст формы контроля: {case.hint}
@@ -235,6 +242,7 @@ def score_response(
     *,
     runner: str = "unknown",
     runner_error: str = "",
+    command_budget: int | None = None,
 ) -> AgentScore:
     components = {
         "маршрут": 0,
@@ -291,6 +299,10 @@ def score_response(
         components["запуск оракула"] = 1
     else:
         issues.append("в трассе нет фактического запуска Python-оракула")
+    if command_budget is not None and len(observed_commands) > command_budget:
+        issues.append(
+            f"превышен бюджет команд: {len(observed_commands)} > {command_budget}"
+        )
 
     claims = response.get("claims", [])
     valid_claims = [claim for claim in claims if isinstance(claim, dict)] if isinstance(claims, list) else []
@@ -445,6 +457,7 @@ def run_codex_case(
         "response": response,
         "observed_commands": list(observed_commands),
         "usage": usage,
+        "command_budget": COMMAND_BUDGET,
         "error": error,
     }
 
@@ -495,12 +508,19 @@ def score_runs(
                 tuple(map(str, record.get("observed_commands", ()))),
                 runner=str(record.get("runner", "unknown")),
                 runner_error=str(record.get("error", "")),
+                command_budget=(
+                    int(record["command_budget"])
+                    if record.get("command_budget") is not None
+                    else None
+                ),
             )
         )
     return tuple(scores)
 
 
-def score_report(scores: Sequence[AgentScore]) -> str:
+def score_report(
+    scores: Sequence[AgentScore], records: Sequence[dict[str, Any]] = ()
+) -> str:
     passed = sum(score.passed for score in scores)
     average = sum(score.total for score in scores) / len(scores) if scores else 0.0
     lines = [
@@ -509,6 +529,33 @@ def score_report(scores: Sequence[AgentScore]) -> str:
         f"Случаев: **{len(scores)}**, прошли порог 8/10: **{passed}**, "
         f"средний балл: **{average:.2f}/10**.",
         "",
+    ]
+    if records:
+        versions = sorted({str(record.get("runner_version", "unknown")) for record in records})
+        models = sorted({str(record.get("model", "default")) for record in records})
+        commits = sorted({str(record.get("repository_commit", "unknown")) for record in records})
+        elapsed = sum(float(record.get("elapsed_s", 0)) for record in records)
+        usage_keys = (
+            "input_tokens",
+            "cached_input_tokens",
+            "output_tokens",
+            "reasoning_output_tokens",
+        )
+        usage = {
+            key: sum(
+                int(record.get("usage", {}).get(key, 0))
+                for record in records
+                if isinstance(record.get("usage"), dict)
+            )
+            for key in usage_keys
+        }
+        lines += [
+            f"Runner: `{', '.join(versions)}`; model: `{', '.join(models)}`.",
+            f"Коммит harness: `{', '.join(commits)}`; суммарное время: **{elapsed:.2f} с**.",
+            "Usage: " + ", ".join(f"{key}={value}" for key, value in usage.items()) + ".",
+            "",
+        ]
+    lines += [
         "| случай | runner | балл | маршрут | итог |",
         "|---|---|---:|---:|---|",
     ]

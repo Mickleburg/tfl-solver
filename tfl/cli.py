@@ -152,12 +152,12 @@ def _holdout(arguments: argparse.Namespace) -> int:
             timeout=arguments.timeout,
         )
         scores = score_runs(cases, records)
-        print(score_report(scores))
+        print(score_report(scores, records))
         return 0 if all(score.passed for score in scores) else 1
     if arguments.holdout_command == "score":
         records = load_runs(_repo_path(arguments.input))
         scores = score_runs(cases, records)
-        report = score_report(scores)
+        report = score_report(scores, records)
         print(report)
         if arguments.report:
             destination = _repo_path(arguments.report)

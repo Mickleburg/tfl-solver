@@ -96,6 +96,7 @@ def test_prompt_contains_task_but_not_expected_route(cases):
         assert case.task_class not in prompt
         assert "$tfl-solver" in prompt
         assert "Не читай evals/agent_holdout" in prompt
+        assert "не более 10 команд" in prompt
 
 
 def test_complete_observed_trajectory_scores_ten(cases):
@@ -130,6 +131,17 @@ def test_bounded_experiment_cannot_be_called_a_proof(cases):
     score = score_response(case, response, ["py -3 oracle.py"])
     assert score.components["честность"] == 0
     assert any("ограниченный перебор" in issue for issue in score.issues)
+
+
+def test_command_budget_is_a_hard_gate(cases):
+    case = cases[0]
+    commands = [f"py -3 check-{number}.py" for number in range(11)]
+    score = score_response(
+        case, good_response(case), commands, command_budget=10
+    )
+    assert score.total == 10
+    assert not score.passed
+    assert any("превышен бюджет команд" in issue for issue in score.issues)
 
 
 def test_codex_jsonl_stream_keeps_commands_and_final_response(cases):
@@ -180,6 +192,11 @@ def test_cli_scores_a_saved_run(tmp_path, cases, capsys):
         "runner": "test",
         "response": good_response(case),
         "observed_commands": ["py -3 check.py"],
+        "runner_version": "test-runner 1.0",
+        "model": "test-model",
+        "repository_commit": "0123456789abcdef",
+        "elapsed_s": 1.5,
+        "usage": {"input_tokens": 100, "output_tokens": 20},
         "error": "",
     }
     run = tmp_path / "run.jsonl"
@@ -187,6 +204,7 @@ def test_cli_scores_a_saved_run(tmp_path, cases, capsys):
     report = tmp_path / "report.md"
     assert main(["holdout", "score", "--input", str(run), "--report", str(report)]) == 0
     assert "10/10" in report.read_text(encoding="utf-8")
+    assert "input_tokens=100" in report.read_text(encoding="utf-8")
     assert "PASS" in capsys.readouterr().out
 
 
