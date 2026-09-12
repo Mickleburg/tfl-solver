@@ -68,7 +68,7 @@
 «не выяснено»: неудача поиска не значит, что система не завершима.
 Опровержение — это петля, и она ищется отдельно (`SRS.find_loop`).
 
-Замер на вариантах ЛР1 2025 — `python tools/lab1_termination.py`.
+Замер на вариантах ЛР1 2025 — `py -3 tools/lab1_termination.py`.
 """
 
 from __future__ import annotations

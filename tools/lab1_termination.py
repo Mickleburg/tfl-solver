@@ -26,9 +26,9 @@
 
 ```bash
 export PYTHONPATH=.
-python tools/lab1_termination.py              # вся таблица
-python tools/lab1_termination.py --variant 8  # разобрать один вариант
-python tools/lab1_termination.py --dimension 2 --ceiling 2
+py -3 tools/lab1_termination.py              # вся таблица
+py -3 tools/lab1_termination.py --variant 8  # разобрать один вариант
+py -3 tools/lab1_termination.py --dimension 2 --ceiling 2
 ```
 
 Прогон всей таблицы идёт **десятками минут**: на неудачных вариантах Z3

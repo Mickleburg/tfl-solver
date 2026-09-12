@@ -20,9 +20,9 @@
 
 ```bash
 export PYTHONPATH=.
-python tools/lab1_invariants.py                 # таблица по всем вариантам
-python tools/lab1_invariants.py --variant 20    # подробно по одному
-python tools/lab1_invariants.py --cap 4         # быстрее, оценка грубее
+py -3 tools/lab1_invariants.py                 # таблица по всем вариантам
+py -3 tools/lab1_invariants.py --variant 20    # подробно по одному
+py -3 tools/lab1_invariants.py --cap 4         # быстрее, оценка грубее
 ```
 """
 

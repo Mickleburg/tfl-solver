@@ -661,7 +661,7 @@ class SRS:
         Сила против прямой интерпретации в том, что правила требуется
         уронить лишь **нестрого**, а строго — по одной паре на каждую
         циклическую компоненту графа зависимостей. Замер на ЛР1 2025 —
-        `python tools/lab1_termination.py`.
+        `py -3 tools/lab1_termination.py`.
         """
         from tfl.deppair import prove_termination
 

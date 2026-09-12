@@ -2,8 +2,8 @@
 """Извлечение текстового корпуса из PDF курса ТФЯ.
 
 Использование:
-    python tools/extract_corpus.py            # переизвлечь всё в corpus/txt
-    python tools/extract_corpus.py --render FILE.pdf 1 5   # отрендерить стр. 1..5 в PNG
+    py -3 tools/extract_corpus.py            # переизвлечь всё в corpus/txt
+    py -3 tools/extract_corpus.py --render FILE.pdf 1 5   # отрендерить стр. 1..5 в PNG
 
 Зачем: почти все материалы курса лежат в PDF. Grep по PDF невозможен,
 поэтому агент работает с плоским текстовым зеркалом в corpus/txt/.
@@ -26,8 +26,15 @@ import pymupdf
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "corpus" / "txt"
-CHAT = "chat-onTG-2025-tfl"
-SOURCES = ("FormalLanguageTheory", "TFL-IU9-claude", CHAT)
+CHAT = "chat"
+# Метка сохраняет стабильные имена corpus/txt, а путь отражает единый
+# локальный каталог references/. Это позволяет перемещать весь проект без
+# абсолютных путей и не пересобирать индекс задач из-за смены раскладки.
+SOURCES = (
+    ("FormalLanguageTheory", pathlib.Path("references/teacher/FormalLanguageTheory")),
+    ("TFL-IU9-claude", pathlib.Path("references/course/TFL-IU9-claude")),
+    (CHAT, pathlib.Path("references/chat/chat-onTG-2025-tfl")),
+)
 # Персональные данные третьих лиц: списки групп с ФИО. В корпус не идут —
 # к предмету отношения не имеют, а распространять их мы не вправе.
 SKIP = ("Группа ИУ9", "Список группы")
@@ -88,7 +95,7 @@ def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     rows = []
     seen: dict[str, str] = {}
-    for base in SOURCES:
+    for label, base in SOURCES:
         for pdf in sorted((ROOT / base).rglob("*.pdf")):
             if any(mark in pdf.name for mark in SKIP):
                 continue
@@ -100,10 +107,12 @@ def main() -> None:
                 continue
             seen[digest] = pdf.name
             rel = pdf.relative_to(ROOT)
-            if base == CHAT:
+            if label == CHAT:
                 name = "chat_" + pdf.stem.replace(" ", "_") + ".txt"
             else:
-                name = str(rel).replace("\\", "_").replace("/", "_").replace(" ", "_")[:-4] + ".txt"
+                inside = pdf.relative_to(ROOT / base)
+                stem = str(inside.with_suffix(""))
+                name = label + "_" + stem.replace("\\", "_").replace("/", "_").replace(" ", "_") + ".txt"
             try:
                 text, pages = extract(pdf)
             except Exception as exc:  # повреждённый или защищённый PDF

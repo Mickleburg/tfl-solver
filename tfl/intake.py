@@ -341,7 +341,7 @@ def load_index(path: pathlib.Path | None = None) -> TaskIndex:
     source = path or INDEX_PATH
     if not source.exists():
         raise FileNotFoundError(
-            f"нет {source}; соберите индекс: python tools/build_task_index.py"
+            f"нет {source}; соберите индекс: py -3 tools/build_task_index.py"
         )
     records = [
         json.loads(line)

@@ -1,6 +1,6 @@
 # Рецепт `LAB-3` — КС-языки: детерминизм, PDA, регулярные аппроксимации
 
-Задание 2025: `FormalLanguageTheory/lab_tfl_2025_3.pdf`,
+Задание 2025: `references/teacher/FormalLanguageTheory/2025/lab_tfl_2025_3.pdf`,
 текст — `corpus/txt/FormalLanguageTheory_2025_lab_tfl_2025_3.txt`.
 
 Пункты задания и их цена:
@@ -48,7 +48,7 @@
   LR(0)-автомат и LL(1)-автомат → пересечение по Бар-Хиллелу → сверка языков
 ```
 
-Запуск: `python tools/lab3_report.py NN` (и `--pda my.pda`, когда автомат
+Запуск: `py -3 tools/lab3_report.py NN` (и `--pda my.pda`, когда автомат
 построен; `--file my.cfg` для чётных вариантов).
 
 ## §1. Грамматика по словесному описанию
@@ -214,6 +214,6 @@ disagreements(grammar, predicate, "ab", max_len=10)
 * Лекция 9 (`corpus/txt/FormalLanguageTheory_2023_lect_tfl_9.txt`,
   страницы 41–48) — построение PDA по LR(0)-автомату, избавление
   от переходов по нетерминалам, регулярная аппроксимация, критерий DPDA.
-* `VDEN5-IU9-TFL/lab3/other/lab3.tex` — студенческий отчёт по варианту 7
+* `references/students/VDEN5-IU9-TFL/lab3/other/lab3.tex` — студенческий отчёт по варианту 7
   с правилами пересечения в записи `⟨p, A, q⟩`. Оформление — образец,
   содержание — не источник истины.

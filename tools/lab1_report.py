@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Генератор отчёта по ЛР1 (системы переписывания строк).
 
-    python tools/lab1_report.py 20
-    python tools/lab1_report.py --file my.srs --out out/
+    py -3 tools/lab1_report.py 20
+    py -3 tools/lab1_report.py --file my.srs --out out/
 
 Автоматизируется всё, что имеет исполняемый оракул: завершимость, критические
 пары, пополнение по Кнуту–Бендиксу, классы эквивалентности, поиск линейных

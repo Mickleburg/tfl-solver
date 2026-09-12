@@ -1,0 +1,3 @@
+interface:
+  display_name: "TFL Solver"
+  short_description: "Решает и проверяет задачи по ТФЯ"

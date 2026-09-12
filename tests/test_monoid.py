@@ -1,7 +1,7 @@
 """Трансформационный и синтаксический моноиды.
 
 Приём взят из работы, которую преподаватель рекомендовала в issue #6
-(`vendor/UsefulTornado-Formal-Languages/transition_monoid`), и переписан
+(`references/vendor/UsefulTornado-Formal-Languages/transition_monoid`), и переписан
 с одной существенной поправкой: там моноид считается по полезным
 состояниям, из-за чего функции становятся частичными. Синтаксическим
 такой моноид не является — см. `test_trap_state_changes_the_monoid`.

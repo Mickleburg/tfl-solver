@@ -1,8 +1,8 @@
 """Прогон набора для оценки: что оракул закрывает, а что нет.
 
-    python tools/eval_suite.py                 # таблица по классам
-    python tools/eval_suite.py --class RK2-B   # только один класс
-    python tools/eval_suite.py --report        # записать evals/coverage_report.md
+    py -3 tools/eval_suite.py                 # таблица по классам
+    py -3 tools/eval_suite.py --class RK2-B   # только один класс
+    py -3 tools/eval_suite.py --report        # записать evals/coverage_report.md
 
 Смысл — не в зелёных галочках. Каждое утверждение вида «класс закрыт»
 из `docs/OPEN-GAPS.md` здесь становится исполняемой проверкой с одним
@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import time
 from pathlib import Path
@@ -22,6 +23,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from evals.suite import CASES, MANUAL, PARTIAL, SOLVED  # noqa: E402
 
 MARK = {SOLVED: "+", PARTIAL: "~", MANUAL: "-", "ошибка": "!"}
+
+
+def _configure_windows_stdio() -> None:
+    if os.name != "nt":
+        return
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8")
 
 
 def run(selected=None):
@@ -75,7 +85,7 @@ def markdown(results) -> str:
     lines = [
         "# Покрытие: куда приходит оракул по каждому классу задач",
         "",
-        "Считается `python tools/eval_suite.py --report`. Исходы:",
+        "Считается `py -3 tools/eval_suite.py --report`. Исходы:",
         "",
         "* **решено** — оракул выдаёт ответ на вопрос условия;",
         "* **частично** — необходимое условие, свидетель либо проверка",
@@ -118,6 +128,7 @@ def markdown(results) -> str:
 
 
 def main() -> int:
+    _configure_windows_stdio()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--class", dest="selected", help="класс задач либо id случая")
     parser.add_argument(

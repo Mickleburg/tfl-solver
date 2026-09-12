@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Генератор отчёта по ЛР2 (регулярка → ДКА / НКА / ПКА / расширенная регулярка).
 
-    python tools/lab2_report.py 15
-    python tools/lab2_report.py --regex "b*((ab*a)*(aabb|(babb)*))*" --out out/
+    py -3 tools/lab2_report.py 15
+    py -3 tools/lab2_report.py --regex "b*((ab*a)*(aabb|(babb)*))*" --out out/
 
 Автоматизируется только механическая часть — та, где есть исполняемый оракул:
 минимальный ДКА, таблица классов, малый НКА и оценка его минимальности,

@@ -39,7 +39,7 @@
 
 Нижняя граница `n ⩾ ⌈k/2⌉` — это `k ⩽ 2n`; верхняя `n ⩽ T` — это `T ⩾ n`.
 
-Запуск: `python tools/rk2_variant_28.py` — сводка и сверка с оракулом.
+Запуск: `py -3 tools/rk2_variant_28.py` — сводка и сверка с оракулом.
 """
 
 from __future__ import annotations

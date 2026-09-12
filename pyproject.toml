@@ -5,10 +5,13 @@ description = "Агент для решения задач по теории ф�
 requires-python = ">=3.11"
 dependencies = []
 
+[project.scripts]
+tfl-agent = "tfl.cli:main"
+
 [project.optional-dependencies]
 # Извлечение текста и рендер сканов из PDF курса
 corpus = ["pymupdf>=1.24"]
-dev = ["pytest>=8"]
+dev = ["pytest>=8", "pyyaml>=6"]
 # Поиск матричных интерпретаций. Необязателен: проверка готовой
 # интерпретации своя и от решателя не зависит, а модель печатается
 # в smtlib для любого внешнего решателя.

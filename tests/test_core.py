@@ -230,7 +230,7 @@ def test_fooling_sets_are_valid_and_bounded(num, pattern):
 
 
 def test_matches_dm800_variant_15():
-    """`dm800-TFLlabs/lab2` — вариант 15, таблица классов на 17 строк.
+    """`references/students/dm800-TFLlabs/lab2` — вариант 15, таблица классов на 17 строк.
 
     Расхождение 16 против 17 при первом прогоне оказалось состоянием-ловушкой:
     в их таблице это строка `aabaa` из одних минусов. С учётом ловушки
@@ -247,7 +247,7 @@ def test_matches_dm800_variant_15():
 
 
 def test_matches_prrromanssss_variant_2():
-    """`Prrromanssss-formal-languages-labs/lab2` — вариант 2, min_dfa.dot на 22 состояния."""
+    """`references/students/Prrromanssss-formal-languages-labs/lab2` — вариант 2, min_dfa.dot на 22 состояния."""
     dfa = dfa_of(
         "((a*b*c*)*ab(a*b*c*)*bc(a|b|c)*)"
         "|((a|b|c)*bc(a*b*c*)*ab(a|bc|cc|bb)*)|abc"

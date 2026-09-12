@@ -5,7 +5,7 @@
 Кнуту–Бендиксу; построить `T′` с теми же классами; проверить фаззингом
 и метаморфно.
 
-Условие: `FormalLanguageTheory/lab_tfl_2025_1.pdf`
+Условие: `references/teacher/FormalLanguageTheory/2025/lab_tfl_2025_1.pdf`
 (текст — `corpus/txt/FormalLanguageTheory_2025_lab_tfl_2025_1.txt`).
 Варианты — `evals/lab1_2025/variant-NN.srs`, извлечены
 `tools/extract_lab1_variants.py`.
@@ -55,9 +55,9 @@
 Всё механическое собрано в генератор:
 
 ```bash
-python tools/extract_lab1_variants.py     # один раз: 28 фикстур из PDF
-python tools/lab1_report.py 20            # отчёт по варианту
-python tools/lab1_report.py --file my.srs --precedence cba
+py -3 tools/extract_lab1_variants.py     # один раз: 28 фикстур из PDF
+py -3 tools/lab1_report.py 20            # отчёт по варианту
+py -3 tools/lab1_report.py --file my.srs --precedence cba
 ```
 
 ---
@@ -113,11 +113,13 @@ system.prove_by_dependency_pairs(2, 3, 30_000)  # d = 2, дороже
 целочисленная и делается руками (`DependencyProof.check` делает то же
 самое и от решателя не зависит).
 
-**Замер на 28 вариантах ЛР1 2025: пять** (`python tools/lab1_termination.py`),
+**Замер на 28 вариантах ЛР1 2025: пять** (`py -3 tools/lab1_termination.py`),
 из них четыре — те, что не брало ничто другое: 4, 8, 12, 19. Вариант 12
 показателен: одиннадцать букв и 18 пар, но граф распадается на пять
 маленьких компонент, и только поэтому задача решается. Итог по ЛР1
-после этого: 11 петель, 6 доказательств завершимости, 11 «не выяснено».
+после одних только пар зависимостей: 11 петель, 6 доказательств
+завершимости, 11 «не выяснено». Итог после всех реализованных методов ниже:
+9 полностью невыясненных и 2 частичных случая.
 
 ### §1b. Удаление правил
 
@@ -236,7 +238,7 @@ system.cycle_of_length(7)             # цикл среди слов ровно 
 
 ### Итог: чем закрываются 28 вариантов
 
-Прогон — `python tools/lab1_termination.py`, около получаса.
+Прогон — `py -3 tools/lab1_termination.py`, около получаса.
 
 | приём | вариантов | из них только он |
 |---|---|---|
@@ -465,12 +467,12 @@ invariant.counting_witness("ab", 6)     # ('ab', 'ba') либо None
 
 | Источник | Что там |
 |---|---|
-| `boomhaa-tfl-labs/lab1/report_lab1.md` | вариант 20: цикл незавершимости, дерево нормальных форм, пополнение с ε-правилом и без, инварианты через матричный гомоморфизм |
-| `dm800-TFLlabs/lab1` | `Fuzz.cpp`, `Metamorph.cpp`, отчёт в LaTeX |
-| `kms-qwe-FLT/lab1/trs_fuzz` | фаззер на Rust |
+| `references/students/boomhaa-tfl-labs/lab1/report_lab1.md` | вариант 20: цикл незавершимости, дерево нормальных форм, пополнение с ε-правилом и без, инварианты через матричный гомоморфизм |
+| `references/students/dm800-TFLlabs/lab1` | `Fuzz.cpp`, `Metamorph.cpp`, отчёт в LaTeX |
+| `references/students/kms-qwe-FLT/lab1/trs_fuzz` | фаззер на Rust |
 | `Prrromanssss-.../lab1` | fuzzing + metamorphic, Rust |
 | `dm800-TFLcheck` | перебор строк в поисках эквивалентной SRS; автор сам перечисляет баги — брать идею, не код |
-| `Formal Language Theory/lab1_Knuth-Bendix_order` | порядок Кнута–Бендикса на Python |
+| `references/students/Formal Language Theory/lab1_Knuth-Bendix_order` | порядок Кнута–Бендикса на Python |
 
 Сверка с `boomhaa` по варианту 20 дала: цикл совпал, переориентация правил
 совпала один в один, контрпример к локальной конфлюэнтности нашёлся короче

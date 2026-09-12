@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Разбор экспорта учебного чата: отделить предметное от бытового.
 
-    python tools/extract_chat.py
+    py -3 tools/extract_chat.py
 
-Читает `chat-onTG-2025-tfl/result.json` и складывает в `corpus/chat/`:
+Читает `references/chat/chat-onTG-2025-tfl/result.json` и складывает в `corpus/chat/`:
 
 * `messages.md` — сообщения по делу, хронологически, с автором и датой;
 * `photos.tsv` — каталог фотографий с контекстом (что писали в самом
@@ -35,7 +35,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 from tfl.intake import find_asks, find_features
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-EXPORT = ROOT / "chat-onTG-2025-tfl"
+EXPORT = ROOT / "references" / "chat" / "chat-onTG-2025-tfl"
 OUT = ROOT / "corpus" / "chat"
 
 #: ФИО с номером и/или баллом — строка списка группы.

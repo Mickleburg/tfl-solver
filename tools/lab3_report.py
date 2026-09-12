@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Генератор отчёта по ЛР3 (КС-грамматики, PDA, регулярные аппроксимации).
 
-    python tools/lab3_report.py 1
-    python tools/lab3_report.py --file my.cfg --pda my.pda --out out/
+    py -3 tools/lab3_report.py 1
+    py -3 tools/lab3_report.py --file my.cfg --pda my.pda --out out/
 
 Что делает генератор и чего не делает — граница проходит по наличию оракула.
 

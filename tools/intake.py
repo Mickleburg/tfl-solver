@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Приём задачи: разбор условия, кандидаты в классы, похожие задачи из корпуса.
 
-    python tools/intake.py --text "Язык SRS с правилами aa →aba, базис (ab)*"
-    python tools/intake.py --file task.txt --hint РК2
-    cat task.txt | python tools/intake.py --hint экзамен
+    py -3 tools/intake.py --text "Язык SRS с правилами aa →aba, базис (ab)*"
+    py -3 tools/intake.py --file task.txt --hint РК2
+    cat task.txt | py -3 tools/intake.py --hint экзамен
 
 Пометка `--hint` (`РК1`, `РК2`, `ЛР1`…`ЛР4`, `экзамен`, `Аптека`) сужает
 набор классов. Она не обязательна: без неё разбор всё равно покажет, какие

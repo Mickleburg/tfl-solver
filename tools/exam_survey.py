@@ -13,8 +13,8 @@
 LL(1)-языков всегда детерминирована?» содержит и `LL`, и «детерминирова»,
 и по одним лишь ключевым словам неотличим от разбора конкретной грамматики.
 
-    python tools/exam_survey.py            # сводка: тема × позиция
-    python tools/exam_survey.py --list КС  # выписать вопросы одной темы
+    py -3 tools/exam_survey.py            # сводка: тема × позиция
+    py -3 tools/exam_survey.py --list КС  # выписать вопросы одной темы
 """
 
 from __future__ import annotations
@@ -73,7 +73,7 @@ def topic(text: str) -> str:
 
 def load() -> list[dict]:
     if not INDEX.exists():
-        sys.exit(f"нет индекса {INDEX}; сначала python tools/build_task_index.py")
+        sys.exit(f"нет индекса {INDEX}; сначала py -3 tools/build_task_index.py")
     rows = [json.loads(line) for line in INDEX.open(encoding="utf-8")]
     return [r for r in rows if r.get("form") == "экзамен"]
 

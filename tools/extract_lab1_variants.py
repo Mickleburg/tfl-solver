@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Извлечение 28 вариантов ЛР1 2025 из текстового зеркала PDF.
 
-    python tools/extract_lab1_variants.py
+    py -3 tools/extract_lab1_variants.py
 
 Варианты в PDF свёрстаны в две колонки, причём номер варианта стоит
 вертикально по центру своего блока — в `pdftotext -layout` часть правил
@@ -17,7 +17,7 @@ PyMuPDF восстанавливает порядок чтения правил�
     ba
     ...
 
-Контроль: вариант 20 сверен вручную с `boomhaa-tfl-labs/lab1/report_lab1.md`,
+Контроль: вариант 20 сверен вручную с `references/students/boomhaa-tfl-labs/lab1/report_lab1.md`,
 и результат извлечения обязан совпасть с ним до символа.
 """
 
@@ -78,7 +78,7 @@ def write_fixtures(variants: dict[int, list[tuple[str, str]]]) -> list[pathlib.P
     written = []
     for number, rules in sorted(variants.items()):
         lines = [
-            f"# ЛР1 2025, вариант {number} (FormalLanguageTheory/lab_tfl_2025_1.pdf)",
+            f"# ЛР1 2025, вариант {number} (references/teacher/FormalLanguageTheory/2025/lab_tfl_2025_1.pdf)",
             f"# Извлечено tools/extract_lab1_variants.py, правил: {len(rules)}",
         ]
         lines += [f"{lhs} -> {rhs or EPSILON}" for lhs, rhs in rules]

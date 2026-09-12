@@ -52,7 +52,7 @@ def main() -> None:
     OUTDIR.mkdir(parents=True, exist_ok=True)
     for number, rules in sorted(grammars.items()):
         header = [
-            f"# ЛР3 2025, вариант {number} (FormalLanguageTheory/lab_tfl_2025_3.pdf)",
+            f"# ЛР3 2025, вариант {number} (references/teacher/FormalLanguageTheory/2025/lab_tfl_2025_3.pdf)",
             f"# Извлечено tools/extract_lab3_variants.py, правил: {len(rules)}",
         ]
         (OUTDIR / f"variant-{number:02d}.cfg").write_text(

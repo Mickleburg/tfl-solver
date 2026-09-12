@@ -1,4 +1,4 @@
-# Индивидуальные варианты ЛР2 2025 (FormalLanguageTheory/lab_tfl_2025_2.pdf)
+# Индивидуальные варианты ЛР2 2025 (references/teacher/FormalLanguageTheory/2025/lab_tfl_2025_2.pdf)
 # Формат: <номер><TAB><академическая регулярка>
 # Юникодная звёздочка ∗ (U+2217) нормализована в *; переносы строк PDF склеены.
 1	((a|b)*abb(a|b))|(a|ba)*bb(a*b)*aba(a|b)

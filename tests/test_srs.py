@@ -227,7 +227,7 @@ def test_identical_systems_are_equivalent():
 def test_boomhaa_minimized_system_is_wrong(v20_no_eps: SRS):
     """Найденная ошибка в чужой работе.
 
-    `boomhaa-tfl-labs/lab1` для варианта 20 без ε-правила приводит
+    `references/students/boomhaa-tfl-labs/lab1` для варианта 20 без ε-правила приводит
     пополненную систему, содержащую `aa → a`, но при минимизации это правило
     теряется и остаётся `{b → a, c → a}`. Такая система сохраняет длину слова,
     тогда как исходная — нет.

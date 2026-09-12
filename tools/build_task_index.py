@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Сборка размеченного индекса задач из корпуса.
 
-    python tools/build_task_index.py
+    py -3 tools/build_task_index.py
 
 Читает `corpus/txt/`, режет документы на отдельные задачи и складывает
 в `evals/tasks/index.jsonl`. Индекс нужен для двух вещей: искать похожие

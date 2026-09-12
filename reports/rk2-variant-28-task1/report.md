@@ -151,7 +151,7 @@ $k = 3$, $T = 2$: базис вынужден быть $n = 2$ (из $k \le 2n$ 
 
 ```bash
 export PYTHONPATH=.
-python tools/rk2_variant_28.py 10
+py -3 tools/rk2_variant_28.py 10
 ```
 
 ```python

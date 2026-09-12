@@ -21,18 +21,13 @@ def test_case_lands_where_recorded(case):
 
 
 def test_every_class_of_the_taxonomy_is_represented():
-    """Четырнадцать классов рецептов — и хотя бы по задаче на каждый.
-
-    `RK1-A/B/C` и `RK2-A/B/C` считаются отдельно, `EXAM-2` набором пока
-    не покрыт: второй вопрос билета это детерминизм грамматики, и он
-    разбирается тем же кодом, что `LAB-3`.
-    """
+    """Все классы рецептов представлены хотя бы одной задачей."""
     covered = {case.task_class for case in CASES}
     expected = {
         "LAB-1", "LAB-2", "LAB-3", "LAB-4",
         "RK1-A", "RK1-B", "RK1-C",
         "RK2-A", "RK2-B", "RK2-C",
-        "EXAM-1", "EXAM-3", "PHARMA", "MAT", "CODE",
+        "EXAM-1", "EXAM-2", "EXAM-3", "PHARMA", "MAT", "CODE",
     }
     assert expected <= covered
 
