@@ -22,14 +22,17 @@ py -3 -m tfl holdout list
 py -3 -m tfl holdout prompt --case pharma-2022-A11
 ```
 
-Запустить установленный Codex в read-only sandbox и сохранить машинный
-транскрипт. Один или несколько `--case` обязательны; полный прогон требует
-явного `--all`, чтобы случайно не потратить бюджет всех задач:
+Запустить установленный Codex или Claude Code и сохранить машинный транскрипт.
+Один или несколько `--case` обязательны; полный прогон требует явного `--all`,
+чтобы случайно не потратить бюджет всех задач:
 
 ```powershell
 py -3 -m tfl holdout run `
+  --runner codex `
   --case pharma-2022-A11 --output reports/agent-holdout/codex-smoke.jsonl
 ```
+
+Для Claude Code используется та же команда с `--runner claude`.
 
 Оценить сохранённый прогон:
 
@@ -43,6 +46,14 @@ Codex вызывается через `codex exec --ephemeral --sandbox read-onl
 --output-schema ... --json`. Harness сохраняет только финальный структурный
 ответ, выполненные команды, usage и ошибку запуска; скрытые рассуждения в
 артефакт не попадают.
+
+Claude вызывается через `claude --print --output-format stream-json
+--no-session-persistence --json-schema ...`. Доступные инструменты ограничены
+адаптером `/tfl`, чтением/поиском и Bash-командами `py -3 ...`/`python3 ...`;
+только подтверждённые ответным `tool_result` вызовы проходят через тот же
+scorer. На машине ревизии CLI 2.1.205
+успешно стартует, но live smoke заблокирован политикой организации
+`oauth_org_not_allowed`; датированный FAIL сохранён в `reports/agent-holdout/`.
 
 Первый зафиксированный smoke-run: `reports/agent-holdout/codex-smoke-2026-09-12.md`.
 Он прошёл 10/10, но показал слишком длинную траекторию; поэтому prompt теперь

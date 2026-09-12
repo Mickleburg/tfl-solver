@@ -120,6 +120,7 @@ def _holdout(arguments: argparse.Namespace) -> int:
         choose_cases,
         load_cases,
         load_runs,
+        run_claude,
         run_codex,
         score_report,
         score_runs,
@@ -143,11 +144,14 @@ def _holdout(arguments: argparse.Namespace) -> int:
         if output.exists():
             print(f"файл уже существует: {output}", file=sys.stderr)
             return 2
-        print(f"Запуск {len(selected)} случаев через Codex; результат: {output}")
-        records = run_codex(
+        runner = arguments.runner
+        executable = arguments.executable or runner
+        print(f"Запуск {len(selected)} случаев через {runner}; результат: {output}")
+        run = run_codex if runner == "codex" else run_claude
+        records = run(
             selected,
             output,
-            executable=arguments.executable,
+            executable=executable,
             model=arguments.model,
             timeout=arguments.timeout,
         )
@@ -211,13 +215,18 @@ def build_parser() -> argparse.ArgumentParser:
     holdout_prompt.add_argument("--case", required=True, help="id случая")
     holdout_prompt.set_defaults(handler=_holdout)
 
-    holdout_run = holdout_actions.add_parser("run", help="запустить случаи через codex exec")
+    holdout_run = holdout_actions.add_parser("run", help="запустить случаи через LLM CLI")
     holdout_selection = holdout_run.add_mutually_exclusive_group(required=False)
     holdout_selection.add_argument("--case", action="append", help="id случая; повторяется")
     holdout_selection.add_argument("--all", action="store_true", help="запустить весь набор")
     holdout_run.add_argument("--output", required=True, help="новый JSONL-файл результата")
-    holdout_run.add_argument("--executable", default="codex", help="путь к Codex CLI")
-    holdout_run.add_argument("--model", help="необязательная явная модель Codex")
+    holdout_run.add_argument(
+        "--runner", choices=("codex", "claude"), default="codex", help="LLM backend"
+    )
+    holdout_run.add_argument(
+        "--executable", help="путь к CLI; по умолчанию совпадает с --runner"
+    )
+    holdout_run.add_argument("--model", help="необязательная явная модель")
     holdout_run.add_argument("--timeout", type=int, default=900, help="таймаут на случай, с")
     holdout_run.set_defaults(handler=_holdout)
 

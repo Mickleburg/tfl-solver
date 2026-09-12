@@ -13,6 +13,7 @@ import json
 import os
 import pathlib
 import re
+import shutil
 import subprocess
 import time
 from dataclasses import dataclass
@@ -149,7 +150,8 @@ def choose_cases(
 
 def build_prompt(case: HoldoutCase) -> str:
     """Промпт не раскрывает эталонный класс и смысловые якоря scorer-а."""
-    return f"""Используй $tfl-solver и реши задачу по полному циклу S0–S7.
+    return f"""Используй $tfl-solver (в Claude Code тот же skill доступен как /tfl)
+и реши задачу по полному циклу S0–S7.
 
 Это изолированный eval. Не читай evals/agent_holdout/cases.jsonl, manifest.json
 и прежние runs/reports: там находится закрытая рубрика. Можно читать repo-skill,
@@ -371,10 +373,108 @@ def parse_codex_stream(text: str) -> tuple[Any, tuple[str, ...], dict[str, Any],
     return response, tuple(commands), usage, "; ".join(errors)
 
 
+def parse_claude_stream(
+    text: str,
+) -> tuple[Any, tuple[str, ...], dict[str, Any], str, str | None]:
+    """Извлечь structured output и tool calls из Claude ``stream-json``."""
+    response: Any = None
+    commands: list[str] = []
+    usage: dict[str, Any] = {}
+    errors: list[str] = []
+    model: str | None = None
+    pending_tools: dict[str, str] = {}
+    completed_tools: set[str] = set()
+
+    def remember_error(value: Any) -> None:
+        message = str(value).strip() if value is not None else ""
+        if message and message not in errors:
+            errors.append(message)
+
+    for number, line in enumerate(text.splitlines(), 1):
+        if not line.strip():
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            errors.append(f"строка {number} потока runner не JSON")
+            continue
+        event_type = event.get("type")
+        if event_type == "system" and event.get("subtype") == "init":
+            if event.get("model"):
+                model = str(event["model"])
+        if event_type == "assistant" and isinstance(event.get("message"), dict):
+            message = event["message"]
+            if message.get("model") and message.get("model") != "<synthetic>":
+                model = str(message["model"])
+            remember_error(message.get("error"))
+            content = message.get("content", [])
+            if isinstance(content, list):
+                for block in content:
+                    if not isinstance(block, dict) or block.get("type") != "tool_use":
+                        continue
+                    tool_id = str(block.get("id", ""))
+                    if not tool_id or tool_id in completed_tools:
+                        continue
+                    name = str(block.get("name", "tool"))
+                    inputs = block.get("input") if isinstance(block.get("input"), dict) else {}
+                    command = inputs.get("command")
+                    if isinstance(command, str) and command.strip():
+                        pending_tools[tool_id] = command
+                    else:
+                        pending_tools[tool_id] = (
+                            f"{name} {json.dumps(inputs, ensure_ascii=False, sort_keys=True)}"
+                        )
+        if event_type == "user" and isinstance(event.get("message"), dict):
+            content = event["message"].get("content", [])
+            if isinstance(content, list):
+                for block in content:
+                    if not isinstance(block, dict) or block.get("type") != "tool_result":
+                        continue
+                    tool_id = str(block.get("tool_use_id", ""))
+                    if tool_id in pending_tools and tool_id not in completed_tools:
+                        commands.append(pending_tools[tool_id])
+                        completed_tools.add(tool_id)
+        if event_type == "result":
+            if isinstance(event.get("structured_output"), dict):
+                response = event["structured_output"]
+            elif isinstance(event.get("result"), str):
+                try:
+                    candidate = json.loads(event["result"])
+                except json.JSONDecodeError:
+                    candidate = None
+                if isinstance(candidate, dict):
+                    response = candidate
+            if isinstance(event.get("usage"), dict):
+                usage = event["usage"]
+            if event.get("is_error"):
+                remember_error(event.get("result") or event.get("error") or "ошибка Claude")
+    if response is None:
+        errors.append("в потоке нет структурированного финального ответа")
+    return response, tuple(commands), usage, "; ".join(errors), model
+
+
+def _executable_command(executable: str) -> list[str]:
+    """Разрешить native/npm launcher без ``shell=True``."""
+    resolved = shutil.which(executable) or executable
+    if os.name == "nt" and pathlib.Path(resolved).suffix.lower() in {".bat", ".cmd"}:
+        npm_claude = (
+            pathlib.Path(resolved).parent
+            / "node_modules"
+            / "@anthropic-ai"
+            / "claude-code"
+            / "bin"
+            / "claude.exe"
+        )
+        if pathlib.Path(resolved).stem.lower() == "claude" and npm_claude.is_file():
+            return [str(npm_claude)]
+        return [os.environ.get("COMSPEC", "cmd.exe"), "/d", "/s", "/c", resolved]
+    return [resolved]
+
+
 def _runner_version(executable: str) -> str:
     try:
         result = subprocess.run(
-            [executable, "--version"], capture_output=True, text=True,
+            [*_executable_command(executable), "--version"], capture_output=True, text=True,
             encoding="utf-8", errors="replace", timeout=30, check=False,
         )
     except (OSError, subprocess.TimeoutExpired) as error:
@@ -402,7 +502,7 @@ def run_codex_case(
     version: str | None = None,
 ) -> dict[str, Any]:
     command = [
-        executable,
+        *_executable_command(executable),
         "exec",
         "--ephemeral",
         "--sandbox",
@@ -418,6 +518,7 @@ def run_codex_case(
     command.append("-")
     environment = os.environ.copy()
     environment["PYTHONIOENCODING"] = "utf-8"
+    started_at = datetime.now(timezone.utc).isoformat()
     started = time.monotonic()
     response: Any = None
     observed_commands: tuple[str, ...] = ()
@@ -451,7 +552,7 @@ def run_codex_case(
         "runner_version": version or _runner_version(executable),
         "model": model or "default",
         "repository_commit": _repository_commit(),
-        "started_at": datetime.now(timezone.utc).isoformat(),
+        "started_at": started_at,
         "elapsed_s": round(time.monotonic() - started, 3),
         "returncode": returncode,
         "response": response,
@@ -476,6 +577,111 @@ def run_codex(
     with output.open("x", encoding="utf-8", newline="\n") as stream:
         for case in cases:
             record = run_codex_case(
+                case, executable=executable, model=model, timeout=timeout, version=version
+            )
+            stream.write(json.dumps(record, ensure_ascii=False) + "\n")
+            stream.flush()
+            records.append(record)
+    return tuple(records)
+
+
+def run_claude_case(
+    case: HoldoutCase,
+    *,
+    executable: str = "claude",
+    model: str | None = None,
+    timeout: int = 900,
+    version: str | None = None,
+) -> dict[str, Any]:
+    """Запустить один случай через Claude Code с узким allowlist инструментов."""
+    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    schema.pop("$schema", None)
+    command = [
+        *_executable_command(executable),
+        "--print",
+        "--output-format",
+        "stream-json",
+        "--verbose",
+        "--no-session-persistence",
+        "--permission-mode",
+        "dontAsk",
+        "--tools",
+        "Skill,Read,Grep,Glob,Bash",
+        "--allowedTools",
+        "Skill(tfl),Read,Grep,Glob,Bash(py -3 *),Bash(python3 *)",
+        "--json-schema",
+        json.dumps(schema, ensure_ascii=False, separators=(",", ":")),
+    ]
+    if model:
+        command += ["--model", model]
+    environment = os.environ.copy()
+    environment["PYTHONIOENCODING"] = "utf-8"
+    started_at = datetime.now(timezone.utc).isoformat()
+    started = time.monotonic()
+    response: Any = None
+    observed_commands: tuple[str, ...] = ()
+    usage: dict[str, Any] = {}
+    error = ""
+    detected_model: str | None = None
+    returncode = 1
+    try:
+        completed = subprocess.run(
+            command,
+            input=build_prompt(case),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            cwd=ROOT,
+            env=environment,
+            timeout=timeout,
+            check=False,
+        )
+        returncode = completed.returncode
+        response, observed_commands, usage, error, detected_model = parse_claude_stream(
+            completed.stdout
+        )
+        if completed.returncode:
+            process_error = completed.stderr[-1200:]
+            if process_error and process_error not in error:
+                error = "; ".join(part for part in (error, process_error) if part)
+            elif not error:
+                error = f"claude exited {completed.returncode}"
+    except subprocess.TimeoutExpired:
+        error = f"таймаут {timeout} с"
+    except OSError as exc:
+        error = f"не удалось запустить {executable}: {exc}"
+    return {
+        "case_id": case.id,
+        "runner": "claude",
+        "runner_version": version or _runner_version(executable),
+        "model": model or detected_model or "default",
+        "repository_commit": _repository_commit(),
+        "started_at": started_at,
+        "elapsed_s": round(time.monotonic() - started, 3),
+        "returncode": returncode,
+        "response": response,
+        "observed_commands": list(observed_commands),
+        "usage": usage,
+        "command_budget": COMMAND_BUDGET,
+        "error": error,
+    }
+
+
+def run_claude(
+    cases: Sequence[HoldoutCase],
+    output: pathlib.Path,
+    *,
+    executable: str = "claude",
+    model: str | None = None,
+    timeout: int = 900,
+) -> tuple[dict[str, Any], ...]:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    version = _runner_version(executable)
+    records = []
+    with output.open("x", encoding="utf-8", newline="\n") as stream:
+        for case in cases:
+            record = run_claude_case(
                 case, executable=executable, model=model, timeout=timeout, version=version
             )
             stream.write(json.dumps(record, ensure_ascii=False) + "\n")
@@ -538,9 +744,17 @@ def score_report(
         usage_keys = (
             "input_tokens",
             "cached_input_tokens",
+            "cache_read_input_tokens",
+            "cache_creation_input_tokens",
             "output_tokens",
             "reasoning_output_tokens",
         )
+        present_usage_keys = {
+            key
+            for record in records
+            if isinstance(record.get("usage"), dict)
+            for key in record["usage"]
+        }
         usage = {
             key: sum(
                 int(record.get("usage", {}).get(key, 0))
@@ -548,11 +762,14 @@ def score_report(
                 if isinstance(record.get("usage"), dict)
             )
             for key in usage_keys
+            if key in present_usage_keys
         }
         lines += [
             f"Runner: `{', '.join(versions)}`; model: `{', '.join(models)}`.",
             f"Коммит harness: `{', '.join(commits)}`; суммарное время: **{elapsed:.2f} с**.",
-            "Usage: " + ", ".join(f"{key}={value}" for key, value in usage.items()) + ".",
+            "Usage: "
+            + (", ".join(f"{key}={value}" for key, value in usage.items()) or "нет данных")
+            + ".",
             "",
         ]
     lines += [

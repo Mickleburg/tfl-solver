@@ -4,15 +4,19 @@ from __future__ import annotations
 
 import hashlib
 import json
+from types import SimpleNamespace
 
 import pytest
 
+import tfl.agent_eval as agent_eval
 from tfl.agent_eval import (
     CASES_PATH,
     HOLDOUT_ROOT,
     build_prompt,
     load_cases,
+    parse_claude_stream,
     parse_codex_stream,
+    run_claude_case,
     score_response,
     score_runs,
 )
@@ -164,6 +168,125 @@ def test_codex_jsonl_stream_keeps_commands_and_final_response(cases):
     assert commands == ("py -3 check.py",)
     assert usage["output_tokens"] == 20
     assert not error
+
+
+def test_claude_jsonl_stream_keeps_tool_calls_and_structured_output(cases):
+    response = good_response(cases[0])
+    events = [
+        {"type": "system", "subtype": "init", "model": "claude-sonnet-test"},
+        {
+            "type": "assistant",
+            "message": {
+                "model": "claude-sonnet-test",
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "read-1",
+                        "name": "Read",
+                        "input": {"file_path": "docs/PROJECT-STATE.md"},
+                    },
+                    {
+                        "type": "tool_use",
+                        "id": "bash-1",
+                        "name": "Bash",
+                        "input": {"command": "py -3 -m tfl doctor"},
+                    },
+                    {
+                        "type": "tool_use",
+                        "id": "bash-not-completed",
+                        "name": "Bash",
+                        "input": {"command": "py -3 denied.py"},
+                    },
+                ],
+            },
+        },
+        {
+            "type": "user",
+            "message": {
+                "content": [
+                    {"type": "tool_result", "tool_use_id": "read-1", "content": "ok"},
+                    {"type": "tool_result", "tool_use_id": "bash-1", "content": "ok"},
+                ]
+            },
+        },
+        {
+            "type": "result",
+            "subtype": "success",
+            "is_error": False,
+            "structured_output": response,
+            "usage": {"input_tokens": 10, "output_tokens": 20},
+        },
+    ]
+    body = "\n".join(json.dumps(event, ensure_ascii=False) for event in events)
+    parsed, commands, usage, error, model = parse_claude_stream(body)
+    assert parsed == response
+    assert commands == (
+        'Read {"file_path": "docs/PROJECT-STATE.md"}',
+        "py -3 -m tfl doctor",
+    )
+    assert usage["output_tokens"] == 20
+    assert model == "claude-sonnet-test"
+    assert not error
+
+
+def test_claude_jsonl_stream_surfaces_api_error():
+    body = json.dumps(
+        {
+            "type": "result",
+            "subtype": "success",
+            "is_error": True,
+            "result": "oauth_org_not_allowed",
+            "usage": {"input_tokens": 0, "output_tokens": 0},
+        }
+    )
+    response, commands, usage, error, model = parse_claude_stream(body)
+    assert response is None
+    assert not commands
+    assert usage["input_tokens"] == 0
+    assert "oauth_org_not_allowed" in error
+    assert "нет структурированного" in error
+    assert model is None
+
+
+def test_claude_runner_restricts_tools_and_adapts_schema(monkeypatch, cases):
+    response = good_response(cases[0])
+    stream = "\n".join(
+        json.dumps(event, ensure_ascii=False)
+        for event in (
+            {"type": "system", "subtype": "init", "model": "claude-test"},
+            {
+                "type": "result",
+                "is_error": False,
+                "structured_output": response,
+                "usage": {"input_tokens": 1, "output_tokens": 2},
+            },
+        )
+    )
+    captured = {}
+
+    def fake_run(command, **kwargs):
+        captured["command"] = command
+        captured["kwargs"] = kwargs
+        return SimpleNamespace(returncode=0, stdout=stream, stderr="")
+
+    monkeypatch.setattr(agent_eval, "_executable_command", lambda executable: [executable])
+    monkeypatch.setattr(agent_eval, "_repository_commit", lambda: "commit-test")
+    monkeypatch.setattr(agent_eval.subprocess, "run", fake_run)
+    record = run_claude_case(cases[0], version="claude-test-version")
+
+    command = captured["command"]
+    tools = command[command.index("--tools") + 1]
+    allowed = command[command.index("--allowedTools") + 1]
+    schema = json.loads(command[command.index("--json-schema") + 1])
+    assert tools == "Skill,Read,Grep,Glob,Bash"
+    assert allowed == "Skill(tfl),Read,Grep,Glob,Bash(py -3 *),Bash(python3 *)"
+    assert "$schema" not in schema
+    assert schema["additionalProperties"] is False
+    assert captured["kwargs"]["cwd"] == agent_eval.ROOT
+    assert cases[0].statement in captured["kwargs"]["input"]
+    assert record["response"] == response
+    assert record["model"] == "claude-test"
+    assert record["repository_commit"] == "commit-test"
 
 
 def test_score_runs_rejects_duplicate_cases(cases):

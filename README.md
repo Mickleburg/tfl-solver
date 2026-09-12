@@ -54,10 +54,11 @@ py -3 -m tfl holdout list
 
 Обычный `eval` проверяет отдельные Python-оракулы. Замороженный holdout
 проверяет весь маршрут агента на задачах 2021–2025 и читает реальные события
-запуска команд из `codex exec --json`:
+запуска инструментов Codex CLI или Claude Code:
 
 ```powershell
 py -3 -m tfl holdout run `
+  --runner codex `
   --case pharma-2022-A11 `
   --output reports/agent-holdout/codex-smoke.jsonl
 
@@ -66,11 +67,14 @@ py -3 -m tfl holdout score `
   --report reports/agent-holdout/codex-smoke.md
 ```
 
-`run` использует установленный и аутентифицированный Codex CLI, запускает
-каждый случай в read-only sandbox и запрашивает итог по JSON Schema. Полный
-набор вызывается только явным `--all`, поскольку это реальные LLM-запуски.
-Неинтерактивный режим описан в
-[официальной документации Codex](https://developers.openai.com/codex/noninteractive).
+`--runner codex` (по умолчанию) запускает случай в read-only sandbox.
+`--runner claude` использует non-interactive `stream-json`, отключает сохранение
+сессии и оставляет только skill, чтение, поиск и Python-команды. Оба backend'а
+требуют установленный и аутентифицированный CLI и запрашивают итог по одной
+JSON Schema. Полный набор вызывается только явным `--all`, поскольку это
+реальные LLM-запуски. Контракты сверены с официальной документацией
+[Codex](https://developers.openai.com/codex/noninteractive) и
+[Claude Code](https://code.claude.com/docs/en/headless).
 
 ## Устройство
 
