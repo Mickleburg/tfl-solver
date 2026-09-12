@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "case_id": {"type": "string"},
+    "task_class": {
+      "type": "string",
+      "enum": [
+        "LAB-1", "LAB-2", "LAB-3", "LAB-4", "LAB-5",
+        "RK1-A", "RK1-B", "RK1-C", "RK2-A", "RK2-B", "RK2-C",
+        "EXAM-1", "EXAM-2", "EXAM-3", "MAT", "CODE", "PHARMA"
+      ]
+    },
+    "recipe": {
+      "type": "string",
+      "enum": [
+        "docs/recipes/LAB-1.md", "docs/recipes/LAB-2.md",
+        "docs/recipes/LAB-3.md", "docs/recipes/LAB-4.md",
+        "docs/recipes/LAB-5.md", "docs/recipes/RK1-A.md",
+        "docs/recipes/RK1-B.md", "docs/recipes/RK1-C.md",
+        "docs/recipes/RK2-A.md", "docs/recipes/RK2-B.md",
+        "docs/recipes/RK2-C.md", "docs/recipes/EXAM-1.md",
+        "docs/recipes/EXAM-2.md", "docs/recipes/EXAM-3.md",
+        "docs/recipes/MAT.md", "docs/recipes/CODE.md",
+        "docs/recipes/PHARMA.md"
+      ]
+    },
+    "formalization": {"type": "string"},
+    "oracle_calls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "module": {"type": "string"},
+          "operation": {"type": "string"},
+          "input": {"type": "string"},
+          "result": {"type": "string"}
+        },
+        "required": ["module", "operation", "input", "result"],
+        "additionalProperties": false
+      }
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ДОКАЗАНО", "ПРОВЕРЕНО", "ЧАСТИЧНО", "ВРУЧНУЮ", "НЕ ПРОВЕРЕНО"]
+          },
+          "text": {"type": "string"},
+          "evidence": {"type": "string"}
+        },
+        "required": ["status", "text", "evidence"],
+        "additionalProperties": false
+      }
+    },
+    "final_answer": {"type": "string"},
+    "limitations": {"type": "array", "items": {"type": "string"}}
+  },
+  "required": [
+    "case_id",
+    "task_class",
+    "recipe",
+    "formalization",
+    "oracle_calls",
+    "claims",
+    "final_answer",
+    "limitations"
+  ],
+  "additionalProperties": false
+}

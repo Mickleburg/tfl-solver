@@ -62,6 +62,10 @@ def _doctor(arguments: argparse.Namespace) -> int:
         "Claude adapter": (ROOT / ".claude" / "skills" / "tfl" / "SKILL.md").is_file(),
         "карта задач": (ROOT / "docs" / "02-TASK-TAXONOMY.md").is_file(),
         "индекс корпуса": (ROOT / "evals" / "tasks" / "index.jsonl").is_file(),
+        "сквозной holdout": (
+            (ROOT / "evals" / "agent_holdout" / "cases.jsonl").is_file()
+            and (ROOT / "evals" / "agent_holdout" / "response.schema.json").is_file()
+        ),
     }
     optional = {
         "первоисточник преподавателя": ROOT
@@ -105,6 +109,65 @@ def _eval(arguments: argparse.Namespace) -> int:
     ).returncode
 
 
+def _repo_path(value: str) -> pathlib.Path:
+    path = pathlib.Path(value)
+    return path if path.is_absolute() else ROOT / path
+
+
+def _holdout(arguments: argparse.Namespace) -> int:
+    from tfl.agent_eval import (
+        build_prompt,
+        choose_cases,
+        load_cases,
+        load_runs,
+        run_codex,
+        score_report,
+        score_runs,
+    )
+
+    cases = load_cases()
+    if arguments.holdout_command == "list":
+        for case in cases:
+            head = case.statement.replace("\n", " ")[:90]
+            print(f"{case.id:24} {case.year} {case.hint:8} {head}")
+        return 0
+    if arguments.holdout_command == "prompt":
+        print(build_prompt(choose_cases(cases, [arguments.case])[0]))
+        return 0
+    if arguments.holdout_command == "run":
+        if not arguments.all and not arguments.case:
+            print("укажите --case ID (можно несколько раз) или --all", file=sys.stderr)
+            return 2
+        selected = choose_cases(cases, () if arguments.all else arguments.case)
+        output = _repo_path(arguments.output)
+        if output.exists():
+            print(f"файл уже существует: {output}", file=sys.stderr)
+            return 2
+        print(f"Запуск {len(selected)} случаев через Codex; результат: {output}")
+        records = run_codex(
+            selected,
+            output,
+            executable=arguments.executable,
+            model=arguments.model,
+            timeout=arguments.timeout,
+        )
+        scores = score_runs(cases, records)
+        print(score_report(scores))
+        return 0 if all(score.passed for score in scores) else 1
+    if arguments.holdout_command == "score":
+        records = load_runs(_repo_path(arguments.input))
+        scores = score_runs(cases, records)
+        report = score_report(scores)
+        print(report)
+        if arguments.report:
+            destination = _repo_path(arguments.report)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_text(report, encoding="utf-8")
+            print(f"\nотчёт записан: {destination}")
+        return 0 if scores and all(score.passed for score in scores) else 1
+    raise AssertionError(arguments.holdout_command)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="tfl-agent",
@@ -136,6 +199,32 @@ def build_parser() -> argparse.ArgumentParser:
         help="обновить стандартный отчёт или записать указанный файл",
     )
     evaluate.set_defaults(handler=_eval)
+
+    holdout = subparsers.add_parser(
+        "holdout", help="сквозной eval маршрута, оракулов и итогового ответа"
+    )
+    holdout_actions = holdout.add_subparsers(dest="holdout_command", required=True)
+    holdout_list = holdout_actions.add_parser("list", help="показать замороженные случаи")
+    holdout_list.set_defaults(handler=_holdout)
+
+    holdout_prompt = holdout_actions.add_parser("prompt", help="показать eval-промпт")
+    holdout_prompt.add_argument("--case", required=True, help="id случая")
+    holdout_prompt.set_defaults(handler=_holdout)
+
+    holdout_run = holdout_actions.add_parser("run", help="запустить случаи через codex exec")
+    holdout_selection = holdout_run.add_mutually_exclusive_group(required=False)
+    holdout_selection.add_argument("--case", action="append", help="id случая; повторяется")
+    holdout_selection.add_argument("--all", action="store_true", help="запустить весь набор")
+    holdout_run.add_argument("--output", required=True, help="новый JSONL-файл результата")
+    holdout_run.add_argument("--executable", default="codex", help="путь к Codex CLI")
+    holdout_run.add_argument("--model", help="необязательная явная модель Codex")
+    holdout_run.add_argument("--timeout", type=int, default=900, help="таймаут на случай, с")
+    holdout_run.set_defaults(handler=_holdout)
+
+    holdout_score = holdout_actions.add_parser("score", help="оценить сохранённый JSONL-run")
+    holdout_score.add_argument("--input", required=True, help="JSONL-файл результата")
+    holdout_score.add_argument("--report", help="необязательный Markdown-отчёт")
+    holdout_score.set_defaults(handler=_holdout)
     return parser
 
 

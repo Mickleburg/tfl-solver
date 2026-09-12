@@ -43,11 +43,34 @@ py -3 -m tfl doctor
 py -3 -m tfl intake --file task.txt
 py -3 -m tfl intake --text "Проверить завершимость SRS ..." --hint ЛР1
 py -3 -m tfl eval
+py -3 -m tfl holdout list
 ```
 
 После editable-установки те же команды доступны через `tfl-agent`.
 Командная строка выполняет диагностику, классификацию и eval; рассуждающий
 цикл выполняет LLM по repo-skill.
+
+### Сквозная оценка агента
+
+Обычный `eval` проверяет отдельные Python-оракулы. Замороженный holdout
+проверяет весь маршрут агента на задачах 2021–2025 и читает реальные события
+запуска команд из `codex exec --json`:
+
+```powershell
+py -3 -m tfl holdout run `
+  --case pharma-2022-A11 `
+  --output reports/agent-holdout/codex-smoke.jsonl
+
+py -3 -m tfl holdout score `
+  --input reports/agent-holdout/codex-smoke.jsonl `
+  --report reports/agent-holdout/codex-smoke.md
+```
+
+`run` использует установленный и аутентифицированный Codex CLI, запускает
+каждый случай в read-only sandbox и запрашивает итог по JSON Schema. Полный
+набор вызывается только явным `--all`, поскольку это реальные LLM-запуски.
+Неинтерактивный режим описан в
+[официальной документации Codex](https://developers.openai.com/codex/noninteractive).
 
 ## Устройство
 
@@ -56,6 +79,7 @@ py -3 -m tfl eval
 - `docs/recipes/` — рецепты 17 классов задач;
 - `corpus/` — версионируемое текстовое зеркало источников;
 - `evals/` — исполняемая оценка покрытия;
+- `evals/agent_holdout/` — замороженные задачи и контракт сквозного eval;
 - `docs/PROJECT-STATE.md` — единое актуальное состояние;
 - `docs/OPEN-GAPS.md` — незакрытые задачи;
 - `references/` — локальные исходные материалы, не входящие в Git.
