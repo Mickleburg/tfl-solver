@@ -65,6 +65,12 @@ def _doctor(arguments: argparse.Namespace) -> int:
         "раскрытие ИИ для лабораторной": (
             ROOT / "docs" / "LAB-AI-DISCLOSURE.md"
         ).is_file(),
+        "стандарт автономного проекта лабораторной": (
+            ROOT / "docs" / "LAB-PROJECT-STANDARD.md"
+        ).is_file(),
+        "стандарт быстрого ответа по теории": (
+            ROOT / "docs" / "THEORY-ANSWER-STANDARD.md"
+        ).is_file(),
         "рецепт аудита ИИ-решения": (
             ROOT / "docs" / "recipes" / "EXAM-ERROR.md"
         ).is_file(),
@@ -114,6 +120,58 @@ def _eval(arguments: argparse.Namespace) -> int:
     return subprocess.run(
         command, cwd=ROOT, check=False, env=_subprocess_env()
     ).returncode
+
+
+def _lab(arguments: argparse.Namespace) -> int:
+    from tfl.lab_project import audit_lab_project, create_lab_scaffold
+
+    if arguments.lab_command == "init":
+        task_text = arguments.text
+        if arguments.file is not None:
+            try:
+                task_text = pathlib.Path(arguments.file).read_text(encoding="utf-8")
+            except OSError as error:
+                print(f"ошибка входа: {error}", file=sys.stderr)
+                return 2
+        try:
+            created = create_lab_scaffold(
+                arguments.output,
+                title=arguments.title,
+                task_text=task_text,
+            )
+        except (OSError, FileExistsError) as error:
+            print(f"не удалось создать проект: {error}", file=sys.stderr)
+            return 2
+        print(f"создана автономная заготовка: {pathlib.Path(arguments.output)}")
+        print(f"файлов: {len(created)}; заполните заглушки и выполните `lab check`")
+        return 0
+
+    if arguments.lab_command == "check":
+        audit = audit_lab_project(
+            arguments.project,
+            run_tests=not arguments.skip_tests,
+            timeout=arguments.timeout,
+        )
+        print(f"проект: {audit.root}")
+        print(f"Python-файлов: {audit.python_files}")
+        if audit.tests_run:
+            result = "OK" if audit.test_returncode == 0 else "FAIL"
+            print(f"stdlib-тесты: {result}")
+        for issue in audit.issues:
+            print(f"FAIL {issue}")
+        if audit.test_output and any("stdlib" in issue for issue in audit.issues):
+            print("\nВывод unittest:")
+            print(audit.test_output)
+        if audit.passed:
+            if arguments.skip_tests:
+                print("OK   статическая проверка автономности пройдена")
+                print("WARN тесты пропущены по запросу; проект ещё не принят целиком")
+            else:
+                print("OK   проект автономен и прошёл приёмочные проверки")
+            return 0
+        return 1
+
+    raise AssertionError(arguments.lab_command)
 
 
 def _repo_path(value: str) -> pathlib.Path:
@@ -183,8 +241,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="tfl-agent",
         description=(
-            "Детерминированный вход агента ТФЯ: диагностика, разбор условия "
-            "и прогон исполняемых eval. Сам цикл рассуждений задаёт repo-skill."
+            "Детерминированный вход агента ТФЯ: диагностика, разбор условия, "
+            "автономные проекты лабораторных и исполняемый eval. Сам цикл "
+            "рассуждений задаёт repo-skill."
         ),
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -210,6 +269,28 @@ def build_parser() -> argparse.ArgumentParser:
         help="обновить стандартный отчёт или записать указанный файл",
     )
     evaluate.set_defaults(handler=_eval)
+
+    lab = subparsers.add_parser(
+        "lab", help="создать или проверить автономный проект лабораторной"
+    )
+    lab_actions = lab.add_subparsers(dest="lab_command", required=True)
+    lab_init = lab_actions.add_parser(
+        "init", help="создать безопасную заготовку проекта"
+    )
+    lab_init.add_argument("output", help="новый или пустой каталог проекта")
+    lab_init.add_argument("--title", default="Лабораторная работа по ТФЯ")
+    lab_source = lab_init.add_mutually_exclusive_group()
+    lab_source.add_argument("--text", help="полное условие лабораторной")
+    lab_source.add_argument("--file", help="UTF-8 файл с полным условием")
+    lab_init.set_defaults(handler=_lab)
+
+    lab_check = lab_actions.add_parser(
+        "check", help="проверить автономность, заглушки и stdlib-тесты"
+    )
+    lab_check.add_argument("project", help="каталог проекта лабораторной")
+    lab_check.add_argument("--skip-tests", action="store_true")
+    lab_check.add_argument("--timeout", type=int, default=120, help="таймаут тестов, с")
+    lab_check.set_defaults(handler=_lab)
 
     holdout = subparsers.add_parser(
         "holdout", help="сквозной eval маршрута, оракулов и итогового ответа"
