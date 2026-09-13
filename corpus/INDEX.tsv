@@ -108,11 +108,11 @@ TEXT	11	8129	FormalLanguageTheory_2025_TFL_exam_2025_5.txt	references\teacher\Fo
 TEXT	16	11326	FormalLanguageTheory_2025_TFL_exam_2025_6.txt	references\teacher\FormalLanguageTheory\2025\TFL_exam_2025_6.pdf
 TEXT	20	8772	FormalLanguageTheory_Lecture1_Trace.txt	references\teacher\FormalLanguageTheory\Lecture1_Trace.pdf
 TEXT	528	1179937	TFL-IU9-claude_Hopcroft.txt	references\course\TFL-IU9-claude\Hopcroft.pdf
-TEXT	49	60330	TFL-IU9-claude_tfl_lec_sem.txt	references\course\TFL-IU9-claude\tfl_lec_sem.pdf
+OCR	49	60330	TFL-IU9-claude_tfl_lec_sem.txt	references\course\TFL-IU9-claude\tfl_lec_sem.pdf
 SCAN	5	110	TFL-IU9-claude_tfl_rk1_var_18.txt	references\course\TFL-IU9-claude\tfl_rk1_var_18.pdf
 SCAN	5	110	TFL-IU9-claude_tfl_rk1_var_2.txt	references\course\TFL-IU9-claude\tfl_rk1_var_2.pdf
 SCAN	6	132	TFL-IU9-claude_tfl_rk1_var_24.txt	references\course\TFL-IU9-claude\tfl_rk1_var_24.pdf
 SCAN	5	110	TFL-IU9-claude_tfl_rk1_var_7.txt	references\course\TFL-IU9-claude\tfl_rk1_var_7.pdf
-TEXT	4	5402	TFL-IU9-claude_РК1_tfl_rk1_var_2_new.txt	references\course\TFL-IU9-claude\РК1\tfl_rk1_var_2_new.pdf
-TEXT	8	8963	TFL-IU9-claude_РК2_tfl_rk2_var_8.txt	references\course\TFL-IU9-claude\РК2\tfl_rk2_var_8.pdf
+OCR	4	5402	TFL-IU9-claude_РК1_tfl_rk1_var_2_new.txt	references\course\TFL-IU9-claude\РК1\tfl_rk1_var_2_new.pdf
+OCR	8	8963	TFL-IU9-claude_РК2_tfl_rk2_var_8.txt	references\course\TFL-IU9-claude\РК2\tfl_rk2_var_8.pdf
 TEXT	10	22889	Supplement_Alternating_Automata.txt	references\course\supplemental\Alternating_Automata.pdf

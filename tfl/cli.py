@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import pathlib
 import subprocess
@@ -178,6 +179,65 @@ def _eval(arguments: argparse.Namespace) -> int:
     ).returncode
 
 
+def _srs(arguments: argparse.Namespace) -> int:
+    """Run stable, serialization-friendly string-rewriting oracles."""
+    from tfl.srs import parse_srs
+
+    try:
+        if arguments.file is not None:
+            source = pathlib.Path(arguments.file).read_text(encoding="utf-8")
+        else:
+            source = "\n".join(arguments.rule)
+        system = parse_srs(source)
+        if not system.rules:
+            raise ValueError("no rewrite rules")
+    except (OSError, UnicodeError, ValueError) as error:
+        message = json.dumps(str(error), ensure_ascii=True)
+        print(f"input_error={message}", file=sys.stderr)
+        return 2
+
+    if arguments.srs_command != "critical-pairs":
+        raise AssertionError(arguments.srs_command)
+
+    rules = [{"lhs": rule.lhs, "rhs": rule.rhs} for rule in system.rules]
+    pairs = [
+        {
+            "word": word,
+            "left": left,
+            "right": right,
+            "first_rule": {"lhs": first.lhs, "rhs": first.rhs},
+            "second_rule": {"lhs": second.lhs, "rhs": second.rhs},
+        }
+        for word, left, right, first, second in system.critical_pairs()
+    ]
+    payload = {
+        "schema_version": 1,
+        "operation": "critical-pairs",
+        "rules": rules,
+        "count": len(pairs),
+        "critical_pairs": pairs,
+    }
+
+    if arguments.format == "json":
+        print(json.dumps(payload, ensure_ascii=True, indent=2))
+        return 0
+
+    print(f"critical_pairs={len(pairs)}")
+    for index, pair in enumerate(pairs, 1):
+        fields = " ".join(
+            f"{name}={json.dumps(pair[name], ensure_ascii=True)}"
+            for name in ("word", "left", "right")
+        )
+        first = json.dumps(
+            pair["first_rule"], ensure_ascii=True, separators=(",", ":")
+        )
+        second = json.dumps(
+            pair["second_rule"], ensure_ascii=True, separators=(",", ":")
+        )
+        print(f"{index} {fields} first_rule={first} second_rule={second}")
+    return 0
+
+
 def _lab(arguments: argparse.Namespace) -> int:
     from tfl.lab_project import audit_lab_project, create_lab_scaffold
 
@@ -350,6 +410,30 @@ def build_parser() -> argparse.ArgumentParser:
         help="обновить стандартный отчёт или записать указанный файл",
     )
     evaluate.set_defaults(handler=_eval)
+
+    srs = subparsers.add_parser(
+        "srs", help="исполняемые оракулы для систем переписывания строк"
+    )
+    srs_actions = srs.add_subparsers(dest="srs_command", required=True)
+    critical_pairs = srs_actions.add_parser(
+        "critical-pairs", help="найти все нетривиальные критические пары"
+    )
+    srs_source = critical_pairs.add_mutually_exclusive_group(required=True)
+    srs_source.add_argument(
+        "--rule",
+        action="append",
+        help="правило вида 'aab -> ba'; параметр повторяется",
+    )
+    srs_source.add_argument(
+        "--file", help="UTF-8 файл: по одному правилу на строку"
+    )
+    critical_pairs.add_argument(
+        "--format",
+        choices=("ascii", "json"),
+        default="ascii",
+        help="стабильный формат stdout (по умолчанию: ascii)",
+    )
+    critical_pairs.set_defaults(handler=_srs)
 
     lab = subparsers.add_parser(
         "lab", help="создать или проверить автономный проект лабораторной"

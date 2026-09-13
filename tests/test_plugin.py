@@ -69,3 +69,29 @@ def test_plugin_launcher_works_outside_checkout(tmp_path):
     )
     assert completed.returncode == 0, completed.stderr
     assert pathlib.Path(completed.stdout.strip()).resolve() == ROOT.resolve()
+
+
+def test_plugin_launcher_exposes_stable_srs_command_outside_checkout(tmp_path):
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "tfl_plugin.py"),
+            "srs",
+            "critical-pairs",
+            "--rule",
+            "aab -> ba",
+            "--rule",
+            "aaa -> ab",
+            "--format",
+            "json",
+        ],
+        cwd=tmp_path,
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="ascii",
+    )
+    assert completed.returncode == 0, completed.stderr
+    payload = json.loads(completed.stdout)
+    assert payload["count"] == 4
+    assert payload["critical_pairs"][0]["word"] == "aaaab"

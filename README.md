@@ -66,6 +66,8 @@ prompt `/prompts:tfl`.
 tfl doctor
 tfl intake --file task.txt
 tfl intake --text "Проверить завершимость SRS ..." --hint ЛР
+tfl srs critical-pairs --rule "aab -> ba" --rule "aaa -> ab"
+tfl srs critical-pairs --file system.srs --format json
 tfl lab init path/to/lab --file task.txt
 tfl lab check path/to/lab
 tfl eval

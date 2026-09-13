@@ -525,9 +525,28 @@ def _lab4_verdicts():
 
 
 def _lab4_capture():
-    return MANUAL, (
-        "точная проверка вхождения со ссылками на строку не сделана: "
-        "равенство захваченных подстрок КС-грамматикой не выражается"
+    from tfl.extre import exact_matches, parse_extended
+
+    examples = {
+        r"(aa|bb)\1": {
+            "aaaa": True,
+            "bbbb": True,
+            "aabb": False,
+            "bbaa": False,
+        },
+        r"(a|b)(?=\1)\1": {"aa": True, "bb": True, "ab": False},
+        "(a(?1)b|c)": {"c": True, "acb": True, "aacbb": True},
+    }
+    checked = 0
+    for pattern, words in examples.items():
+        node = parse_extended(pattern)
+        for word, expected in words.items():
+            checked += 1
+            if exact_matches(node, word) is not expected:
+                return "ошибка", f"{pattern!r} расходится на слове {word!r}"
+    return SOLVED, (
+        f"точный capture-aware matcher: {checked} контрольных примеров; "
+        "строковые ссылки, рекурсия и lookahead"
     )
 
 
@@ -1313,7 +1332,7 @@ CASES: tuple[Case, ...] = (
     Case("lab4-вердикты", "LAB-4", "issue #35",
          "корректность ссылок в расширенной регулярке", SOLVED, _lab4_verdicts),
     Case("lab4-захваты", "LAB-4", "ЛР4",
-         "разбор со ссылками на строку", MANUAL, _lab4_capture),
+         "разбор со ссылками на строку", SOLVED, _lab4_capture),
     Case("rk1-счётчики", "RK1-B", "rk1_tfl_2025",
          "регулярен ли язык с условием на счётчики подслов", SOLVED, _rk1_counter),
     Case("rk1-моноид", "RK1-A", "разбалловка issue #6",

@@ -12,9 +12,9 @@
   * pdftotext отдаёт кириллицу LaTeX-овских PDF байтами CP1251 -> используем PyMuPDF;
   * часть PDF всё равно приходит "мохибейком" (Âàðèàíò) -> посимвольная
     перекодировка cp1251 с проверкой по доле кириллицы;
-  * сканы (рукописные решения, конспекты) текстового слоя не имеют
-    либо имеют мусорный OCR -> помечаются в INDEX.tsv как SCAN,
-    их читают только рендером в PNG.
+  * сканы без текстового слоя помечаются в INDEX.tsv как SCAN;
+  * известные рукописные PDF с объёмным, но ненадёжным OCR помечаются OCR,
+    поэтому большой счётчик символов больше не выдаёт их за чистый TEXT.
 
 Требуется: pip install pymupdf
 """
@@ -39,6 +39,11 @@ SOURCES = (
 SKIP = ("Группа ИУ9", "Список группы")
 CYR = set("абвгдежзийклмнопрстуфхцчшщъыьэюяАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ")
 SCAN_CHARS_PER_PAGE = 120  # ниже порога считаем страницу сканом
+LOW_CONFIDENCE_OCR = {
+    ("TFL-IU9-claude", "tfl_lec_sem.pdf"),
+    ("TFL-IU9-claude", "РК1/tfl_rk1_var_2_new.pdf"),
+    ("TFL-IU9-claude", "РК2/tfl_rk2_var_8.pdf"),
+}
 
 
 def demojibake(s: str) -> str:
@@ -114,7 +119,11 @@ def main() -> None:
                 text, pages = f"EXTRACTION ERROR: {exc}", 0
             (OUT / name).write_text(text, encoding="utf-8")
             per_page = len(text) / pages if pages else 0
-            kind = "SCAN" if per_page < SCAN_CHARS_PER_PAGE else "TEXT"
+            identity = (label, inside.as_posix())
+            if identity in LOW_CONFIDENCE_OCR:
+                kind = "OCR"
+            else:
+                kind = "SCAN" if per_page < SCAN_CHARS_PER_PAGE else "TEXT"
             rows.append((kind, pages, len(text), name, str(rel)))
 
     index = ROOT / "corpus" / "INDEX.tsv"
@@ -123,7 +132,11 @@ def main() -> None:
         for kind, pages, chars, name, rel in rows:
             fh.write(f"{kind}\t{pages}\t{chars}\t{name}\t{rel}\n")
     scans = sum(1 for r in rows if r[0] == "SCAN")
-    print(f"{len(rows)} PDF -> {OUT} ({scans} сканов, читать рендером)")
+    ocr = sum(1 for r in rows if r[0] == "OCR")
+    print(
+        f"{len(rows)} PDF -> {OUT} "
+        f"({scans} без текста, {ocr} с ненадёжным OCR; читать рендером)"
+    )
     print(f"индекс: {index}")
 
 

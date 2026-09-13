@@ -132,6 +132,7 @@ First/Follow, EBNF→CFG).
 | `corpus/knowledge/COURSE-QA.md` | уточнения по SRS, автоматам, КС/ДКС-языкам, атрибутным грамматикам и формату тренировки |
 | `corpus/knowledge/SOLUTION-PATTERNS.md` | проверяемые приёмы, контрпримеры и контрольный список ошибок |
 | `corpus/knowledge/PRIVACY.md` | обязательный фильтр при добавлении новых материалов |
+| `corpus/knowledge/SCAN-REVIEW.md` | обезличенный итог визуальной проверки рукописных PDF |
 
 Полезный внешний пример превращается в общий алгоритм и локальный тест. После
 этого происхождение примера не нужно ни для запуска оракула, ни для
@@ -143,7 +144,7 @@ First/Follow, EBNF→CFG).
 
 ```
 tools/extract_corpus.py     # переизвлечение; --render FILE.pdf N M -> PNG
-corpus/INDEX.tsv            # kind(TEXT|SCAN) | страниц | символов | txt | pdf
+corpus/INDEX.tsv            # kind(TEXT|OCR|SCAN) | страниц | символов | txt | pdf
 corpus/txt/*.txt            # 117 файлов; разметка страниц «----- [page N] -----»
 corpus/png/<stem>/pNN.png   # рендеры сканов (создаются по требованию)
 ```
@@ -152,7 +153,7 @@ corpus/png/<stem>/pNN.png   # рендеры сканов (создаются п
 
 ```powershell
 rg "префикс-свойств" corpus/txt
-Import-Csv -Delimiter "`t" corpus/INDEX.tsv | Where-Object kind -eq SCAN
+Import-Csv -Delimiter "`t" corpus/INDEX.tsv | Where-Object kind -in OCR,SCAN
 py -3 tools/extract_corpus.py --render "references/course/TFL-IU9-claude/РК1/tfl_rk1_var_2.pdf" 1 5
 ```
 
@@ -163,9 +164,10 @@ py -3 tools/extract_corpus.py --render "references/course/TFL-IU9-claude/РК1/t
 2. **Шрифт без ToUnicode.** У `lab_tfl_2025_*.pdf` `pdftotext` молча выбрасывает
    всю кириллицу, оставляя одни формулы. PyMuPDF читает их корректно. Если в
    тексте задания зияют дыры — это оно.
-3. **Сканы.** После дедупликации индекс содержит 4 файла без текстового слоя.
-   Ещё 3 имеют ненадёжный OCR (`tfl_lec_sem`, `tfl_rk1_var_2_new`,
-   `tfl_rk2_var_8`) и тоже требуют сверки по рендеру PNG.
+3. **Сканы.** После дедупликации индекс содержит 4 `SCAN` без текстового слоя
+   и 3 `OCR` с ненадёжным распознаванием. Все семь визуально сверены; итог и
+   тематическая карта находятся в `corpus/knowledge/SCAN-REVIEW.md`. Сырой
+   OCR нельзя цитировать как содержание страницы.
 
 ---
 

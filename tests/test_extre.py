@@ -14,6 +14,7 @@ from tfl.extre import (
     Group,
     ParseError,
     StrRef,
+    exact_matches,
     groups,
     matches,
     parse_extended,
@@ -181,3 +182,89 @@ def test_skeleton_grammar_is_well_formed():
     assert grammar.start == "S"
     assert "G1" in grammar.nonterminals and "G2" in grammar.nonterminals
     assert grammar.terminals == frozenset("ab")
+
+
+# --------------------------------------------------------------------------
+# Точная принадлежность со значениями захватов
+# --------------------------------------------------------------------------
+
+
+def test_exact_matcher_enforces_string_equality():
+    node = parse_extended(r"(a|b)\1")
+    assert exact_matches(node, "aa")
+    assert exact_matches(node, "bb")
+    assert not exact_matches(node, "ab")
+    assert matches(node, "ab")  # каркас по-прежнему только верхняя оценка
+
+
+def test_exact_matcher_keeps_the_whole_captured_substring():
+    node = parse_extended(r"(a*)b\1")
+    assert exact_matches(node, "b")
+    assert exact_matches(node, "aba")
+    assert exact_matches(node, "aabaa")
+    assert not exact_matches(node, "aaba")
+
+
+def test_exact_matcher_handles_recursive_expression_references():
+    node = parse_extended("(a(?1)b|c)")
+    assert exact_matches(node, "c")
+    assert exact_matches(node, "acb")
+    assert exact_matches(node, "aacbb")
+    assert not exact_matches(node, "aaccbb")
+
+
+def test_exact_matcher_executes_lookahead_without_consuming_input():
+    node = parse_extended(r"(a|b)(?=\1)\1")
+    assert exact_matches(node, "aa")
+    assert exact_matches(node, "bb")
+    assert not exact_matches(node, "ab")
+
+
+def test_exact_matcher_rejects_invalid_capture_flow():
+    with pytest.raises(ValueError, match="ещё не дочитана"):
+        exact_matches(parse_extended(r"(a|(bb))\2"), "bbbb")
+
+
+def test_stateful_matcher_supports_forward_references_between_iterations():
+    node = parse_extended(r"^(\2a|(b\1)|bb)*$")
+    assert validate(node).value is False
+    assert validate(node, stateful=True).value is True
+    assert exact_matches(node, "bb", stateful=True)
+    assert exact_matches(node, "bbbbb", stateful=True)  # bb, then b\1
+    assert exact_matches(node, "bbbbbbbba", stateful=True)  # then \2a
+    assert not exact_matches(node, "bbb", stateful=True)
+
+
+def test_extended_parser_accepts_course_operators_and_spacing():
+    node = parse_extended("ˆ ((?: a | b)+) c? $")
+    assert exact_matches(node, "a")
+    assert exact_matches(node, "abc")
+    assert not exact_matches(node, "")
+
+
+STATEFUL_COURSE_PATTERNS = [
+    r"^(a\1a|b\1b|a)*(?=\1b*$)(a\2\2|b)*$",
+    r"^(a\1(?=a*\2)a|(b+))*$",
+    r"^(((?:a|b)+)((?:a|b)+)\2\3)(\1\1)+$",
+    r"^((?:a|b)*)a((?:a|b)*)\1b\2(\2)+$",
+    r"^((aa+)\2+b\1|bb)*$",
+    r"^((?:a|b)*)((?:a|b)*)c(?=\1(\1|\2)+$)\2(\1|\2)+$",
+    r"^((a\2a+(?=a)|b)*)\1+$",
+    r"^(((?:a|b)*)\2\2a((?:a|b)*)b\3)\1?$",
+    r"^(?=b+a(?:a|bba|bbba)*b*$)(bb|b(a\1)|a\1\2)*$",
+    r"^((?:a|b)*)c((?:a|b)*)(?=\1ab\2)\2ba\1$",
+    r"^(?=b(?:a|bb)*$)((b|a\3)|(a\2\2))*$",
+    r"^(((?:\2a\2b)|a)*)bab\1$",
+    r"^(a|b\1b)*c((?:a|b)*)((?:a|b)*)((?:a|b)*)c"
+    r"(?=\1$)(?=\2\3$)\3\4$",
+]
+
+
+@pytest.mark.parametrize("pattern", STATEFUL_COURSE_PATTERNS)
+def test_stateful_course_patterns_parse_and_reference_existing_groups(pattern):
+    assert validate(parse_extended(pattern), stateful=True).value is True
+
+
+def test_printed_variant_28_needs_official_parenthesis_clarification():
+    with pytest.raises(ParseError):
+        parse_extended(r"^((?:a|b)*)a\1((?:a|b)*)b\2)+$")

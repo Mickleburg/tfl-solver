@@ -154,6 +154,16 @@ def test_no_critical_pairs_when_no_overlap():
     assert parse_srs("ba -> ab").critical_pairs() == []
 
 
+def test_all_first_level_critical_pairs_of_the_smoke_system():
+    pairs = parse_srs("aab -> ba\naaa -> ab").critical_pairs()
+    assert [(word, left, right) for word, left, right, _, _ in pairs] == [
+        ("aaaab", "abab", "aaba"),
+        ("aaab", "abb", "aba"),
+        ("aaaaa", "abaa", "aaab"),
+        ("aaaa", "aba", "aab"),
+    ]
+
+
 def test_critical_pair_from_overlap():
     """Классика: `aa → ε` и `aba → b` накладываются на слове `aaba`."""
     pairs = parse_srs("aa -> ε\naba -> b").critical_pairs()

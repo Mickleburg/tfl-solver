@@ -30,6 +30,11 @@
 **сверху**: равенство захваченных строк и опережающее условие в КС-грамматике
 не выражаются. Это то же приближение сверху, что в `tfl/approx.py`,
 и вывод из него односторонний.
+
+Поздняя формулировка добавляет stateful-семантику: значение захвата может
+сохраняться между итерациями, а первая успешная итерация выбирает ветвь без
+ещё не инициализированной ссылки. Для неё используются
+`validate(..., stateful=True)` и `exact_matches(..., stateful=True)`.
 """
 
 from __future__ import annotations
@@ -42,7 +47,9 @@ from tfl.verdict import Verdict, proved, refuted
 
 __all__ = [
     "Node",
+    "Eps",
     "Sym",
+    "Anchor",
     "Concat",
     "Alt",
     "Star",
@@ -57,6 +64,7 @@ __all__ = [
     "validate",
     "skeleton_cfg",
     "matches",
+    "exact_matches",
     "MAX_GROUPS",
 ]
 
@@ -82,7 +90,21 @@ class Node:
 
 
 @dataclass(frozen=True)
+class Eps(Node):
+    def __str__(self) -> str:
+        return "ε"
+
+
+@dataclass(frozen=True)
 class Sym(Node):
+    char: str
+
+    def __str__(self) -> str:
+        return self.char
+
+
+@dataclass(frozen=True)
+class Anchor(Node):
     char: str
 
     def __str__(self) -> str:
@@ -193,11 +215,14 @@ def parse_extended(text: str) -> Node:
     >>> str(parse_extended("(a(?1)b|c)"))
     '(a(?1)b|c)'
     """
-    parser = _Parser(text)
+    normalized = (
+        "".join(text.split()).replace("ˆ", "^").replace("∗", "*")
+    )
+    parser = _Parser(normalized)
     node = parser.expression()
-    if parser.pos != len(text):
+    if parser.pos != len(normalized):
         raise ParseError(
-            f"лишний текст с позиции {parser.pos}: «{text[parser.pos:]}»"
+            f"лишний текст с позиции {parser.pos}: «{normalized[parser.pos:]}»"
         )
     return node
 
@@ -231,9 +256,15 @@ class _Parser:
 
     def factor(self) -> Node:
         node = self.atom()
-        while self.peek() == "*":
+        while self.peek() in ("*", "+", "?"):
+            operator = self.peek()
             self.pos += 1
-            node = Star(node)
+            if operator == "*":
+                node = Star(node)
+            elif operator == "+":
+                node = Concat((node, Star(node)))
+            else:
+                node = Alt((node, Eps()))
         return node
 
     def atom(self) -> Node:
@@ -249,6 +280,9 @@ class _Parser:
             return StrRef(int(digit))
         if char == "(":
             return self.bracket()
+        if char in "^$":
+            self.pos += 1
+            return Anchor(char)
         if char.isalpha() and char.islower():
             self.pos += 1
             return Sym(char)
@@ -301,7 +335,7 @@ def groups(node: Node) -> dict[int, Node]:
 # --------------------------------------------------------------------------
 
 
-def validate(node: Node) -> Verdict:
+def validate(node: Node, stateful: bool = False) -> Verdict:
     """Корректно ли выражение по всем ограничениям условия.
 
     Проверяются: число групп захвата, содержимое опережающих проверок
@@ -319,7 +353,7 @@ def validate(node: Node) -> Verdict:
         problems.append(f"групп захвата {len(table)}, а разрешено {MAX_GROUPS}")
 
     for sub in node.walk():
-        if isinstance(sub, Lookahead):
+        if isinstance(sub, Lookahead) and not stateful:
             for inner in sub.inner.walk():
                 if isinstance(inner, Group):
                     problems.append(
@@ -335,16 +369,17 @@ def validate(node: Node) -> Verdict:
         if isinstance(sub, (ExprRef, StrRef)) and sub.number not in table:
             problems.append(f"ссылка «{sub}» указывает на несуществующую группу")
 
-    if not problems:
+    if not problems and not stateful:
         _initialised(node, frozenset(), table, (), problems)
 
     if problems:
         return refuted("; ".join(dict.fromkeys(problems)), problems)
-    return proved(
-        f"выражение корректно: {len(table)} групп захвата, "
-        "все ссылки на строку инициализированы по всем путям разбора",
-        node,
+    detail = (
+        "инициализация проверяется во время stateful-разбора"
+        if stateful
+        else "все ссылки на строку инициализированы по всем путям разбора"
     )
+    return proved(f"выражение корректно: {len(table)} групп захвата, {detail}", node)
 
 
 def _initialised(
@@ -361,7 +396,7 @@ def _initialised(
     Ссылка на выражение раскрывается на месте — иначе не поймать случай
     `(a|(?2))(a|(bb\\1))`, где ошибка возникает именно после подстановки.
     """
-    if isinstance(node, (Sym, ExprRef)) and isinstance(node, Sym):
+    if isinstance(node, (Eps, Sym, Anchor)):
         return before
     if isinstance(node, Concat):
         current = before
@@ -432,6 +467,10 @@ def skeleton_cfg(node: Node, start: str = "S") -> CFG:
     def emit(current: Node) -> str:
         if isinstance(current, Sym):
             return current.char
+        if isinstance(current, (Eps, Anchor)):
+            name = fresh("E")
+            productions.append(Production(name, ()))
+            return name
         if isinstance(current, Group):
             name = f"G{current.number}"
             if current.number not in emitted:
@@ -479,3 +518,127 @@ def matches(node: Node, word: str) -> bool:
     from tfl.parse import recognize
 
     return recognize(skeleton_cfg(node), word)
+
+
+# --------------------------------------------------------------------------
+# Точная принадлежность: захваты, строковые ссылки и lookahead
+# --------------------------------------------------------------------------
+
+
+CaptureState = tuple[str | None, ...]
+MatchState = tuple[int, CaptureState]
+
+
+class _ExactMatcher:
+    """Неподвижная точка отношений разбора на одном конечном слове.
+
+    Обычный рекурсивный спуск зацикливается на допустимых ссылках вроде
+    ``(a(?1)b|c)``. Здесь для каждой пары ``(узел, конфигурация)`` накапливается
+    конечное множество результатов. Все уравнения монотонны, а позиции и
+    значения захватов являются подстроками фиксированного входа, поэтому
+    итерация достигает наименьшей неподвижной точки.
+    """
+
+    def __init__(self, root: Node, word: str, group_count: int) -> None:
+        self.root = root
+        self.word = word
+        self.group_count = group_count
+        self.group_bodies = groups(root)
+        self.cache: dict[tuple[Node, MatchState], set[MatchState]] = {}
+
+    def results(self, node: Node, state: MatchState) -> set[MatchState]:
+        return self.cache.setdefault((node, state), set())
+
+    def derive(self, node: Node, state: MatchState) -> set[MatchState]:
+        position, captures = state
+        if isinstance(node, Eps):
+            return {state}
+        if isinstance(node, Sym):
+            if position < len(self.word) and self.word[position] == node.char:
+                return {(position + 1, captures)}
+            return set()
+        if isinstance(node, Anchor):
+            if node.char == "^" and position == 0:
+                return {state}
+            if node.char == "$" and position == len(self.word):
+                return {state}
+            return set()
+        if isinstance(node, Concat):
+            current = {state}
+            for part in node.parts:
+                following: set[MatchState] = set()
+                for item in current:
+                    following.update(self.results(part, item))
+                current = following
+                if not current:
+                    break
+            return current
+        if isinstance(node, Alt):
+            out: set[MatchState] = set()
+            for option in node.options:
+                out.update(self.results(option, state))
+            return out
+        if isinstance(node, Star):
+            out = {state}
+            for item in self.results(node.inner, state):
+                if item != state:
+                    out.update(self.results(node, item))
+            return out
+        if isinstance(node, Group):
+            out = set()
+            for end, after in self.results(node.inner, state):
+                values = list(after)
+                values[node.number - 1] = self.word[position:end]
+                out.add((end, tuple(values)))
+            return out
+        if isinstance(node, NonCapturing):
+            return set(self.results(node.inner, state))
+        if isinstance(node, ExprRef):
+            body = self.group_bodies[node.number]
+            return set(self.results(body, state))
+        if isinstance(node, StrRef):
+            captured = captures[node.number - 1]
+            if captured is not None and self.word.startswith(captured, position):
+                return {(position + len(captured), captures)}
+            return set()
+        if isinstance(node, Lookahead):
+            return {state} if self.results(node.inner, state) else set()
+        raise TypeError(f"неизвестный узел {node!r}")
+
+    def solve(self) -> set[MatchState]:
+        initial: MatchState = (0, (None,) * self.group_count)
+        root_results = self.results(self.root, initial)
+        while True:
+            changed = False
+            known_keys = len(self.cache)
+            for (node, state), current in list(self.cache.items()):
+                before = len(current)
+                current.update(self.derive(node, state))
+                changed = changed or len(current) != before
+            if not changed and len(self.cache) == known_keys:
+                return root_results
+
+
+def exact_matches(node: Node, word: str, stateful: bool = False) -> bool:
+    """Точно проверить принадлежность расширенному выражению.
+
+    В отличие от :func:`matches`, этот распознаватель сохраняет фактические
+    строки групп, требует буквального совпадения ``\\N`` и исполняет
+    положительный lookahead без потребления входа. Ссылки на выражение могут
+    быть рекурсивными: вычисляется наименьшая неподвижная точка, а не вводится
+    искусственный предел глубины.
+
+    Некорректное по правилам задания выражение отвергается исключением.
+    ``stateful=True`` включает семантику поздних вариантов: захват предыдущей
+    итерации сохраняется, поэтому ссылка может стоять текстуально раньше
+    инициализирующей альтернативы. Неинициализированная ссылка просто не даёт
+    перехода; первый успешный проход обязан выбрать ветвь без неё.
+    Алгоритм конечен на фиксированном слове, но в худшем случае экспоненциален
+    по числу групп и длине: значения захватов являются частью конфигурации.
+    """
+    verdict = validate(node, stateful=stateful)
+    if verdict.value is not True:
+        raise ValueError(verdict.reason)
+    table = groups(node)
+    results = _ExactMatcher(node, word, len(table)).solve()
+    return any(position == len(word) for position, _captures in results)
