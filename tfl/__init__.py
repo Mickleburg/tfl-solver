@@ -7,4 +7,4 @@
 См. docs/03-AGENT-PLAN.md, §6 — критерии L0-L3.
 """
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"

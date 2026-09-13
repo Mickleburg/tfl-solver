@@ -1,6 +1,21 @@
 from __future__ import annotations
 
 from tfl.cli import main
+from tfl.paths import ROOT
+
+
+def test_root_prints_runtime_path(capsys):
+    assert main(["root"]) == 0
+    assert capsys.readouterr().out.strip() == str(ROOT)
+
+
+def test_setup_installs_and_checks_global_adapters(tmp_path, capsys):
+    assert main(["setup", "--home", str(tmp_path)]) == 0
+    output = capsys.readouterr().out
+    assert "/tfl <запрос>" in output
+    assert "$tfl-solver <запрос>" in output
+    assert main(["setup", "--home", str(tmp_path), "--status"]) == 0
+    assert "current" in capsys.readouterr().out
 
 
 def test_doctor_is_independent_of_current_directory(tmp_path, monkeypatch, capsys):

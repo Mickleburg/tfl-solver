@@ -92,7 +92,7 @@ python -S -m unittest discover -s tests -v
 ## Готовность
 
 {PLACEHOLDER}: заменить заготовку предметной реализацией и командами запуска,
-затем выполнить `tfl-agent lab check .` из окружения tfl-solver.
+затем выполнить `tfl lab check .` из окружения tfl-solver.
 """,
         "task.md": f"""# Условие
 

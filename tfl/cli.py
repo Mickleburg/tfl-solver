@@ -9,10 +9,10 @@ import subprocess
 import sys
 from collections.abc import Sequence
 
+from tfl import __version__
 from tfl.intake import BY_FORM, analyse, load_index
-
-
-ROOT = pathlib.Path(__file__).resolve().parent.parent
+from tfl.integrations import adapter_status, install_adapters, selected_adapters
+from tfl.paths import IS_BUNDLED, PACKAGE_ROOT, ROOT
 
 
 def _configure_windows_stdio() -> None:
@@ -57,7 +57,7 @@ def _intake(arguments: argparse.Namespace) -> int:
 def _doctor(arguments: argparse.Namespace) -> int:
     checks = {
         "Python >= 3.11": sys.version_info >= (3, 11),
-        "пакет tfl": (ROOT / "tfl" / "__init__.py").is_file(),
+        "пакет tfl": (PACKAGE_ROOT / "__init__.py").is_file(),
         "Codex skill": (ROOT / ".agents" / "skills" / "tfl-solver" / "SKILL.md").is_file(),
         "Claude adapter": (ROOT / ".claude" / "skills" / "tfl" / "SKILL.md").is_file(),
         "карта задач": (ROOT / "docs" / "02-TASK-TAXONOMY.md").is_file(),
@@ -107,6 +107,60 @@ def _doctor(arguments: argparse.Namespace) -> int:
         if completed.returncode:
             return completed.returncode
     return 0 if all(checks.values()) else 1
+
+
+def _root(_arguments: argparse.Namespace) -> int:
+    print(ROOT)
+    return 0
+
+
+def _setup(arguments: argparse.Namespace) -> int:
+    home = pathlib.Path(arguments.home) if arguments.home else None
+    if arguments.status:
+        results = tuple(
+            (adapter, adapter_status(adapter))
+            for adapter in selected_adapters(arguments.target, home)
+        )
+    else:
+        installed = install_adapters(
+            arguments.target,
+            home=home,
+            force=arguments.force,
+        )
+        results = tuple((result.adapter, result.status) for result in installed)
+
+    failed = False
+    for adapter, status in results:
+        label = {
+            "current": "OK",
+            "installed": "OK",
+            "updated": "OK",
+            "missing": "MISS",
+            "outdated": "OLD",
+            "conflict": "FAIL",
+            "unreadable": "FAIL",
+        }[status]
+        print(
+            f"{label:4} {adapter.client:6} {adapter.kind}: "
+            f"{adapter.path} ({status})"
+        )
+        failure_statuses = (
+            {"missing", "outdated", "conflict", "unreadable"}
+            if arguments.status
+            else {"conflict", "unreadable"}
+        )
+        failed = failed or status in failure_statuses
+
+    if any(adapter.client == "claude" for adapter, _status in results):
+        print("Claude Code: /tfl <запрос>")
+    if any(adapter.client == "codex" for adapter, _status in results):
+        print("Codex: $tfl-solver <запрос> или /prompts:tfl <запрос>")
+    if failed and not arguments.force and not arguments.status:
+        print(
+            "Чужие файлы не перезаписаны; проверьте их или повторите с --force.",
+            file=sys.stderr,
+        )
+    return 1 if failed else 0
 
 
 def _eval(arguments: argparse.Namespace) -> int:
@@ -176,7 +230,9 @@ def _lab(arguments: argparse.Namespace) -> int:
 
 def _repo_path(value: str) -> pathlib.Path:
     path = pathlib.Path(value)
-    return path if path.is_absolute() else ROOT / path
+    if path.is_absolute():
+        return path
+    return (pathlib.Path.cwd() if IS_BUNDLED else ROOT) / path
 
 
 def _holdout(arguments: argparse.Namespace) -> int:
@@ -239,14 +295,37 @@ def _holdout(arguments: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="tfl-agent",
+        prog="tfl",
         description=(
             "Детерминированный вход агента ТФЯ: диагностика, разбор условия, "
             "автономные проекты лабораторных и исполняемый eval. Сам цикл "
             "рассуждений задаёт repo-skill."
         ),
     )
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {__version__}"
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    root = subparsers.add_parser(
+        "root", help="показать каталог встроенных материалов агента"
+    )
+    root.set_defaults(handler=_root)
+
+    setup_parser = subparsers.add_parser(
+        "setup", help="установить глобальные команды для Claude Code и Codex"
+    )
+    setup_parser.add_argument(
+        "--target", choices=("all", "claude", "codex"), default="all"
+    )
+    setup_parser.add_argument(
+        "--status", action="store_true", help="только проверить состояние"
+    )
+    setup_parser.add_argument(
+        "--force", action="store_true", help="разрешить замену существующего чужого файла"
+    )
+    setup_parser.add_argument("--home", help=argparse.SUPPRESS)
+    setup_parser.set_defaults(handler=_setup)
 
     doctor = subparsers.add_parser("doctor", help="проверить готовность проекта")
     doctor.add_argument("--tests", action="store_true", help="также запустить pytest")

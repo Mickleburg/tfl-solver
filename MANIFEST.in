@@ -1,0 +1,9 @@
+include AGENTS.md README.md
+recursive-include .agents *
+recursive-include .claude *
+recursive-include corpus *
+recursive-include docs *
+recursive-include evals *
+recursive-include tools *
+global-exclude __pycache__ *.py[cod]
+prune references

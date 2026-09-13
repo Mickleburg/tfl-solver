@@ -20,7 +20,9 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Iterable, Sequence
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
+from tfl.paths import ROOT
+
+
 HOLDOUT_ROOT = ROOT / "evals" / "agent_holdout"
 CASES_PATH = HOLDOUT_ROOT / "cases.jsonl"
 SCHEMA_PATH = HOLDOUT_ROOT / "response.schema.json"
@@ -495,7 +497,14 @@ def _repository_commit() -> str:
         )
     except (OSError, subprocess.TimeoutExpired):
         return "unknown"
-    return result.stdout.strip() if result.returncode == 0 else "unknown"
+    if result.returncode == 0:
+        return result.stdout.strip()
+    try:
+        from importlib.metadata import PackageNotFoundError, version
+
+        return f"package-{version('tfl-solver')}"
+    except PackageNotFoundError:
+        return "unknown"
 
 
 def run_codex_case(

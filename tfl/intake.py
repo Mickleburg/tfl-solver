@@ -34,6 +34,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 
 from tfl.hints import Hint, match as match_hints
+from tfl.paths import ROOT
 
 __all__ = [
     "Evidence",
@@ -49,7 +50,7 @@ __all__ = [
     "ASKS",
 ]
 
-INDEX_PATH = pathlib.Path(__file__).resolve().parent.parent / "evals" / "tasks" / "index.jsonl"
+INDEX_PATH = ROOT / "evals" / "tasks" / "index.jsonl"
 
 
 # --------------------------------------------------------------------------

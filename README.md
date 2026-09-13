@@ -17,45 +17,51 @@
 под таймер и экзаменационный поиск ошибки в готовом ИИ-решении. Big Pharma в
 текущем курсе нет; её старые задачи сохранены только как регрессии.
 
-## Быстрый запуск
+## Установка из GitHub
 
-Требуется Python 3.11+.
+Требуются Python 3.11+, Git и установленный Claude Code или Codex.
 
 ```powershell
-py -3 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
-.\.venv\Scripts\python.exe -m tfl doctor
+py -3 -m pip install --user --upgrade "git+https://github.com/Mickleburg/tfl-solver.git"
+py -3 -m tfl setup
+py -3 -m tfl doctor
 ```
 
-Для работы со сканами и SMT-поиском можно установить все дополнительные
-зависимости:
+Пакет включает skill, рецепты, корпус и оракулы. `tfl setup` устанавливает
+глобальные точки входа для LLM-клиентов; открытый клиент после этого нужно
+перезапустить. Полная инструкция, обновление и editable-клон — в
+[`docs/INSTALLATION.md`](docs/INSTALLATION.md).
+
+Для разработки самого проекта:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install -e ".[dev,corpus,smt]"
+git clone https://github.com/Mickleburg/tfl-solver.git
+cd tfl-solver
+py -3 -m pip install -e ".[dev]"
+py -3 -m tfl setup
 ```
 
 ### Codex
 
-Запусти Codex из корня репозитория и передай задачу с упоминанием
-`$tfl-solver`. Repo-skill находится в `.agents/skills/tfl-solver/` и
-обнаруживается Codex автоматически. Список доступных навыков можно проверить
-командой `/skills`.
+После `tfl setup` передай задачу с упоминанием `$tfl-solver`. Для slash-вызова
+используй `/prompts:tfl <запрос>`: официальный синтаксис пользовательских
+prompt-файлов Codex включает префикс `prompts`.
 
 ### Claude Code
 
-Совместимый вход сохранён в `.claude/skills/tfl/SKILL.md`. Он загружает тот же
-канонический repo-skill, поэтому правила двух агентов не расходятся.
+После `tfl setup` используй точную команду `/tfl <запрос>`. Она загружает тот
+же канонический skill, поэтому правила Claude Code и Codex не расходятся.
 
 ### Детерминированная командная строка
 
 ```powershell
-py -3 -m tfl doctor
-py -3 -m tfl intake --file task.txt
-py -3 -m tfl intake --text "Проверить завершимость SRS ..." --hint ЛР
-py -3 -m tfl lab init path/to/lab --file task.txt
-py -3 -m tfl lab check path/to/lab
-py -3 -m tfl eval
-py -3 -m tfl holdout list
+tfl doctor
+tfl intake --file task.txt
+tfl intake --text "Проверить завершимость SRS ..." --hint ЛР
+tfl lab init path/to/lab --file task.txt
+tfl lab check path/to/lab
+tfl eval
+tfl holdout list
 ```
 
 `lab init` создаёт неперезаписываемую заготовку с условием, кодом, `unittest`
@@ -70,7 +76,8 @@ py -3 -m tfl holdout list
 ответ, точное определение, минимальный пример и граница применимости без
 ненужного запуска всего корпуса.
 
-После editable-установки те же команды доступны через `tfl-agent`.
+Если `tfl` не найден в `PATH`, используй переносимую форму `py -3 -m tfl`.
+Старое имя `tfl-agent` сохранено для совместимости.
 Командная строка выполняет диагностику, классификацию и eval; рассуждающий
 цикл выполняет LLM по repo-skill.
 
@@ -112,6 +119,7 @@ JSON Schema. Полный набор вызывается только явны�
 - `docs/LAB-PROJECT-STANDARD.md` — автономный код, тесты и описание ЛР;
 - `docs/LAB-AI-DISCLOSURE.md` — обязательный раздел лабораторного отчёта;
 - `docs/THEORY-ANSWER-STANDARD.md` — быстрые и проверяемые объяснения теории;
+- `docs/INSTALLATION.md` — установка из GitHub и глобальные команды клиентов;
 - `docs/PROJECT-STATE.md` — единое актуальное состояние;
 - `docs/OPEN-GAPS.md` — незакрытые задачи;
 - `references/` — локальные исходные материалы, не входящие в Git.

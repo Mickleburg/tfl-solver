@@ -1,11 +1,21 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "tfl-solver"
-version = "0.1.0"
+version = "1.0.0"
 description = "Агент для решения задач по теории формальных языков (ИУ9, МГТУ им. Баумана)"
+readme = "README.md"
 requires-python = ">=3.11"
 dependencies = []
+authors = [{name = "Mickleburg", email = "yruloki@yandex.ru"}]
+
+[project.urls]
+Repository = "https://github.com/Mickleburg/tfl-solver"
 
 [project.scripts]
+tfl = "tfl.cli:main"
 tfl-agent = "tfl.cli:main"
 
 [project.optional-dependencies]
