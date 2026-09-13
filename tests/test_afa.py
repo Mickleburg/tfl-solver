@@ -4,7 +4,8 @@
 
 * два примера из issue #40 (`corpus/issues/lab2-2025-issue40.md`) —
   сверяются с самими lookahead-регулярками через `re`;
-* автомат из лекции 6 (`corpus/txt/chat_AFA.txt`) — сверяется
+* автомат из дополнительной лекции
+  (`corpus/txt/Supplement_Alternating_Automata.txt`) — сверяется
   со словесной формулировкой оттуда же.
 """
 

@@ -3,8 +3,8 @@
 `RK2-A` — язык SRS над базисом либо язык грамматики с числовым условием;
 `RK2-B` — язык, заданный теоретико-множественным описанием.
 
-Эталоны берутся из проверенных работ (`reports/rk2-2026-photos/NOTES.md`)
-и из лекций курса.
+Эталоны берутся из официальных условий, лекций и обезличенных контрольных
+примеров.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from tfl.srs import parse_srs
 
 
 def test_variant_15_language_is_empty():
-    """photo_116: `S → aSbSb | aSa | a`, букв `a` вчетверо больше, чем `b`.
+    """`S → aSbSb | aSa | a`, букв `a` вчетверо больше, чем `b`.
 
     `I(w) = |w|_a − 2|w|_b` нечётно на всех выводимых словах, а условие
     `|w|_a = 4|w|_b` делает его чётным. Противоречие ⇒ язык пуст.
@@ -36,7 +36,7 @@ def test_variant_15_language_is_empty():
 
 
 def test_second_work_with_the_same_trick():
-    """photo_155: `S → aSaSa | bSb | b`, букв `a` столько же, сколько `b`."""
+    """`S → aSaSa | bSb | b`, букв `a` столько же, сколько `b`."""
     grammar = parse_cfg("S -> a S a S a | b S b | b")
     assert grammar.counting_condition({"a": 1, "b": -1}).value is False
 
@@ -168,7 +168,7 @@ def test_witness_must_lie_in_the_language():
 
 
 def test_squares_over_one_letter_are_not_context_free():
-    """photo_176: гомоморфизм в унарный алфавит и разрыв между квадратами.
+    """Гомоморфизм в унарный алфавит и разрыв между квадратами.
 
     Следствие теоремы Париха из лекции 7: над однобуквенным алфавитом
     регулярные и КС-языки совпадают, поэтому различающая таблица бьёт

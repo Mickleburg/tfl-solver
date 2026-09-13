@@ -82,7 +82,6 @@ def test_reduced_nfa_is_minimal_for_variant_15():
     """Вариант 15: редукция даёт 6 состояний, нижняя оценка тоже 6.
 
     Совпадение оценки снизу с числом состояний доказывает минимальность НКА.
-    У `references/students/dm800-TFLlabs/lab2` НКА тоже на 6 состояний.
     """
     node = rx.parse("b*((ab*a)*(aabb|(babb)*))*")
     nfa = small_nfa(node)
@@ -91,10 +90,10 @@ def test_reduced_nfa_is_minimal_for_variant_15():
     assert bound == 6, "оценка снизу совпала с размером — НКА минимален"
 
 
-def test_dm800_extended_regex_simplification_is_correct():
-    """Проверка нетривиального шага из отчёта dm800.
+def test_reference_extended_regex_simplification_is_correct():
+    """Проверка нетривиального упрощения контрольного выражения.
 
-    Они убирают внутреннюю итерацию под внешней:
+    Убирается внутренняя итерация под внешней:
     `((ab*a)*(aabb|(babb)*))*` → `(ab*a|aabb|babb)*`.
     Шаг верный, хотя выглядит рискованным: тело внешней итерации после
     упрощения обязано оканчиваться на `aabb`/`babb`, но потерянные слова

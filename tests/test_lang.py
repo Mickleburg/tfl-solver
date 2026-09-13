@@ -1,8 +1,7 @@
 """Тесты языка-предиката, таблиц различимости и лемм о накачке.
 
-Контрольная точка взята не из учебника, а из **проверенной работы РК2 2025**
-(фотография `photo_140` из учебного чата, см. `corpus/chat/FINDINGS.md`):
-язык пересечён с регулярным до `a b^n a b^{n+1} aa`, префиксы `a b^i a`,
+Контрольный язык пересечён с регулярным до `a b^n a b^{n+1} aa`,
+префиксы `a b^i a`,
 суффиксы `b^{j+1} aa`, и таблица обязана различить все пары.
 
 Второе, что проверяется всюду: границы вывода. Отбитая накачка и различённая
@@ -54,16 +53,16 @@ ANBNCN = from_predicate(
 )
 EVEN_A = from_predicate(lambda w: w.count("a") % 2 == 0, "ab", "чётное число a")
 
-# Язык из проверенной работы: L ∩ ab⁺ab⁺aa = { a b^n a b^{n+1} aa | n ≥ 0 }.
-_GRADED = re.compile(r"^ab(b*)ab(b*)aa$")
+# Контрольный язык: L ∩ ab⁺ab⁺aa = { a b^n a b^{n+1} aa | n ≥ 0 }.
+_REFERENCE = re.compile(r"^ab(b*)ab(b*)aa$")
 
 
-def _graded_member(word: str) -> bool:
-    match = _GRADED.match(word)
+def _reference_member(word: str) -> bool:
+    match = _REFERENCE.match(word)
     return bool(match) and len(match.group(2)) == len(match.group(1)) + 1
 
 
-GRADED = from_predicate(_graded_member, "ab", "ab^n ab^{n+1} aa")
+REFERENCE = from_predicate(_reference_member, "ab", "ab^n ab^{n+1} aa")
 
 
 # --------------------------------------------------------------------------
@@ -119,10 +118,10 @@ def test_disagreements_finds_the_mismatch():
 # --------------------------------------------------------------------------
 
 
-def test_graded_paper_table_separates_every_pair():
-    """Воспроизведение таблицы из проверенной работы РК2 2025."""
+def test_reference_table_separates_every_pair():
+    """Воспроизведение контрольной таблицы различимости."""
     verdict = at_least_classes(
-        GRADED,
+        REFERENCE,
         family(lambda i: "a" + "b" * i + "a", 6),
         family(lambda j: "b" * (j + 1) + "aa", 6),
     )
@@ -130,10 +129,10 @@ def test_graded_paper_table_separates_every_pair():
     assert verdict.witness.merged() == []
 
 
-def test_graded_paper_table_is_diagonal_from_the_first_row():
+def test_reference_table_is_diagonal_from_the_first_row():
     """Единицы стоят по диагонали со сдвигом: `pᵢ` подходит ровно к `sᵢ`."""
     built = table(
-        GRADED,
+        REFERENCE,
         family(lambda i: "a" + "b" * i + "a", 5, start=1),
         family(lambda j: "b" * (j + 1) + "aa", 5, start=1),
     )

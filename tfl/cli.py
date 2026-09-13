@@ -86,7 +86,6 @@ def _doctor(arguments: argparse.Namespace) -> int:
         / "teacher"
         / "FormalLanguageTheory",
         "учебные материалы": ROOT / "references" / "course" / "TFL-IU9-claude",
-        "архив чата": ROOT / "references" / "chat" / "chat-onTG-2025-tfl",
     }
 
     print(f"tfl-solver: {ROOT}")

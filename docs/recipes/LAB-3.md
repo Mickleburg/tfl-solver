@@ -214,6 +214,5 @@ disagreements(grammar, predicate, "ab", max_len=10)
 * Лекция 9 (`corpus/txt/FormalLanguageTheory_2023_lect_tfl_9.txt`,
   страницы 41–48) — построение PDA по LR(0)-автомату, избавление
   от переходов по нетерминалам, регулярная аппроксимация, критерий DPDA.
-* `references/students/VDEN5-IU9-TFL/lab3/other/lab3.tex` — студенческий отчёт по варианту 7
-  с правилами пересечения в записи `⟨p, A, q⟩`. Оформление — образец,
-  содержание — не источник истины.
+* `tests/test_cfg.py`, `tests/test_pda.py`, `tests/test_approx.py` — локальные
+  регрессии для пересечения в записи `⟨p, A, q⟩`, разбора и аппроксимации.

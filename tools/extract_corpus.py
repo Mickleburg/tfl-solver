@@ -26,14 +26,13 @@ import pymupdf
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "corpus" / "txt"
-CHAT = "chat"
 # Метка сохраняет стабильные имена corpus/txt, а путь отражает единый
 # локальный каталог references/. Это позволяет перемещать весь проект без
 # абсолютных путей и не пересобирать индекс задач из-за смены раскладки.
 SOURCES = (
     ("FormalLanguageTheory", pathlib.Path("references/teacher/FormalLanguageTheory")),
     ("TFL-IU9-claude", pathlib.Path("references/course/TFL-IU9-claude")),
-    (CHAT, pathlib.Path("references/chat/chat-onTG-2025-tfl")),
+    ("Supplement", pathlib.Path("references/course/supplemental")),
 )
 # Персональные данные третьих лиц: списки групп с ФИО. В корпус не идут —
 # к предмету отношения не имеют, а распространять их мы не вправе.
@@ -99,20 +98,16 @@ def main() -> None:
         for pdf in sorted((ROOT / base).rglob("*.pdf")):
             if any(mark in pdf.name for mark in SKIP):
                 continue
-            # Один и тот же PDF приходит из нескольких источников: файлы из
-            # чата побайтово совпадают с репозиторием преподавателя. Дубли
-            # только засоряют выдачу grep.
+            # Один и тот же PDF может встречаться в нескольких наборах.
+            # Побайтовые дубли только засоряют текстовый поиск.
             digest = hashlib.md5(pdf.read_bytes()).hexdigest()
             if digest in seen:
                 continue
             seen[digest] = pdf.name
             rel = pdf.relative_to(ROOT)
-            if label == CHAT:
-                name = "chat_" + pdf.stem.replace(" ", "_") + ".txt"
-            else:
-                inside = pdf.relative_to(ROOT / base)
-                stem = str(inside.with_suffix(""))
-                name = label + "_" + stem.replace("\\", "_").replace("/", "_").replace(" ", "_") + ".txt"
+            inside = pdf.relative_to(ROOT / base)
+            stem = str(inside.with_suffix(""))
+            name = label + "_" + stem.replace("\\", "_").replace("/", "_").replace(" ", "_") + ".txt"
             try:
                 text, pages = extract(pdf)
             except Exception as exc:  # повреждённый или защищённый PDF

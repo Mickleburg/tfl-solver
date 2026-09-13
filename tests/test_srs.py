@@ -25,7 +25,7 @@ def v20() -> SRS:
 
 @pytest.fixture(scope="module")
 def v20_no_eps(v20: SRS) -> SRS:
-    """Вариант 20 без правила `babc → ε` — как во второй половине отчёта boomhaa."""
+    """Вариант 20 без правила `babc → ε` — второй контрольный случай."""
     return SRS(tuple(r for r in v20.rules if r.rhs), v20.alphabet)
 
 
@@ -120,10 +120,10 @@ def test_decreasing_order_proves_termination():
     assert "армейск" in verdict.reason
 
 
-def test_variant_20_cycle_matches_boomhaa(v20: SRS):
-    """Незавершимость варианта 20 — тот же цикл, что в отчёте boomhaa.
+def test_variant_20_cycle_matches_known_witness(v20: SRS):
+    """Незавершимость варианта 20 подтверждается известным циклом.
 
-    Они записали его как `caba → cba → baa → caba`; найденный отличается лишь
+    Цикл `caba → cba → baa → caba`; найденный отличается лишь
     точкой входа в цикл.
     """
     cycle = v20.find_cycle(max_len=8, context=1)
@@ -162,7 +162,7 @@ def test_critical_pair_from_overlap():
 
 
 def test_variant_20_not_locally_confluent(v20: SRS):
-    """Найденный контрпример короче приведённого в отчёте boomhaa (`aabcaaa`)."""
+    """Найденный контрпример короче раннего кандидата `aabcaaa`."""
     verdict = v20.locally_confluent(max_len=11)
     assert verdict.value is False
     critical, left, right, _, _ = verdict.witness
@@ -224,12 +224,12 @@ def test_identical_systems_are_equivalent():
     assert srs.same_equivalence(srs, max_len=3, search_len=6).value is True
 
 
-def test_boomhaa_minimized_system_is_wrong(v20_no_eps: SRS):
-    """Найденная ошибка в чужой работе.
+def test_incomplete_minimized_system_is_wrong(v20_no_eps: SRS):
+    """Слишком агрессивная минимизация меняет конгруэнцию.
 
-    `references/students/boomhaa-tfl-labs/lab1` для варианта 20 без ε-правила приводит
-    пополненную систему, содержащую `aa → a`, но при минимизации это правило
-    теряется и остаётся `{b → a, c → a}`. Такая система сохраняет длину слова,
+    Для варианта 20 без ε-правила пополненная система содержит `aa → a`,
+    но в ошибочном кандидате это правило теряется и остаётся
+    `{b → a, c → a}`. Такая система сохраняет длину слова,
     тогда как исходная — нет.
 
     Свидетель: `a ↔ aa` тремя шагами исходной системы
@@ -241,14 +241,14 @@ def test_boomhaa_minimized_system_is_wrong(v20_no_eps: SRS):
     а класс слова `a` в `{b → a, c → a}` вычисляется целиком и равен
     `{a, b, c}`.
     """
-    boomhaa = parse_srs("b -> a\nc -> a")
-    verdict = v20_no_eps.same_equivalence(boomhaa, max_len=3, search_len=7)
+    candidate = parse_srs("b -> a\nc -> a")
+    verdict = v20_no_eps.same_equivalence(candidate, max_len=3, search_len=7)
     assert verdict.value is False
     word, missing = verdict.witness
     assert (word, missing) == ("a", "aa")
 
 
-def test_class_of_a_in_boomhaa_system_is_exact():
+def test_class_of_a_in_incomplete_system_is_exact():
     """Опровержение опирается на полноту обхода — проверяем её отдельно."""
     search = parse_srs("b -> a\nc -> a").symmetric().reachable("a", max_len=7)
     assert search.exact
@@ -272,8 +272,8 @@ def test_adding_missing_rule_is_not_refuted(v20_no_eps: SRS):
 
 
 def test_fuzz_equivalence_follows_task_scheme(v20_no_eps: SRS):
-    boomhaa = parse_srs("b -> a\nc -> a")
-    verdict = v20_no_eps.fuzz_equivalence(boomhaa, trials=200, seed=1)
+    candidate = parse_srs("b -> a\nc -> a")
+    verdict = v20_no_eps.fuzz_equivalence(candidate, trials=200, seed=1)
     assert verdict.value is False
 
 
@@ -374,7 +374,7 @@ def test_linear_invariant_modulo_two():
 def test_no_linear_invariants_for_variant_20(v20: SRS):
     """У варианта 20 линейных инвариантов нет — нужны нелинейные.
 
-    `boomhaa` строит для них гомоморфизм в моноид диагональных матриц.
+    Для него полезен гомоморфизм в моноид диагональных матриц.
     """
     assert all(not v20.linear_invariants(m) for m in (2, 3, 5, 7))
 
@@ -398,8 +398,8 @@ def test_all_28_variants_present_and_parse():
         assert srs.alphabet, f"{path.name}: пустой алфавит"
 
 
-def test_extracted_variant_20_matches_boomhaa(v20: SRS):
-    """Автоизвлечение из PDF совпало с ручной сверкой по отчёту boomhaa.
+def test_extracted_variant_20_matches_reference_fixture(v20: SRS):
+    """Автоизвлечение из PDF совпало с зафиксированной ручной сверкой.
 
     Вёрстка PDF двухколоночная, номер варианта стоит по центру блока,
     поэтому автоматическому разбору нужна независимая проверка.
@@ -422,8 +422,8 @@ def test_fuzz_directed_is_stricter_than_symmetric():
     систему пропустит, а формулировка преподавателя — «можно ли её результат
     переписать в исходное слово либо наоборот» — забракует.
 
-    Ровно этот случай обсуждали в учебном чате: «все правила в T′ просто
-    переписывают любую последовательность в ccc» (`corpus/chat/FINDINGS.md`).
+    Это иллюстрирует систему, где все слова могут сводиться к одному
+    каноническому представителю, но направленная достижимость различается.
     """
     original = parse_srs("a -> b")
     replacement = parse_srs("a -> c\nb -> c")

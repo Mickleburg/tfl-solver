@@ -115,4 +115,4 @@ SCAN	6	132	TFL-IU9-claude_tfl_rk1_var_24.txt	references\course\TFL-IU9-claude\tf
 SCAN	5	110	TFL-IU9-claude_tfl_rk1_var_7.txt	references\course\TFL-IU9-claude\tfl_rk1_var_7.pdf
 TEXT	4	5402	TFL-IU9-claude_РК1_tfl_rk1_var_2_new.txt	references\course\TFL-IU9-claude\РК1\tfl_rk1_var_2_new.pdf
 TEXT	8	8963	TFL-IU9-claude_РК2_tfl_rk2_var_8.txt	references\course\TFL-IU9-claude\РК2\tfl_rk2_var_8.pdf
-TEXT	10	22889	chat_AFA.txt	references\chat\chat-onTG-2025-tfl\chats\chat_562952089037772\topic_23455\files\AFA.pdf
+TEXT	10	22889	Supplement_Alternating_Automata.txt	references\course\supplemental\Alternating_Automata.pdf

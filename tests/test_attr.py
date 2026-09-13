@@ -1,8 +1,7 @@
 """Атрибутные грамматики: разбор, вычисление, язык.
 
 Условия взяты из `corpus/txt/FormalLanguageTheory_2025_rk2_tfl_2025.txt`
-(слой A) и сверены с проверенными работами из
-`reports/rk2-2026-photos/NOTES.md`.
+и сверены с обезличенными контрольными примерами.
 """
 
 from __future__ import annotations
@@ -171,7 +170,7 @@ def test_empty_language_when_conditions_never_hold():
 
 
 # --------------------------------------------------------------------------
-# Варианты РК2 2025 — сверка с проверенными работами
+# Варианты РК2 2025 — контрольные примеры
 # --------------------------------------------------------------------------
 
 
@@ -192,8 +191,8 @@ def blocks_of(word: str) -> list[int] | None:
     return counts
 
 
-def test_variant_1_matches_the_graded_answer():
-    """photo_119: язык `(a b^{nᵢ} a)^m` при `m > max nᵢ`.
+def test_variant_1_matches_the_reference_language():
+    """Язык `(a b^{nᵢ} a)^m` при `m > max nᵢ`.
 
     `S'.a` — число блоков, `S'.b` — максимум по разбиению на группы `T`,
     а минимум этого максимума достигается разбиением по одному блоку.
@@ -271,7 +270,7 @@ def test_variant_7_condition_is_not_vacuous():
 
 
 def test_variant_28_ignoring_conditions_changes_the_answer():
-    """Ошибка из photo_115: условие отброшено — и язык уже другой."""
+    """Если отбросить условие, получится другой язык."""
     grammar = parse_attr_grammar(VARIANT_28)
     naive = parse_attr_grammar(
         VARIANT_28.replace(
@@ -310,7 +309,7 @@ T -> ε       ; T.d == 0
 
 
 def test_inherited_attribute_flows_down():
-    """Условие стоит на листе, а значение приходит сверху (photo_191).
+    """Условие стоит на листе, а значение приходит сверху.
 
     Наследуемый счётчик считает глубину обёрток и требует ровно столько же
     букв `a` в середине: язык — это `{w a^{|w|} wᴿ}`.
