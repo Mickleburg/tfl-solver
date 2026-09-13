@@ -17,19 +17,35 @@
 под таймер и экзаменационный поиск ошибки в готовом ИИ-решении. Big Pharma в
 текущем курсе нет; её старые задачи сохранены только как регрессии.
 
-## Установка из GitHub
+## Установка плагина из GitHub
 
-Требуются Python 3.11+, Git и установленный Claude Code или Codex.
+Репозиторий одновременно является плагином для Codex и Claude Code. Отдельно
+копировать skill-файлы или запускать `tfl setup` не требуется.
 
-```powershell
-py -3 -m pip install --user --upgrade "git+https://github.com/Mickleburg/tfl-solver.git"
-py -3 -m tfl setup
-py -3 -m tfl doctor
+Codex CLI:
+
+```text
+codex plugin marketplace add Mickleburg/tfl-solver
+codex plugin add tfl-solver@tfl-solver-marketplace
 ```
 
-Пакет включает skill, рецепты, корпус и оракулы. `tfl setup` устанавливает
-глобальные точки входа для LLM-клиентов; открытый клиент после этого нужно
-перезапустить. Полная инструкция, обновление и editable-клон — в
+В новой сессии используй `$tfl <запрос>` или сформулируй задачу обычным
+языком: skill допускает автоматический выбор.
+
+Claude Code:
+
+```text
+/plugin marketplace add Mickleburg/tfl-solver
+/plugin install tfl-solver@tfl-solver-marketplace
+```
+
+После перезапуска вызови `/tfl-solver:tfl <запрос>`. Claude Code добавляет к
+командам плагина пространство имён, поэтому это имя намеренно длиннее `/tfl`.
+
+Для объяснений и работы с текстовым корпусом достаточно установленного
+плагина. Исполняемые оракулы и создание проектов ЛР требуют Python 3.11+;
+в каталоге плагина агент запускает их через `scripts/tfl_plugin.py`. Полная
+инструкция, обновление, локальная установка и перенос CLI — в
 [`docs/INSTALLATION.md`](docs/INSTALLATION.md).
 
 Для разработки самого проекта:
@@ -38,19 +54,11 @@ py -3 -m tfl doctor
 git clone https://github.com/Mickleburg/tfl-solver.git
 cd tfl-solver
 py -3 -m pip install -e ".[dev]"
-py -3 -m tfl setup
 ```
 
-### Codex
-
-После `tfl setup` передай задачу с упоминанием `$tfl-solver`. Для slash-вызова
-используй `/prompts:tfl <запрос>`: официальный синтаксис пользовательских
-prompt-файлов Codex включает префикс `prompts`.
-
-### Claude Code
-
-После `tfl setup` используй точную команду `/tfl <запрос>`. Она загружает тот
-же канонический skill, поэтому правила Claude Code и Codex не расходятся.
+Старый вариант с `pip` и `tfl setup` сохранён: он устанавливает самостоятельную
+CLI, ненеймспейсную команду Claude Code `/tfl`, Codex skill `$tfl-solver` и
+prompt `/prompts:tfl`.
 
 ### Детерминированная командная строка
 
@@ -76,8 +84,9 @@ tfl holdout list
 ответ, точное определение, минимальный пример и граница применимости без
 ненужного запуска всего корпуса.
 
-Если `tfl` не найден в `PATH`, используй переносимую форму `py -3 -m tfl`.
-Старое имя `tfl-agent` сохранено для совместимости.
+Если `tfl` не найден в `PATH`, из клона или распакованного плагина используй
+`py -3 scripts/tfl_plugin.py <команда>`; из установленного Python-пакета —
+`py -3 -m tfl <команда>`. Старое имя `tfl-agent` сохранено для совместимости.
 Командная строка выполняет диагностику, классификацию и eval; рассуждающий
 цикл выполняет LLM по repo-skill.
 
@@ -109,7 +118,9 @@ JSON Schema. Полный набор вызывается только явны�
 
 ## Устройство
 
-- `.agents/skills/tfl-solver/SKILL.md` — канонический цикл решения;
+- `skills/tfl/SKILL.md` — единый канонический цикл решения для обоих клиентов;
+- `plugin.json`, `.codex-plugin/`, `.claude-plugin/` — переносимые манифесты;
+- `.agents/plugins/marketplace.json` — каталог установки Codex;
 - `tfl/` — проверяющие оракулы;
 - `docs/recipes/` — рецепты 18 содержательных классов задач;
 - `corpus/txt/` — версионируемое текстовое зеркало официальных источников;

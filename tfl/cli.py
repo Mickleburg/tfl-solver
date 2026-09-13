@@ -58,7 +58,10 @@ def _doctor(arguments: argparse.Namespace) -> int:
     checks = {
         "Python >= 3.11": sys.version_info >= (3, 11),
         "пакет tfl": (PACKAGE_ROOT / "__init__.py").is_file(),
-        "Codex skill": (ROOT / ".agents" / "skills" / "tfl-solver" / "SKILL.md").is_file(),
+        "общий skill": (ROOT / "skills" / "tfl" / "SKILL.md").is_file(),
+        "переносимый plugin.json": (ROOT / "plugin.json").is_file(),
+        "манифест Codex": (ROOT / ".codex-plugin" / "plugin.json").is_file(),
+        "манифест Claude": (ROOT / ".claude-plugin" / "plugin.json").is_file(),
         "Claude adapter": (ROOT / ".claude" / "skills" / "tfl" / "SKILL.md").is_file(),
         "карта задач": (ROOT / "docs" / "02-TASK-TAXONOMY.md").is_file(),
         "формат курса 2026": (ROOT / "docs" / "COURSE-2026.md").is_file(),

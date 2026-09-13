@@ -1,0 +1,21 @@
+{
+  "name": "tfl-solver-marketplace",
+  "interface": {
+    "displayName": "TFL Solver"
+  },
+  "plugins": [
+    {
+      "name": "tfl-solver",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/Mickleburg/tfl-solver.git",
+        "ref": "main"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

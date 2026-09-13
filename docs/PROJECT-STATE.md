@@ -36,11 +36,15 @@ Pharma в текущем курсе отсутствует.
 
 ## Готово
 
-- Канонический repo-skill для Codex: `.agents/skills/tfl-solver/SKILL.md`.
-- Адаптер Claude Code: `.claude/skills/tfl/SKILL.md`.
-- Устанавливаемый из GitHub wheel 1.0 включает skill, рецепты, документацию,
-  корпус, eval и Python-оракулы; чистая пакетная установка проверена отдельно
-  от исходного дерева.
+- Единый канонический skill для Codex и Claude Code: `skills/tfl/SKILL.md`.
+- Репозиторий оформлен как устанавливаемый плагин обеих платформ: переносимый
+  `plugin.json`, совместимые манифесты `.codex-plugin/` и `.claude-plugin/`,
+  а также marketplace-каталоги для установки напрямую из GitHub.
+- Старые `.agents/skills/tfl-solver/` и `.claude/skills/tfl/` оставлены как
+  тонкие адаптеры, поэтому существующая ручная установка продолжает работать.
+- Устанавливаемый из GitHub wheel 1.0 включает skill, plugin-манифесты,
+  лицензию Apache-2.0, рецепты, документацию, корпус, eval и Python-оракулы;
+  чистая пакетная установка проверена отдельно от исходного дерева.
 - Переносимая CLI: `tfl` / `py -3 -m tfl` / `tfl-agent` с командами `setup`,
   `root`, `doctor`, `intake`, `lab`, `eval`, `holdout`.
 - `tfl setup` безопасно ставит пользовательские точки входа: Claude Code
@@ -72,7 +76,10 @@ Pharma в текущем курсе отсутствует.
 
 | Проверка | Результат |
 |---|---|
-| Unit/integration tests | 1476 passed, 1 skipped |
+| Unit/integration tests | 1480 passed, 1 skipped |
+| Codex plugin | manifest valid, local marketplace parsed |
+| Claude Code plugin | plugin + marketplace strict validation passed |
+| Wheel 1.0 | clean venv install and `doctor` passed |
 | Исполняемый eval | 63 задачи |
 | Eval: решено | 45 |
 | Eval: частично | 13 |

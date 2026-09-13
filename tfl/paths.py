@@ -14,7 +14,7 @@ def _is_runtime_root(path: pathlib.Path) -> bool:
     """Return whether *path* contains the versioned agent runtime."""
     return (
         (path / "docs" / "02-TASK-TAXONOMY.md").is_file()
-        and (path / ".agents" / "skills" / "tfl-solver" / "SKILL.md").is_file()
+        and (path / "skills" / "tfl" / "SKILL.md").is_file()
         and (path / "evals" / "tasks" / "index.jsonl").is_file()
     )
 

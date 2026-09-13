@@ -7,6 +7,7 @@ name = "tfl-solver"
 version = "1.0.0"
 description = "Агент для решения задач по теории формальных языков (ИУ9, МГТУ им. Баумана)"
 readme = "README.md"
+license = "Apache-2.0"
 requires-python = ">=3.11"
 dependencies = []
 authors = [{name = "Mickleburg", email = "yruloki@yandex.ru"}]

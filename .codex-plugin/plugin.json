@@ -1,0 +1,40 @@
+{
+  "name": "tfl-solver",
+  "version": "1.0.0",
+  "description": "Solve and explain formal-language theory tasks and build standalone laboratory projects.",
+  "author": {
+    "name": "Mickleburg",
+    "email": "yruloki@yandex.ru",
+    "url": "https://github.com/Mickleburg"
+  },
+  "homepage": "https://github.com/Mickleburg/tfl-solver",
+  "repository": "https://github.com/Mickleburg/tfl-solver",
+  "license": "Apache-2.0",
+  "keywords": [
+    "formal-languages",
+    "automata",
+    "grammars",
+    "education"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "TFL Solver",
+    "shortDescription": "Theory, tasks, proofs, and standalone TFL labs.",
+    "longDescription": "Explains formal-language theory, verifies solutions with bundled Python oracles, audits incorrect solutions, and builds dependency-free laboratory projects.",
+    "developerName": "Mickleburg",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/Mickleburg/tfl-solver",
+    "privacyPolicyURL": "https://github.com/Mickleburg/tfl-solver/blob/main/corpus/knowledge/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/Mickleburg/tfl-solver/blob/main/LICENSE",
+    "defaultPrompt": [
+      "Explain this formal-language theory question.",
+      "Solve and verify this TFL task.",
+      "Build a standalone project for this TFL lab."
+    ],
+    "brandColor": "#355C7D"
+  }
+}

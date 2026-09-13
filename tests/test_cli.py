@@ -22,7 +22,9 @@ def test_doctor_is_independent_of_current_directory(tmp_path, monkeypatch, capsy
     monkeypatch.chdir(tmp_path)
     assert main(["doctor"]) == 0
     output = capsys.readouterr().out
-    assert "OK   Codex skill" in output
+    assert "OK   общий skill" in output
+    assert "OK   манифест Codex" in output
+    assert "OK   манифест Claude" in output
     assert "OK   индекс корпуса" in output
 
 

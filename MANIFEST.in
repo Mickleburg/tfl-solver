@@ -1,9 +1,13 @@
-include AGENTS.md README.md
+include AGENTS.md LICENSE README.md plugin.json
 recursive-include .agents *
 recursive-include .claude *
+recursive-include .claude-plugin *
+recursive-include .codex-plugin *
 recursive-include corpus *
 recursive-include docs *
 recursive-include evals *
+recursive-include scripts *
+recursive-include skills *
 recursive-include tools *
 global-exclude __pycache__ *.py[cod]
 prune references

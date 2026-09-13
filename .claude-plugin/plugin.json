@@ -1,0 +1,18 @@
+{
+  "name": "tfl-solver",
+  "version": "1.0.0",
+  "description": "Solve and explain formal-language theory tasks and build standalone laboratory projects.",
+  "author": {
+    "name": "Mickleburg",
+    "email": "yruloki@yandex.ru"
+  },
+  "homepage": "https://github.com/Mickleburg/tfl-solver",
+  "repository": "https://github.com/Mickleburg/tfl-solver",
+  "license": "Apache-2.0",
+  "keywords": [
+    "formal-languages",
+    "automata",
+    "grammars",
+    "education"
+  ]
+}

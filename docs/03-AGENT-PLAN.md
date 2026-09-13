@@ -85,8 +85,11 @@ PHARMA. `LAB-5` и `PHARMA` сохранены как исторические �
 
 ## 4. Переносимые точки входа
 
-- Codex: `.agents/skills/tfl-solver/SKILL.md`.
-- Claude Code: `.claude/skills/tfl/SKILL.md`, тонкий адаптер к тому же skill.
+- Общий plugin-skill: `skills/tfl/SKILL.md`; его читают Codex и Claude Code.
+- Совместимость со старой ручной установкой: `.agents/skills/tfl-solver/` и
+  `.claude/skills/tfl/` содержат только тонкие адаптеры к общему skill.
+- Манифесты: `plugin.json`, `.codex-plugin/plugin.json` и
+  `.claude-plugin/plugin.json`.
 - Детерминированная CLI: `py -3 -m tfl` или `tfl-agent`.
 - Правила разработки в репозитории: `AGENTS.md`.
 

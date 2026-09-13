@@ -29,6 +29,9 @@ def test_installs_all_user_adapters_into_explicit_home(tmp_path):
         content = result.adapter.path.read_text(encoding="utf-8")
         assert MANAGED_MARKER in content
     assert ROOT.as_posix() in results[0].adapter.content
+    assert (ROOT / "skills" / "tfl" / "SKILL.md").as_posix() in (
+        results[0].adapter.content
+    )
     assert "$ARGUMENTS" in results[0].adapter.content
 
 

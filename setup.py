@@ -10,8 +10,19 @@ from setuptools import setup
 from setuptools.command.build_py import build_py as _build_py
 
 
-RUNTIME_DIRECTORIES = (".agents", ".claude", "corpus", "docs", "evals", "tools")
-RUNTIME_FILES = ("AGENTS.md", "README.md")
+RUNTIME_DIRECTORIES = (
+    ".agents",
+    ".claude",
+    ".claude-plugin",
+    ".codex-plugin",
+    "corpus",
+    "docs",
+    "evals",
+    "scripts",
+    "skills",
+    "tools",
+)
+RUNTIME_FILES = ("AGENTS.md", "LICENSE", "README.md", "plugin.json")
 IGNORED_NAMES = ("__pycache__", "*.pyc", "*.pyo")
 
 

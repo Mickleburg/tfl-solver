@@ -2,7 +2,7 @@
 
 Общие правила проекта находятся в `AGENTS.md`. Для решения задачи по теории
 формальных языков полностью прочитай канонический skill
-`.agents/skills/tfl-solver/SKILL.md` либо вызови `/tfl`.
+`skills/tfl/SKILL.md` либо вызови plugin-skill `/tfl-solver:tfl`.
 
 Единое актуальное состояние: `docs/PROJECT-STATE.md`.
 Незакрытые задачи: `docs/OPEN-GAPS.md`.

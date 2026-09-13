@@ -43,9 +43,7 @@ def adapters(home: pathlib.Path | None = None) -> tuple[Adapter, ...]:
         .resolve()
     )
     runtime = _markdown_path(ROOT)
-    canonical = _markdown_path(
-        ROOT / ".agents" / "skills" / "tfl-solver" / "SKILL.md"
-    )
+    canonical = _markdown_path(ROOT / "skills" / "tfl" / "SKILL.md")
 
     claude = f"""---
 name: tfl
