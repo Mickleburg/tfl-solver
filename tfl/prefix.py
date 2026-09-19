@@ -1,4 +1,12 @@
-"""Алфавитные префиксные грамматики: переписывание только начала слова.
+"""Префиксные грамматики: общая модель и алфавитный частный случай.
+
+Текущий курс определяет общую грамматику ``G=(W,R)``, где базис ``W`` —
+множество слов, а правило ``u -> v`` применяется только к началу:
+``uz => vz``. Ей соответствуют :class:`GeneralPrefixGrammar`, конструкция
+по правому графу :func:`dfa_to_prefix_grammar` и точная проверка лексических
+меток :func:`check_labelled_rule`.
+
+Ниже сохранён и более узкий алфавитный вариант прежнего курса.
 
 Определение — лекция 4 курса 2022 года
 (`corpus/txt/FormalLanguageTheory_2022_lect_tfl_4.txt`, слайд 31), дословно:
@@ -15,12 +23,12 @@
 не доберётся, дальше не меняется никогда, а «фронт» переписывания движется
 только вправо.
 
-Зачем это нужно. Префиксная грамматика — второе независимое представление
+Зачем нужен частный случай. Префиксная грамматика — второе представление
 языка на задаче 2 РК1 (+2 балла), и она же стоит в банке «Аптеки» задачами
 на 2 и на 4 балла. Следствие теоремы Турчина из лекции 6 опирается ровно
 на эту конструкцию.
 
-Что здесь механизировано: коллапсирование букв, перевод в линейную
+Для алфавитного варианта механизированы: коллапсирование букв, перевод в линейную
 грамматику по лекции и прямое переписывание для сверки. Перевод и прямое
 переписывание написаны **независимо друг от друга**, и `agrees_with_rewriting`
 их сверяет — это и есть проверка конструкции, а не веры в неё.
@@ -28,15 +36,197 @@
 
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass, field
+from typing import Hashable, Iterable
 
+from tfl.automata import DFA
 from tfl.cfg import CFG, Production
-from tfl.verdict import Verdict, proved, refuted
+from tfl.verdict import Verdict, proved, refuted, unknown
 
 __all__ = [
+    "GeneralPrefixGrammar",
     "PrefixGrammar",
+    "check_labelled_rule",
+    "dfa_to_prefix_grammar",
     "parse_prefix_grammar",
 ]
+
+
+@dataclass(frozen=True)
+class GeneralPrefixGrammar:
+    """Общая префиксная грамматика ``G = (W, R)``.
+
+    В отличие от алфавитного частного случая ниже, обе стороны правила
+    могут быть словами произвольной длины. Правило ``u -> v`` применяется
+    только в начале: ``uz => vz``.
+    """
+
+    bases: frozenset[str]
+    rules: tuple[tuple[str, str], ...]
+    alphabet: frozenset[str] = field(default_factory=frozenset)
+
+    def __post_init__(self) -> None:
+        if not self.alphabet:
+            letters = {letter for word in self.bases for letter in word}
+            for left, right in self.rules:
+                letters.update(left)
+                letters.update(right)
+            object.__setattr__(self, "alphabet", frozenset(letters))
+
+    def step(self, word: str) -> set[str]:
+        """Все результаты одного переписывания префикса."""
+        results = {
+            right + word[len(left) :]
+            for left, right in self.rules
+            if word.startswith(left)
+        }
+        results.discard(word)
+        return results
+
+    def _reachable(
+        self, max_len: int, max_nodes: int
+    ) -> tuple[set[str], bool, bool]:
+        seen = {word for word in self.bases if len(word) <= max_len}
+        queue = deque(sorted(seen))
+        cut_by_length = any(len(word) > max_len for word in self.bases)
+        while queue:
+            word = queue.popleft()
+            for following in sorted(self.step(word)):
+                if len(following) > max_len:
+                    cut_by_length = True
+                    continue
+                if following in seen:
+                    continue
+                if len(seen) >= max_nodes:
+                    return seen, cut_by_length, True
+                seen.add(following)
+                queue.append(following)
+        return seen, cut_by_length, False
+
+    def reachable(self, max_len: int = 12, max_nodes: int = 100_000) -> set[str]:
+        """Слова ``L(G)`` до заданной длины.
+
+        Это ограниченный обход. Для грамматики, построенной функцией
+        :func:`dfa_to_prefix_grammar`, правила не уменьшают длину, поэтому
+        сравнение всех слов до ``max_len`` не теряет коротких выводов.
+        """
+        return self._reachable(max_len, max_nodes)[0]
+
+    def agrees_with_dfa(
+        self, machine: DFA, max_len: int = 8, max_nodes: int = 100_000
+    ) -> Verdict:
+        """Сверить грамматику с ДКА на всех словах до ``max_len``."""
+        from tfl.words import iter_words
+
+        generated, cut_by_length, cut_by_nodes = self._reachable(max_len, max_nodes)
+        contracting = any(len(right) < len(left) for left, right in self.rules)
+        if cut_by_nodes or (cut_by_length and contracting):
+            return unknown(
+                "обход префиксной грамматики обрезан; совпадение на полном "
+                "множестве коротких слов не проверено"
+            )
+        alphabet = "".join(sorted(machine.alphabet))
+        for word in iter_words(alphabet, max_len):
+            if (word in generated) != machine.accepts(word):
+                return refuted(
+                    f"грамматика и ДКА расходятся на слове «{word or 'ε'}»",
+                    word,
+                )
+        return proved(
+            f"грамматика и ДКА совпали на всех словах до длины {max_len}"
+        )
+
+
+def dfa_to_prefix_grammar(machine: DFA) -> GeneralPrefixGrammar:
+    """Построить префиксную грамматику по правому графу ДКА.
+
+    Для каждого достижимого состояния ``q`` выбирается кратчайший
+    представитель ``r_q``. Финальные представители образуют базис. Ребро
+    ``q -a-> p`` обращается в правило ``r_p -> r_q a``. Обе части приводят
+    начальное состояние в ``p``, поэтому правило сохраняет принадлежность
+    языка при любом общем суффиксе.
+    """
+    representatives: dict[Hashable, str] = {machine.start: ""}
+    queue = deque([machine.start])
+    while queue:
+        state = queue.popleft()
+        for letter in sorted(machine.alphabet):
+            following = machine.delta.get((state, letter))
+            if following is None or following in representatives:
+                continue
+            representatives[following] = representatives[state] + letter
+            queue.append(following)
+
+    bases = frozenset(
+        representatives[state]
+        for state in machine.finals
+        if state in representatives
+    )
+    rules: list[tuple[str, str]] = []
+    states = sorted(
+        representatives,
+        key=lambda state: (
+            len(representatives[state]),
+            representatives[state],
+            repr(state),
+        ),
+    )
+    for state in states:
+        for letter in sorted(machine.alphabet):
+            following = machine.delta.get((state, letter))
+            if following not in representatives:
+                continue
+            rule = (
+                representatives[following],
+                representatives[state] + letter,
+            )
+            if rule[0] != rule[1] and rule not in rules:
+                rules.append(rule)
+    return GeneralPrefixGrammar(bases, tuple(rules), machine.alphabet)
+
+
+def check_labelled_rule(
+    machine: DFA,
+    left: str,
+    right: str,
+    source_finals: Iterable[Hashable],
+    target_finals: Iterable[Hashable],
+) -> Verdict:
+    """Проверить правило ``left -> right`` с меткой ``(T1, T2)``.
+
+    Цвета ``source_finals`` и ``target_finals`` задают два лексических
+    домена на одном правом графе. Проверяется точное условие
+    ``left*z in T1 => right*z in T2`` для **всех** суффиксов ``z``.
+    При нарушении возвращается кратчайший суффикс-свидетель.
+    """
+    first_finals = frozenset(source_finals)
+    second_finals = frozenset(target_finals)
+    start = (machine.run(left), machine.run(right))
+    queue = deque([start])
+    suffixes: dict[tuple[Hashable | None, Hashable | None], str] = {start: ""}
+
+    def advance(state: Hashable | None, letter: str) -> Hashable | None:
+        return None if state is None else machine.delta.get((state, letter))
+
+    while queue:
+        first, second = queue.popleft()
+        suffix = suffixes[(first, second)]
+        if first in first_finals and second not in second_finals:
+            return refuted(
+                f"метка неверна: для суффикса «{suffix or 'ε'}» слово "
+                f"«{left + suffix or 'ε'}» лежит в T1, а "
+                f"«{right + suffix or 'ε'}» не лежит в T2",
+                suffix,
+            )
+        for letter in sorted(machine.alphabet):
+            following = (advance(first, letter), advance(second, letter))
+            if following not in suffixes:
+                suffixes[following] = suffix + letter
+                queue.append(following)
+    return proved(
+        "для всех суффиксов z выполнено: left·z ∈ T1 влечёт right·z ∈ T2"
+    )
 
 
 @dataclass(frozen=True)

@@ -9,7 +9,14 @@ from __future__ import annotations
 
 import pytest
 
-from tfl.prefix import PrefixGrammar, parse_prefix_grammar
+from tfl.automata import DFA
+from tfl.prefix import (
+    GeneralPrefixGrammar,
+    PrefixGrammar,
+    check_labelled_rule,
+    dfa_to_prefix_grammar,
+    parse_prefix_grammar,
+)
 
 
 def test_left_side_must_be_a_single_letter():
@@ -81,3 +88,57 @@ def test_empty_word_needs_the_whole_start_to_collapse():
     stuck = parse_prefix_grammar("a -> ε", start="ab")
     assert "" not in stuck.reachable(max_len=4)
     assert stuck.agrees_with_rewriting(max_len=6).value is True
+
+
+# --------------------------------------------------------------------------
+# Общая префиксная грамматика G = (W, R)
+# --------------------------------------------------------------------------
+
+
+def words_ending_in_a() -> DFA:
+    return DFA(
+        alphabet=frozenset("ab"),
+        start=0,
+        finals=frozenset({1}),
+        delta={
+            (0, "a"): 1,
+            (0, "b"): 0,
+            (1, "a"): 1,
+            (1, "b"): 0,
+        },
+    )
+
+
+def test_general_prefix_rewriting_replaces_an_arbitrary_prefix():
+    grammar = GeneralPrefixGrammar(
+        frozenset({"ab"}),
+        (("a", "ba"), ("ab", "")),
+    )
+    assert grammar.step("ab") == {"", "bab"}
+    assert grammar.step("cab") == set()
+
+
+def test_right_cayley_graph_gives_a_prefix_grammar_for_the_dfa_language():
+    machine = words_ending_in_a()
+    grammar = dfa_to_prefix_grammar(machine)
+
+    assert grammar.bases == frozenset({"a"})
+    assert grammar.agrees_with_dfa(machine, max_len=7).value is True
+    for left, right in grammar.rules:
+        assert machine.run(left) == machine.run(right)
+
+
+def test_labelled_lexical_rule_is_decided_by_residual_inclusion():
+    parity = DFA(
+        alphabet=frozenset({"a"}),
+        start=0,
+        finals=frozenset({0}),
+        delta={(0, "a"): 1, (1, "a"): 0},
+    )
+
+    valid = check_labelled_rule(parity, "", "a", {0}, {1})
+    assert valid.value is True
+
+    invalid = check_labelled_rule(parity, "", "a", {0}, {0})
+    assert invalid.value is False
+    assert invalid.witness == ""

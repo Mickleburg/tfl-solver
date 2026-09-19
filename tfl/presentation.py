@@ -98,6 +98,11 @@ class Presentation:
         if outside:
             raise ValueError(f"в соотношениях есть чужие буквы: {''.join(sorted(outside))}")
         if self.kind == SEMIGROUP:
+            if any(not left or not right for left, right in self.relations):
+                raise ValueError(
+                    "в копредставлении полугруппы соотношения задаются "
+                    "непустыми словами из A+; для единицы нужен моноид или группа"
+                )
             wrong = {
                 letter
                 for left, right in self.relations
@@ -242,18 +247,19 @@ class Presentation:
         )
 
     def cayley(self, max_elements: int = 500) -> Verdict:
-        """Граф Кэли: конечен ли моноид, и если да — его таблица (`tfl/cayley.py`).
+        """Граф Кэли и таблица структуры (`tfl/cayley.py`).
 
         Вершины графа — элементы, рёбра — умножение справа, то есть это
         детерминированный автомат. Объявив финальной единицу, получаем
-        распознаватель проблемы равенства.
+        распознаватель проблемы равенства. Для полугруппы сам обход строит
+        присоединённый моноид; `presented_elements` исключает внешнюю единицу.
         """
         from tfl.cayley import cayley_graph
 
         return cayley_graph(self, max_elements)
 
     def is_finite(self) -> Verdict:
-        """Конечен ли моноид копредставления (`tfl/cayley.py`).
+        """Конечна ли структура копредставления (`tfl/cayley.py`).
 
         У пополненной системы вопрос **разрешим**: элементы — это
         неприводимые слова, они образуют регулярный язык, а конечность

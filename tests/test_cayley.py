@@ -96,7 +96,7 @@ def test_an_infinite_group_is_refuted_and_not_left_unknown():
     """
     verdict = cayley_graph(parse_presentation(DIHEDRAL), 60)
     assert verdict.value is False
-    assert "бесконечен" in verdict.reason
+    assert "бесконеч" in verdict.reason
 
 
 def test_finiteness_is_decided_both_ways():
@@ -228,7 +228,10 @@ def test_for_a_semigroup_the_walk_builds_the_monoid_and_says_so():
     assert verdict.value is True
     assert verdict.witness.order == 2
     assert verdict.witness.elements == ("", "a")
-    assert "моноид" in verdict.reason
+    assert verdict.witness.presented_order == 1
+    assert verdict.witness.presented_elements == ("a",)
+    assert "полугруппа" in verdict.reason and "внешнюю единицу" in verdict.reason
+    assert is_finite(presentation).witness == 1
 
 
 def test_the_class_count_identity_is_about_groups_and_not_monoids():

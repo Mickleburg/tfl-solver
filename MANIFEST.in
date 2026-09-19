@@ -1,4 +1,4 @@
-include AGENTS.md LICENSE README.md plugin.json
+include AGENTS.md LICENSE README.md THIRD_PARTY_NOTICES.md plugin.json
 recursive-include .agents *
 recursive-include .claude *
 recursive-include .claude-plugin *
@@ -11,3 +11,4 @@ recursive-include skills *
 recursive-include tools *
 global-exclude __pycache__ *.py[cod]
 prune references
+prune corpus/png

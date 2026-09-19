@@ -59,7 +59,7 @@ from collections import deque
 from dataclasses import dataclass
 
 from tfl.automata import DFA
-from tfl.presentation import GROUP, Presentation
+from tfl.presentation import GROUP, SEMIGROUP, Presentation
 from tfl.srs import SRS
 from tfl.verdict import Verdict, proved, refuted, unknown
 
@@ -212,7 +212,20 @@ class CayleyGraph:
 
     @property
     def order(self) -> int:
+        """Число вершин построенного графа ``A*/≡``."""
         return len(self.elements)
+
+    @property
+    def presented_elements(self) -> tuple[str, ...]:
+        """Элементы исходной структуры, без внешней единицы полугруппы."""
+        if self.presentation.kind == SEMIGROUP:
+            return tuple(element for element in self.elements if element)
+        return self.elements
+
+    @property
+    def presented_order(self) -> int:
+        """Порядок группы либо полугруппы из копредставления."""
+        return len(self.presented_elements)
 
     def multiply(self, left: str, right: str) -> str:
         """Произведение элементов, приведённое к нормальной форме."""
@@ -291,11 +304,12 @@ def irreducible_automaton(system: SRS, alphabet: str) -> DFA:
 
 
 def is_finite(presentation: Presentation) -> Verdict:
-    """Конечен ли моноид копредставления. Два исхода из трёх доказательны.
+    """Конечна ли структура копредставления. Два исхода доказательны.
 
     Ход рассуждения весь про языки. Пополнили систему — у каждого элемента
-    ровно одна нормальная форма, то есть элементы моноида и неприводимые
-    слова это одно и то же. Неприводимые слова образуют **регулярный**
+    ровно одна нормальная форма, то есть элементы и неприводимые слова это
+    одно и то же. Для полугруппы пустое слово из подсчёта исключается.
+    Неприводимые слова образуют **регулярный**
     язык (в нём просто нет подслов-левых частей), а конечность
     регулярного языка разрешима: она равносильна отсутствию цикла
     в обрезанном автомате.
@@ -307,7 +321,7 @@ def is_finite(presentation: Presentation) -> Verdict:
     if completed.value is not True:
         return unknown(
             f"конечность не выяснена: {completed.reason}. Без полной системы "
-            f"неприводимые слова и элементы моноида — разные множества"
+            f"неприводимые слова ещё нельзя отождествить с элементами структуры"
         )
     machine = irreducible_automaton(system, presentation.alphabet)
     reachable = machine.reachable()
@@ -331,17 +345,25 @@ def is_finite(presentation: Presentation) -> Verdict:
 
     loop = visit(machine.start, [])
     if loop is not None:
+        what = "группа" if presentation.kind == GROUP else "полугруппа"
         return refuted(
-            f"моноид бесконечен: неприводимых слов бесконечно много — "
+            f"{what} бесконечна: неприводимых слов бесконечно много — "
             f"в автомате неприводимых слов есть цикл, первый выход на него "
             f"даёт слово «{''.join(loop)}». Значит и язык проблемы равенства "
             f"не регулярен (теорема Анисимова)",
             "".join(loop),
         )
-    counted = _count_words(machine, presentation.alphabet)
+    adjoined_count = _count_words(machine, presentation.alphabet)
+    counted = adjoined_count - 1 if presentation.kind == SEMIGROUP else adjoined_count
+    what = "группа" if presentation.kind == GROUP else "полугруппа"
+    addition = (
+        ""
+        if presentation.kind == GROUP
+        else f"; присоединённый моноид A*/≡ содержит {adjoined_count} элементов"
+    )
     return proved(
-        f"моноид конечен: неприводимых слов ровно {counted}, "
-        f"а после пополнения они и есть элементы",
+        f"{what} конечна: неприводимых слов исходной структуры ровно {counted}, "
+        f"а после пополнения они и есть элементы{addition}",
         counted,
     )
 
@@ -363,13 +385,13 @@ def _count_words(machine: DFA, alphabet: str) -> int:
 
 
 def cayley_graph(presentation: Presentation, max_elements: int = 500) -> Verdict:
-    """Конечен ли моноид копредставления, и если да — его граф Кэли.
+    """Конечна ли структура, и если да — построить её правый граф Кэли.
 
     Три исхода, и два из них доказательны.
 
-    * **Да** — обход закрылся: элементов ровно столько, сколько вершин,
-      и в свидетеле лежит `CayleyGraph` вместе с автоматом проблемы
-      равенства.
+    * **Да** — обход закрылся. Для группы вершин ровно столько, сколько
+      элементов; для полугруппы есть ещё внешняя вершина ``ε``. В свидетеле
+      лежит `CayleyGraph` вместе с автоматом проблемы равенства.
     * **Нет** — обход упёрся в потолок, и тогда вопрос передаётся
       `is_finite`: у пополненной системы конечность **разрешима**,
       и бесконечность доказывается циклом в автомате неприводимых слов.
@@ -411,9 +433,16 @@ def cayley_graph(presentation: Presentation, max_elements: int = 500) -> Verdict
                 order.append(target)
                 queue.append(target)
     graph = CayleyGraph(presentation, system, tuple(order), edges)
-    what = "группа" if presentation.kind == GROUP else "моноид A*/≡"
+    if presentation.kind == GROUP:
+        summary = f"группа конечна: ровно {graph.presented_order} элементов"
+    else:
+        summary = (
+            f"полугруппа конечна: ровно {graph.presented_order} элементов; "
+            f"построенный граф A*/≡ содержит ещё внешнюю единицу и имеет "
+            f"{graph.order} вершин"
+        )
     return proved(
-        f"{what} конечен: ровно {graph.order} элементов. Обход закрылся, "
+        f"{summary}. Обход закрылся, "
         f"а система полна, поэтому у каждого элемента одна нормальная форма "
         f"и вершины графа Кэли — это и есть элементы",
         graph,

@@ -22,8 +22,14 @@ RUNTIME_DIRECTORIES = (
     "skills",
     "tools",
 )
-RUNTIME_FILES = ("AGENTS.md", "LICENSE", "README.md", "plugin.json")
-IGNORED_NAMES = ("__pycache__", "*.pyc", "*.pyo")
+RUNTIME_FILES = (
+    "AGENTS.md",
+    "LICENSE",
+    "README.md",
+    "THIRD_PARTY_NOTICES.md",
+    "plugin.json",
+)
+IGNORED_NAMES = ("__pycache__", "*.pyc", "*.pyo", "*.png")
 
 
 def _ignore(_directory: str, names: list[str]) -> set[str]:

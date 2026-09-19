@@ -64,6 +64,11 @@ def test_a_semigroup_gets_no_free_reduction_rules():
     assert len(parse_presentation("группа: a, b\nab = ba").free_rules()) == 4
 
 
+def test_a_semigroup_presentation_cannot_use_the_empty_word():
+    with pytest.raises(ValueError, match="непустыми словами"):
+        parse_presentation("полугруппа: a\naa = 1", SEMIGROUP)
+
+
 # --------------------------------------------------------------------------
 # Ориентация и пополнение
 # --------------------------------------------------------------------------

@@ -17,6 +17,10 @@ references/*
 #   python tools/extract_corpus.py --render FILE.pdf 1 5
 corpus/png/
 
+# Подробные рабочие разборы новых семинарских условий. В Git попадают только
+# обезличенные общие методы, документация и регрессии.
+/local/
+
 __pycache__/
 *.py[cod]
 .pytest_cache/
