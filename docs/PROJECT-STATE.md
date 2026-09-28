@@ -137,7 +137,7 @@ Pharma в текущем курсе отсутствует.
 
 | Проверка | Результат |
 |---|---|
-| Unit/integration tests | 1548 passed, 1 skipped |
+| Unit/integration tests | 1549 passed, 1 skipped |
 | Codex plugin | manifest valid, local marketplace parsed |
 | Claude Code plugin | plugin + marketplace strict validation passed |
 | OpenCode adapter | JSONL/parser/read-only profile tested; CLI 1.18.32 found in WSL |
@@ -151,7 +151,7 @@ Pharma в текущем курсе отсутствует.
 | Codex holdout v1 | 7/7 PASS, 67/70 (среднее 9.57/10) |
 | Codex pedagogy holdout v1 | historical: 8/8 PASS, 104/104 on rubric revision 4 |
 | Pedagogy holdout v2 | baseline pending; rubric checks reproducible discovery path |
-| OpenCode Qwen smoke | FAIL: correct final answer, false intermediate clue, 20/8 tool calls |
+| OpenCode Qwen smoke | FAIL: correct general conclusion; false/contradictory steps, schema error, 16–20/8 tool calls |
 | Claude holdout smoke | BLOCKED: `oauth_org_not_allowed` |
 
 Базовые команды для повторения среза:
@@ -205,9 +205,11 @@ baseline.
 
 Первый реальный OpenCode smoke на `pt/positive-llm-qwen36` сохранён отдельным
 отчётом. Он подтвердил работоспособность WSL-runner и структурированного ответа,
-но не прошёл revision 6: правильный финальный вывод соседствовал с ложным
-утверждением о суффиксе кодового слова, а маршрут занял 20 вызовов при бюджете
-8. Это содержательная регрессия пути к решению, а не успешный baseline.
+но не прошёл revision 6. В первой попытке правильный финальный вывод
+соседствовал с ложным утверждением о суффиксе кодового слова, а маршрут занял
+20 вызовов при бюджете 8. Повтор исправил эту зацепку, но нарушил JSON Schema,
+оставил противоречия в объяснении и использовал 16 вызовов. Это содержательная
+регрессия пути к решению, а не успешный baseline.
 
 Claude adapter проверен вплоть до реального запуска CLI 2.1.205, разбора
 event-stream и API-запроса. Организация отклоняет модель до первого tool call

@@ -187,6 +187,17 @@ def test_budget_is_reported_separately_from_content_quality():
     assert not score.passed
 
 
+def test_schema_violation_is_not_a_content_pass():
+    case = load_cases()[0]
+    response = good_response(case)
+    response["final_answer"] = [response["final_answer"]]
+    score = score_response(case, response, ["py -3 check.py"])
+    assert not score.valid_response
+    assert not score.content_passed
+    assert score.components["ответ"] == 0
+    assert any("final_answer" in issue for issue in score.issues)
+
+
 def test_cli_lists_and_prints_pedagogy_prompt(capsys):
     assert main(["pedagogy", "list"]) == 0
     assert "training-unbounded-delay" in capsys.readouterr().out

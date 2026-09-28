@@ -89,6 +89,7 @@ class PedagogyScore:
     components: dict[str, int]
     issues: tuple[str, ...]
     runner: str = "unknown"
+    valid_response: bool = True
 
     @property
     def total(self) -> int:
@@ -98,7 +99,8 @@ class PedagogyScore:
     def content_passed(self) -> bool:
         """Прошла ли содержательная часть независимо от стоимости маршрута."""
         hard = (
-            self.components.get("режим", 0) == 1
+            self.valid_response
+            and self.components.get("режим", 0) == 1
             and self.components.get("класс", 0) == 1
             and self.components.get("аналог", 0) == 2
             and self.components.get("путь к решению", 0) == 1
@@ -286,11 +288,14 @@ def score_response(
         "ответ": 0,
         "границы": 0,
     }
-    issues = list(validate_response(response))
+    validation_issues = validate_response(response)
+    issues = list(validation_issues)
     if runner_error:
         issues.append(f"ошибка runner: {runner_error}")
     if not isinstance(response, dict):
-        return PedagogyScore(case.id, components, tuple(issues), runner)
+        return PedagogyScore(
+            case.id, components, tuple(issues), runner, valid_response=False
+        )
 
     if response.get("case_id") != case.id:
         issues.append(f"case_id: ожидался {case.id!r}")
@@ -368,7 +373,8 @@ def score_response(
     if command_budget is not None and len(observed_commands) > command_budget:
         issues.append(f"превышен бюджет команд: {len(observed_commands)} > {command_budget}")
 
-    answer = str(response.get("final_answer", ""))
+    answer_value = response.get("final_answer", "")
+    answer = answer_value if isinstance(answer_value, str) else ""
     matched_answer = sum(_matches(pattern, answer) for pattern in case.answer_patterns)
     if len(answer.strip()) >= 100 and matched_answer == len(case.answer_patterns):
         components["ответ"] = 2
@@ -392,7 +398,13 @@ def score_response(
     if not limitations:
         issues.append("не указана граница машинной проверки")
 
-    return PedagogyScore(case.id, components, tuple(issues), runner)
+    return PedagogyScore(
+        case.id,
+        components,
+        tuple(issues),
+        runner,
+        valid_response=not validation_issues,
+    )
 
 
 def run_cases(
