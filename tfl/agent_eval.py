@@ -518,6 +518,10 @@ def parse_opencode_stream(
                     )
             elif state.get("status") == "error":
                 message = str(state.get("error", "ошибка tool")).strip()
+                inputs = state.get("input") if isinstance(state.get("input"), dict) else {}
+                failed_command = inputs.get("command")
+                if isinstance(failed_command, str) and failed_command.strip():
+                    message = f"{message}; отклонённая команда: {failed_command[:500]}"
                 if message:
                     errors.append(message)
         if event_type == "text" and part.get("type") == "text":

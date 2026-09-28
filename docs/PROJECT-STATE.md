@@ -136,7 +136,7 @@ Pharma в текущем курсе отсутствует.
 
 | Проверка | Результат |
 |---|---|
-| Unit/integration tests | 1545 passed, 1 skipped |
+| Unit/integration tests | 1546 passed, 1 skipped |
 | Codex plugin | manifest valid, local marketplace parsed |
 | Claude Code plugin | plugin + marketplace strict validation passed |
 | OpenCode adapter | JSONL/parser/read-only profile tested; CLI 1.18.32 found in WSL |

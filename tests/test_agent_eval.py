@@ -369,6 +369,29 @@ def test_opencode_jsonl_stream_keeps_tools_text_and_usage(cases):
     assert not error
 
 
+def test_opencode_stream_reports_failed_command():
+    body = json.dumps(
+        {
+            "type": "tool_use",
+            "part": {
+                "type": "tool",
+                "tool": "bash",
+                "state": {
+                    "status": "error",
+                    "input": {"command": "cat secret.txt"},
+                    "error": "permission denied",
+                },
+            },
+        }
+    )
+    response, commands, usage, error = parse_opencode_stream(body)
+    assert response is None
+    assert not commands
+    assert not usage
+    assert "permission denied" in error
+    assert "отклонённая команда: cat secret.txt" in error
+
+
 def test_opencode_runner_uses_read_only_agent_and_inline_schema(monkeypatch, cases):
     response = good_response(cases[0])
     body = json.dumps(
