@@ -395,19 +395,41 @@ class TaskIndex:
         limit: int = 5,
         form: str | None = None,
         exclude: str | None = None,
+        *,
+        query_coverage_weight: float = 0.0,
+        routes: set[str] | None = None,
     ) -> list[tuple[float, dict]]:
-        """Похожие условия, от самого близкого. `exclude` — id, который пропустить."""
-        query = self._vector(tokenize(text))
+        """Похожие условия, от самого близкого.
+
+        Для короткого условия и подробной семинарской карточки чистый косинус
+        занижает близость: полезные слова карточки увеличивают её норму. Поэтому
+        семинарский поиск может примешать долю покрытия слов самого запроса.
+        ``routes`` отсекает карточки другого предметного маршрута до ранжирования.
+        """
+        if not 0.0 <= query_coverage_weight <= 1.0:
+            raise ValueError("query_coverage_weight должен быть от 0 до 1")
+        query_tokens = tokenize(text)
+        query = self._vector(query_tokens)
+        query_terms = set(query_tokens)
         scored: list[tuple[float, dict]] = []
         for vector, record in zip(self._vectors, self.records):
             if form and record["form"] != form:
                 continue
             if exclude and record["id"] == exclude:
                 continue
+            record_routes = set(map(str, record.get("routes", ())))
+            if routes is not None and not routes.intersection(record_routes):
+                continue
             shared = set(query) & set(vector)
             if not shared:
                 continue
-            scored.append((sum(query[t] * vector[t] for t in shared), record))
+            cosine = sum(query[t] * vector[t] for t in shared)
+            coverage = len(query_terms & set(vector)) / max(len(query_terms), 1)
+            score = (
+                (1.0 - query_coverage_weight) * cosine
+                + query_coverage_weight * coverage
+            )
+            scored.append((score, record))
         scored.sort(key=lambda pair: -pair[0])
         return scored[:limit]
 
@@ -461,6 +483,7 @@ def load_seminar_index(path: pathlib.Path | None = None) -> TaskIndex:
         "id",
         "date",
         "status",
+        "routes",
         "text",
         "method",
         "micro_methods",
@@ -484,7 +507,13 @@ def load_seminar_index(path: pathlib.Path | None = None) -> TaskIndex:
             raise ValueError(f"{source}:{number}: неверная дата {record['date']}")
         if record["status"] not in {"raw", "partial", "verified"}:
             raise ValueError(f"{source}:{number}: неверный статус {record['status']}")
-        for name in ("micro_methods", "discovery_path", "signals", "prerequisites"):
+        for name in (
+            "routes",
+            "micro_methods",
+            "discovery_path",
+            "signals",
+            "prerequisites",
+        ):
             if not isinstance(record[name], list):
                 raise ValueError(f"{source}:{number}: {name} должен быть списком")
     verified = [record for record in records if record["status"] == "verified"]
@@ -593,6 +622,55 @@ class Analysis:
             lines.append("")
         return "\n".join(lines)
 
+    def solver_briefing(self) -> str:
+        """Короткий проверяемый стартовый пакет для решающей модели.
+
+        Он содержит результат детерминированного intake, а не готовое решение:
+        аналог ещё нужно сопоставить с новым условием и проверить оракулом.
+        Формат намеренно линейный, чтобы небольшая модель не тратила контекст
+        на обход репозитория и сбор тех же сведений из нескольких файлов.
+        """
+        lines = ["## Стартовый пакет решателя"]
+        lines.append(f"Режим: {self.mode}")
+        lines.append(
+            "Что спрашивают: "
+            + (", ".join(e.name for e in self.asks) or "не опознано")
+        )
+        if self.candidates:
+            candidates = ", ".join(str(candidate) for candidate in self.candidates[:3])
+            confidence = "уверенный лидер" if self.confident else "требуется ручная сверка"
+            lines.append(f"Кандидаты класса: {candidates} ({confidence}).")
+        else:
+            lines.append("Кандидаты класса: не найдены; классифицировать вручную.")
+        if self.micro_methods:
+            lines.append("Малые действия до основного метода:")
+            lines.extend(f"- {method}" for method in self.micro_methods)
+
+        if not self.seminar_similar:
+            lines.append("Проверенного семинарного аналога не найдено.")
+            lines.append(
+                "Не подбирай аналог по общим словам; выбери метод по структуре условия."
+            )
+            return "\n".join(lines)
+
+        score, record = self.seminar_similar[0]
+        lines.append("Проверенный семинарный аналог-кандидат:")
+        lines.append(f"- id: {record['id']} (оценка поиска {score:.2f})")
+        lines.append(f"- признаки карточки: {'; '.join(record['signals'])}")
+        lines.append(f"- предпосылки переноса: {'; '.join(record['prerequisites'])}")
+        lines.append(f"- основной метод: {record['method']}")
+        lines.append("- путь открытия:")
+        lines.extend(
+            f"  {number}. {step}"
+            for number, step in enumerate(record["discovery_path"], 1)
+        )
+        lines.append("- проверка: " + str(record["verification"]))
+        lines.append(
+            "Карточка задаёт гипотезу маршрута, а не доказывает новую задачу: "
+            "сверь предпосылки и выполни указанную проверку."
+        )
+        return "\n".join(lines)
+
 
 def analyse(
     text: str,
@@ -606,6 +684,9 @@ def analyse(
     """Полный приём задачи: признаки, вопросы, кандидаты, похожие условия."""
     if mode not in {"training", "full"}:
         raise ValueError("mode должен быть 'training' или 'full'")
+    features = tuple(find_features(text))
+    asks = tuple(find_asks(text))
+    candidates = tuple(classify(text, hint))
     similar: tuple[tuple[float, dict], ...] = ()
     if index is not None:
         similar = tuple(index.similar(text, limit=limit))
@@ -613,17 +694,20 @@ def analyse(
     if seminar_index is not None:
         seminar_similar = tuple(
             hit
-            for hit in seminar_index.similar(text, limit=min(limit, 3))
-            if hit[0] >= 0.15
+            for hit in seminar_index.similar(
+                text,
+                limit=min(limit, 3),
+                query_coverage_weight=0.5,
+                routes={candidate.code for candidate in candidates} or None,
+            )
+            if hit[0] >= 0.08
         )
-    features = tuple(find_features(text))
-    asks = tuple(find_asks(text))
     return Analysis(
         text=text,
         hint=hint,
         features=features,
         asks=asks,
-        candidates=tuple(classify(text, hint)),
+        candidates=candidates,
         similar=similar,
         hints=tuple(match_hints(text)),
         mode=mode,

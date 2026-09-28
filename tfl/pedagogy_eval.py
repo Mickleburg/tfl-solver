@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from typing import Any, Sequence
 
 from tfl import agent_eval
+from tfl.intake import analyse, load_seminar_index
 from tfl.paths import ROOT
 
 
@@ -171,8 +172,14 @@ def choose_cases(
 
 
 def build_prompt(case: PedagogyCase) -> str:
-    return f"""Используй $tfl-solver (в Claude Code — /tfl) и реши учебную задачу
-в режиме {case.mode}. Не раскрывай скрытую цепочку рассуждений: нужен короткий
+    briefing = analyse(
+        case.statement,
+        case.hint,
+        mode=case.mode,
+        seminar_index=load_seminar_index(),
+    ).solver_briefing()
+    return f"""Реши учебную задачу по контракту tfl-solver в режиме {case.mode}.
+Не раскрывай скрытую цепочку рассуждений: нужен короткий
 воспроизводимый учебный путь из наблюдаемых действий и результатов.
 
 Это изолированный eval. Не читай evals/pedagogy_holdout/cases.jsonl,
@@ -191,14 +198,15 @@ manifest.json и прошлые отчёты: там закрытая рубри
 В micro_methods перечисли действия до основной теоремы. Выполни предметный
 Python-оракул и честно запиши границы результата.
 
-Бюджет — не более {COMMAND_BUDGET} вызовов инструментов суммарно, включая
-skill/read/glob/bash: один вызов skill, одна семинарская карточка, один рецепт,
-один intake, один основной оракул и при необходимости короткая независимая
-проверка. Не читай skill повторно и не исследуй исходники или синтаксис API,
-если команда уже дана в промпте или рецепте. Синтаксис intake уже известен:
-`py -3 -m tfl intake --mode {case.mode} --hint "{case.hint}" --text "<условие>"`.
-Не трать команды на чтение `tfl/cli.py` ради синтаксиса. В Linux замени только
-`py -3` на `python3`. Верни только объект по JSON Schema.
+Ниже уже дан детерминированный стартовый пакет: не вызывай skill, intake,
+read или glob, чтобы заново собрать те же сведения. Карточка в пакете — лишь
+кандидат на перенос: явно сверь её предпосылки с условием. Выполни приведённую
+команду оракула; если команды нет, разрешён один точечный Python-вызов.
+Бюджет — не более {COMMAND_BUDGET} вызовов инструментов суммарно. Не исследуй
+исходники или синтаксис API. В Linux используй `python3`, в Windows — `py -3`.
+Верни только объект по JSON Schema.
+
+{briefing}
 
 case_id: {case.id}
 Режим: {case.mode}

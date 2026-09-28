@@ -69,7 +69,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 6
+    assert manifest["rubric_revision"] == 7
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -83,17 +83,18 @@ def test_all_named_seminar_analogs_exist():
     )
 
 
-def test_prompt_exposes_mode_and_task_but_hides_rubric():
+def test_prompt_exposes_precomputed_intake_but_hides_rubric_files():
     for case in load_cases():
         prompt = build_prompt(case)
         assert case.statement in prompt
         assert f"Режим: {case.mode}" in prompt
-        assert f"--mode {case.mode}" in prompt
-        assert f'--hint "{case.hint}"' in prompt
-        assert "Не трать команды на чтение `tfl/cli.py`" in prompt
+        assert "Стартовый пакет решателя" in prompt
+        assert "не вызывай skill, intake" in prompt
         assert "не привязывайся к фразе «заметим, что»" in prompt
         if case.seminar_analog:
-            assert case.seminar_analog not in prompt
+            assert case.seminar_analog in prompt
+        else:
+            assert "Проверенного семинарного аналога не найдено" in prompt
         assert "Не читай evals/pedagogy_holdout" in prompt
 
 

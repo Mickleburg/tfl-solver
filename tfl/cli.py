@@ -52,16 +52,15 @@ def _intake(arguments: argparse.Namespace) -> int:
     except (OSError, ValueError) as error:
         print(f"ошибка входа: {error}", file=sys.stderr)
         return 2
-    print(
-        analyse(
-            text,
-            arguments.hint,
-            load_index(),
-            arguments.limit,
-            mode=arguments.mode,
-            seminar_index=load_seminar_index(),
-        ).report()
+    analysis = analyse(
+        text,
+        arguments.hint,
+        load_index(),
+        arguments.limit,
+        mode=arguments.mode,
+        seminar_index=load_seminar_index(),
     )
+    print(analysis.solver_briefing() if arguments.brief else analysis.report())
     return 0
 
 
@@ -501,6 +500,11 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("training", "full"),
         default="training",
         help="педагогический или полный маршрут решения",
+    )
+    intake.add_argument(
+        "--brief",
+        action="store_true",
+        help="выдать компактный стартовый пакет для решающей модели",
     )
     intake.set_defaults(handler=_intake)
 

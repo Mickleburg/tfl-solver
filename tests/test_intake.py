@@ -271,9 +271,36 @@ def test_training_analysis_prioritizes_a_verified_seminar(index):
     assert "префиксность не годится" in report
 
 
+def test_short_concrete_statement_still_finds_the_delay_seminar():
+    result = analyse(
+        "Дан морфизм h: {x,y,z}* -> {0,1}*: h(x)=0, h(y)=01, h(z)=11. "
+        "Докажите, что он инъективен, и выясните, ограничена ли задержка "
+        "раскодирования.",
+        "семинар",
+        seminar_index=load_seminar_index(),
+    )
+    assert result.seminar_similar
+    assert result.seminar_similar[0][1]["id"] == "sem-2026-09-05-unbounded-delay"
+    briefing = result.solver_briefing()
+    assert "алгоритмом Сардинаса–Паттерсона" in briefing
+    assert "python3 -c" in briefing
+
+
+def test_route_filter_does_not_force_a_seminar_analog():
+    result = analyse(
+        "Является ли регулярным язык L={a^n b^m c^k | n,m,k>=0 ∧ "
+        "(m!=n ∨ k mod 2 != n mod 2 ∨ k mod 2 = m mod 2)}.",
+        "РК1",
+        seminar_index=load_seminar_index(),
+    )
+    assert not result.seminar_similar
+    assert "Проверенного семинарного аналога не найдено" in result.solver_briefing()
+
+
 def test_verified_seminars_store_reproducible_discovery_paths():
     records = load_seminar_index().records
     assert records
+    assert all(record["routes"] for record in records)
     assert all(len(record["discovery_path"]) >= 2 for record in records)
     assert all("→" in step for record in records for step in record["discovery_path"])
 

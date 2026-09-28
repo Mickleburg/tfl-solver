@@ -43,6 +43,18 @@ def test_intake_rejects_empty_input(capsys):
     assert "пустой текст задачи" in capsys.readouterr().err
 
 
+def test_intake_brief_returns_one_verified_route(capsys):
+    task = (
+        "Дан морфизм h: {x,y,z}* -> {0,1}*: h(x)=0, h(y)=01, h(z)=11. "
+        "Докажите инъективность и исследуйте задержку раскодирования."
+    )
+    assert main(["intake", "--text", task, "--hint", "семинар", "--brief"]) == 0
+    output = capsys.readouterr().out
+    assert "Стартовый пакет решателя" in output
+    assert "sem-2026-09-05-unbounded-delay" in output
+    assert "Похожие условия из корпуса" not in output
+
+
 def test_srs_critical_pairs_regression_has_stable_ascii_output(capsys):
     assert main(
         [
