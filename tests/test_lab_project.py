@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import hashlib
-
 from tfl.lab_project import PLACEHOLDER, audit_lab_project, create_lab_scaffold
 
 
@@ -16,10 +14,6 @@ def test_scaffold_is_self_contained_and_never_overwrites(tmp_path):
         "report.md",
     }
     assert "Построить ДКА." in (root / "task.md").read_text(encoding="utf-8")
-    task = (root / "task.md").read_bytes()
-    assert hashlib.sha256(task).hexdigest() in (root / "report.md").read_text(
-        encoding="utf-8"
-    )
     assert not list(root.glob("requirements*.txt"))
     audit = audit_lab_project(root, run_tests=False)
     assert not audit.passed

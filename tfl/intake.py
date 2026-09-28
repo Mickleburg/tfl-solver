@@ -435,7 +435,7 @@ def _search_text(record: dict) -> str:
     аналога, но не должны искусственно дописываться к формулировке задачи.
     """
     parts = [str(record.get("text", "")), str(record.get("method", ""))]
-    for name in ("signals", "micro_methods", "prerequisites"):
+    for name in ("signals", "micro_methods", "discovery_path", "prerequisites"):
         value = record.get(name, ())
         if isinstance(value, list):
             parts.extend(str(item) for item in value)
@@ -464,6 +464,7 @@ def load_seminar_index(path: pathlib.Path | None = None) -> TaskIndex:
         "text",
         "method",
         "micro_methods",
+        "discovery_path",
         "signals",
         "prerequisites",
         "verification",
@@ -483,7 +484,7 @@ def load_seminar_index(path: pathlib.Path | None = None) -> TaskIndex:
             raise ValueError(f"{source}:{number}: неверная дата {record['date']}")
         if record["status"] not in {"raw", "partial", "verified"}:
             raise ValueError(f"{source}:{number}: неверный статус {record['status']}")
-        for name in ("micro_methods", "signals", "prerequisites"):
+        for name in ("micro_methods", "discovery_path", "signals", "prerequisites"):
             if not isinstance(record[name], list):
                 raise ValueError(f"{source}:{number}: {name} должен быть списком")
     verified = [record for record in records if record["status"] == "verified"]
@@ -576,9 +577,11 @@ class Analysis:
             for score, record in self.seminar_similar:
                 head = record["text"].replace("\n", " ")[:90]
                 methods = ", ".join(record.get("micro_methods", ())[:3])
+                path = " → ".join(record.get("discovery_path", ())[:3])
                 lines.append(
                     f"* `{record['id']}` ({score:.2f}, {record['date']}) — "
-                    f"{head}… Метод: {record['method']}. Малые приёмы: {methods}."
+                    f"{head}… Метод: {record['method']}. Малые приёмы: {methods}. "
+                    f"Путь открытия: {path}."
                 )
             lines.append("")
         if self.similar:

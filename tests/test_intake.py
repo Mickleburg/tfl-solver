@@ -265,7 +265,17 @@ def test_training_analysis_prioritizes_a_verified_seminar(index):
     assert result.mode == "training"
     assert result.seminar_similar
     assert result.seminar_similar[0][1]["id"] == "sem-2026-09-05-unbounded-delay"
-    assert "Сначала проверить аналоги" in result.report()
+    report = result.report()
+    assert "Сначала проверить аналоги" in report
+    assert "Путь открытия" in report
+    assert "префиксность не годится" in report
+
+
+def test_verified_seminars_store_reproducible_discovery_paths():
+    records = load_seminar_index().records
+    assert records
+    assert all(len(record["discovery_path"]) >= 2 for record in records)
+    assert all("→" in step for record in records for step in record["discovery_path"])
 
 
 def test_full_mode_is_reported(index):

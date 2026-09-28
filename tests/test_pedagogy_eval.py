@@ -1,4 +1,4 @@
-"""Педагогический holdout: режим, аналог, признаки и малые приёмы."""
+"""Педагогический holdout: режим, аналог и воспроизводимый путь решения."""
 
 from __future__ import annotations
 
@@ -23,14 +23,18 @@ def good_response(case):
         "mode": "training",
         "task_class": "CODE",
         "seminar_analog": "sem-2026-09-05-unbounded-delay",
-        "observations": [
+        "discovery_path": [
             {
-                "text": "Это морфизм, полностью заданный образами букв.",
-                "evidence": "В условии явно записаны h(x), h(y), h(z).",
+                "clue": "Морфизм полностью задан словами 0, 01 и 11.",
+                "action": "Сравнить кодовые слова на префиксность.",
+                "result": "Слово 0 является префиксом 01, поэтому мгновенного декодирования нет.",
+                "next_step": "Проверить более слабое свойство однозначной декодируемости.",
             },
             {
-                "text": "Задержка определяется длиной общего префикса образов.",
-                "evidence": "Нужно различить первую букву прообраза x или y.",
+                "clue": "Нужно различить прообразы, начинающиеся с x и y.",
+                "action": "Продолжить их образами z и поискать растущий общий префикс.",
+                "result": "Пары xz^k и yz^(k-1) дают префиксы из всё более длинных серий единиц.",
+                "next_step": "Записать длину общего префикса формулой для произвольного k.",
             },
         ],
         "micro_methods": [
@@ -64,8 +68,8 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     cases = load_cases()
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
-    assert manifest["version"] == 1
-    assert manifest["rubric_revision"] == 4
+    assert manifest["version"] == 2
+    assert manifest["rubric_revision"] == 5
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -87,6 +91,7 @@ def test_prompt_exposes_mode_and_task_but_hides_rubric():
         assert f"--mode {case.mode}" in prompt
         assert f'--hint "{case.hint}"' in prompt
         assert "Не трать команды на чтение `tfl/cli.py`" in prompt
+        assert "не привязывайся к фразе «заметим, что»" in prompt
         if case.seminar_analog:
             assert case.seminar_analog not in prompt
         assert "Не читай evals/pedagogy_holdout" in prompt
@@ -143,6 +148,23 @@ def test_missing_micro_methods_is_a_hard_failure():
     score = score_response(case, response, ["py -3 check.py"])
     assert score.components["малые приёмы"] == 0
     assert not score.passed
+
+
+def test_list_of_ready_observations_does_not_replace_discovery_path():
+    case = load_cases()[0]
+    response = good_response(case)
+    response["discovery_path"] = [
+        {
+            "clue": "Морфизм задан образами букв.",
+            "action": "Сразу назвать теорему.",
+            "result": "Ответ уже известен.",
+            "next_step": "Применить готовый метод.",
+        }
+    ]
+    score = score_response(case, response, ["py -3 check.py"])
+    assert score.components["путь к решению"] == 0
+    assert not score.passed
+    assert any("хотя бы два" in issue for issue in score.issues)
 
 
 def test_cli_lists_and_prints_pedagogy_prompt(capsys):

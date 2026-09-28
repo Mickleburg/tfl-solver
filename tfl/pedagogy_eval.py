@@ -1,9 +1,10 @@
 """Педагогический holdout режимов training/full.
 
 Исторический ``agent_holdout`` измеряет полный предметный маршрут. Этот набор
-сосредоточен на промежутке до основной теоремы: заметить буквальные признаки,
-выбрать знакомый аналог, назвать малые приёмы и не заменить понятное решение
-необязательным тяжёлым аппаратом.
+сосредоточен на промежутке до основной теоремы: построить воспроизводимый путь
+от зацепки в условии через малое действие и его результат к следующему шагу,
+выбрать знакомый аналог и не заменить понятное решение необязательным тяжёлым
+аппаратом.
 """
 
 from __future__ import annotations
@@ -99,7 +100,7 @@ class PedagogyScore:
             self.components.get("режим", 0) == 1
             and self.components.get("класс", 0) == 1
             and self.components.get("аналог", 0) == 2
-            and self.components.get("наблюдения", 0) == 1
+            and self.components.get("путь к решению", 0) == 1
             and self.components.get("малые приёмы", 0) == 2
             and self.components.get("метод", 0) == 1
             and self.components.get("выбор оракула", 0) == 1
@@ -161,8 +162,8 @@ def choose_cases(
 
 def build_prompt(case: PedagogyCase) -> str:
     return f"""Используй $tfl-solver (в Claude Code — /tfl) и реши учебную задачу
-в режиме {case.mode}. Не раскрывай скрытую цепочку рассуждений: нужны только
-понятные пользователю наблюдения, буквальные признаки и проверяемые шаги.
+в режиме {case.mode}. Не раскрывай скрытую цепочку рассуждений: нужен короткий
+воспроизводимый учебный путь из наблюдаемых действий и результатов.
 
 Это изолированный eval. Не читай evals/pedagogy_holdout/cases.jsonl,
 manifest.json и прошлые отчёты: там закрытая рубрика. Разрешено читать skill,
@@ -171,9 +172,12 @@ manifest.json и прошлые отчёты: там закрытая рубри
 В training сначала проверь уже пройденные семинары. Переноси только шаги с
 подтверждёнными предпосылками; если подходящего аналога нет, seminar_analog
 оставь пустой строкой. В full также проверь аналоги, но рассмотри необходимые
-альтернативные формализации. В observations для каждого «заметим, что» укажи
-буквальный признак условия. В micro_methods перечисли действия до основной
-теоремы. Выполни предметный Python-оракул и честно запиши границы результата.
+альтернативные формализации. В discovery_path покажи два–пять связанных
+учебных шагов: конкретная зацепка в условии, небольшое действие, его результат
+и следующий выбор, который из результата следует. Не подменяй этот путь
+перечнем готовых наблюдений и не привязывайся к фразе «заметим, что».
+В micro_methods перечисли действия до основной теоремы. Выполни предметный
+Python-оракул и честно запиши границы результата.
 
 Бюджет — не более {COMMAND_BUDGET} команд: один intake, один рецепт, один
 основной оракул и короткая независимая проверка. Синтаксис intake уже известен:
@@ -220,7 +224,7 @@ def validate_response(response: Any) -> tuple[str, ...]:
         if not isinstance(response.get(field), str):
             issues.append(f"поле {field} должно быть строкой")
     for field in (
-        "observations",
+        "discovery_path",
         "micro_methods",
         "prerequisites_used",
         "oracle_calls",
@@ -228,14 +232,16 @@ def validate_response(response: Any) -> tuple[str, ...]:
     ):
         if not isinstance(response.get(field), list):
             issues.append(f"поле {field} должно быть массивом")
-    for number, observation in enumerate(response.get("observations", ()), 1):
-        if not isinstance(observation, dict):
-            issues.append(f"observations[{number}] не объект")
+    discovery_path = response.get("discovery_path", ())
+    for number, step in enumerate(discovery_path, 1):
+        if not isinstance(step, dict):
+            issues.append(f"discovery_path[{number}] не объект")
             continue
-        if not str(observation.get("text", "")).strip() or not str(
-            observation.get("evidence", "")
-        ).strip():
-            issues.append(f"observations[{number}] не содержит текст и признак")
+        for field in ("clue", "action", "result", "next_step"):
+            if not str(step.get(field, "")).strip():
+                issues.append(f"discovery_path[{number}].{field} пусто")
+    if isinstance(discovery_path, list) and len(discovery_path) < 2:
+        issues.append("путь к решению должен содержать хотя бы два связанных шага")
     for number, call in enumerate(response.get("oracle_calls", ()), 1):
         if not isinstance(call, dict):
             issues.append(f"oracle_calls[{number}] не объект")
@@ -259,7 +265,7 @@ def score_response(
         "режим": 0,
         "класс": 0,
         "аналог": 0,
-        "наблюдения": 0,
+        "путь к решению": 0,
         "малые приёмы": 0,
         "метод": 0,
         "выбор оракула": 0,
@@ -289,19 +295,28 @@ def score_response(
         expected = case.seminar_analog or "пустая строка"
         issues.append(f"семинарский аналог: ожидался {expected}")
 
-    observations = response.get("observations", [])
-    observation_text = "\n".join(
-        f"{item.get('text', '')} {item.get('evidence', '')}"
-        for item in observations
+    discovery_path = response.get("discovery_path", [])
+    discovery_text = "\n".join(
+        " ".join(str(item.get(field, "")) for field in ("clue", "action", "result", "next_step"))
+        for item in discovery_path
         if isinstance(item, dict)
     )
     missed_signals = [
-        pattern for pattern in case.signal_patterns if not _matches(pattern, observation_text)
+        pattern for pattern in case.signal_patterns if not _matches(pattern, discovery_text)
     ]
-    if observation_text.strip() and not missed_signals:
-        components["наблюдения"] = 1
+    complete_steps = [
+        item
+        for item in discovery_path
+        if isinstance(item, dict)
+        and all(str(item.get(field, "")).strip() for field in ("clue", "action", "result", "next_step"))
+    ]
+    if len(complete_steps) >= 2 and not missed_signals:
+        components["путь к решению"] = 1
     else:
-        issues.append("не объяснены признаки: " + ", ".join(missed_signals))
+        if missed_signals:
+            issues.append("путь не объясняет признаки: " + ", ".join(missed_signals))
+        if len(complete_steps) < 2:
+            issues.append("нет двух полных связанных шагов пути к решению")
 
     micro_text = "\n".join(map(str, response.get("micro_methods", ())))
     matched_micro = sum(_matches(pattern, micro_text) for pattern in case.micro_method_patterns)

@@ -134,11 +134,13 @@ JSON Schema. Полный набор вызывается только явны�
 [Codex](https://developers.openai.com/codex/noninteractive) и
 [Claude Code](https://code.claude.com/docs/en/headless).
 
-Отдельный замороженный набор проверяет педагогический маршрут: правильный
-режим, семинарский аналог, буквальные признаки, малые приёмы и наблюдаемый
-запуск оракула. Он запускается теми же backend'ами через `tfl pedagogy run`,
-а закрытая рубрика оценивается командой `tfl pedagogy score`. Проверенный
-Codex baseline находится в `reports/pedagogy/codex-baseline-2026-09-28.md`.
+Отдельный набор проверяет педагогический маршрут: правильный режим,
+семинарский аналог, связный путь от зацепки через малое действие к следующему
+выбору, малые приёмы и наблюдаемый запуск оракула. Он запускается теми же
+backend'ами через `tfl pedagogy run`, а закрытая рубрика оценивается командой
+`tfl pedagogy score`. Codex baseline revision 4 в
+`reports/pedagogy/codex-baseline-2026-09-28.md` сохранён как исторический;
+revision 5 требует нового поля `discovery_path`.
 
 ## Устройство
 
@@ -153,7 +155,7 @@ Codex baseline находится в `reports/pedagogy/codex-baseline-2026-09-28
 - `corpus/seminars/` — проверенные датированные карточки пройденных методов;
 - `evals/` — исполняемая оценка покрытия;
 - `evals/agent_holdout/` — замороженные задачи и контракт сквозного eval;
-- `evals/pedagogy_holdout/` — eval режимов, аналогов и малых приёмов;
+- `evals/pedagogy_holdout/` — eval режимов, аналогов и пути открытия решения;
 - `docs/COURSE-2026.md` — актуальная форма контроля и неизвестные детали;
 - `docs/LAB-PROJECT-STANDARD.md` — автономный код, тесты и описание ЛР;
 - `docs/LAB-AI-DISCLOSURE.md` — обязательный раздел лабораторного отчёта;

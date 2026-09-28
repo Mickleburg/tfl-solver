@@ -13,15 +13,18 @@
       ]
     },
     "seminar_analog": {"type": "string"},
-    "observations": {
+    "discovery_path": {
       "type": "array",
+      "minItems": 2,
       "items": {
         "type": "object",
         "properties": {
-          "text": {"type": "string"},
-          "evidence": {"type": "string"}
+          "clue": {"type": "string"},
+          "action": {"type": "string"},
+          "result": {"type": "string"},
+          "next_step": {"type": "string"}
         },
-        "required": ["text", "evidence"],
+        "required": ["clue", "action", "result", "next_step"],
         "additionalProperties": false
       }
     },
@@ -46,7 +49,7 @@
     "limitations": {"type": "array", "items": {"type": "string"}}
   },
   "required": [
-    "case_id", "mode", "task_class", "seminar_analog", "observations",
+    "case_id", "mode", "task_class", "seminar_analog", "discovery_path",
     "micro_methods", "prerequisites_used", "chosen_method", "oracle_calls",
     "final_answer", "limitations"
   ],

@@ -9,7 +9,6 @@
 from __future__ import annotations
 
 import ast
-import hashlib
 import pathlib
 import re
 import subprocess
@@ -73,7 +72,6 @@ def create_lab_scaffold(
 
 {condition}
 """
-    task_sha256 = hashlib.sha256(task_content.encode("utf-8")).hexdigest()
 
     files = {
         "README.md": f"""# {heading}
@@ -145,12 +143,10 @@ if __name__ == "__main__":
 ''',
         "report.md": f"""# Описание лабораторной
 
-## Версия условия
+## Условие и требуемый результат
 
-- Источник или URL: `{PLACEHOLDER}`
-- Редакция или коммит: `{PLACEHOLDER}`
-- Дата локального снимка: `{PLACEHOLDER}`
-- SHA-256 `task.md`: `{task_sha256}`
+{PLACEHOLDER}: кратко сослаться на `task.md` и перечислить все подпункты,
+которые должен закрыть проект.
 
 ## Формализация
 
