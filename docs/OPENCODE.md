@@ -18,6 +18,23 @@ opencode .
 `tfl-solver`. `AGENTS.md`, канонический skill, корпус и Python-оракулы остаются
 теми же, что в Codex и Claude Code.
 
+### Изолированный клон в WSL
+
+Для Debian клон размещается в `~/Projects/tfl-solver`. Личный GitHub не должен
+менять рабочую конфигурацию GitLab: отдельный ключ хранится в
+`~/Projects/.ssh/github_personal_ed25519`, а `user.name`, `user.email`,
+`core.sshCommand` и SSH-адрес `origin` задаются в локальном `.git/config`
+клона. Глобальные Git- и OpenCode-конфиги при этом не изменяются.
+
+После создания ключа его открытая часть добавляется в личный GitHub. Проверка
+доступа и обновление клона выполняются уже из `~/Projects/tfl-solver`:
+
+```bash
+ssh -T -i ~/Projects/.ssh/github_personal_ed25519 \
+  -o IdentitiesOnly=yes git@github.com
+git fetch origin
+```
+
 Доступные модели нужно узнавать у самого клиента, не угадывать по имени:
 
 ```powershell
@@ -60,6 +77,9 @@ JSONL-события `tool_use`, `text` и `step_finish`, поэтому scorer 
 ## Граница текущей проверки
 
 Адаптер, JSONL-parser, схема ответа и read-only профиль покрыты unit-тестами.
-На текущей машине OpenCode и локальный model server не установлены, поэтому
-реальный OpenCode baseline ещё не снят. Это состояние отражается в
-`docs/OPEN-GAPS.md`, а не маскируется синтетическим PASS.
+В WSL Debian найден OpenCode 1.18.32 и выполнен реальный smoke на
+`pt/positive-llm-qwen36`. Модель дала правильный итог, но сделала ложное
+промежуточное наблюдение и использовала 20 вызовов вместо 8. Рубрика revision 6
+отдельно ловит содержательную ошибку пути и превышение бюджета; результат не
+маскируется как PASS. Подробности — в отчёте
+`reports/pedagogy/opencode-qwen36-smoke-2026-09-28.md`.

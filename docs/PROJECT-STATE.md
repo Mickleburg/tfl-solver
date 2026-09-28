@@ -53,8 +53,9 @@ Pharma в текущем курсе отсутствует.
 - OpenCode использует совместимый `.agents`-адаптер без копирования базы.
   Добавлены JSONL-runner для общего и педагогического holdout, read-only
   профиль `.opencode/agents/tfl-eval.md` и сохранение partial-trace при
-  таймауте. Клиент OpenCode 1.18.32 найден в WSL Debian; проектная копия и
-  baseline новой педагогической рубрики ещё не подготовлены.
+  таймауте. Клиент OpenCode 1.18.32 и проектная копия готовы в WSL Debian.
+  Отдельный SSH-ключ привязан только к локальному клону; его открытая часть
+  ещё должна быть добавлена в личный GitHub.
 - Устанавливаемый из GitHub wheel 1.0 включает skill, plugin-манифесты,
   лицензию Apache-2.0, рецепты, документацию, корпус, eval и Python-оракулы;
   чистая пакетная установка проверена отдельно от исходного дерева. Локальные
@@ -136,7 +137,7 @@ Pharma в текущем курсе отсутствует.
 
 | Проверка | Результат |
 |---|---|
-| Unit/integration tests | 1546 passed, 1 skipped |
+| Unit/integration tests | 1548 passed, 1 skipped |
 | Codex plugin | manifest valid, local marketplace parsed |
 | Claude Code plugin | plugin + marketplace strict validation passed |
 | OpenCode adapter | JSONL/parser/read-only profile tested; CLI 1.18.32 found in WSL |
@@ -150,6 +151,7 @@ Pharma в текущем курсе отсутствует.
 | Codex holdout v1 | 7/7 PASS, 67/70 (среднее 9.57/10) |
 | Codex pedagogy holdout v1 | historical: 8/8 PASS, 104/104 on rubric revision 4 |
 | Pedagogy holdout v2 | baseline pending; rubric checks reproducible discovery path |
+| OpenCode Qwen smoke | FAIL: correct final answer, false intermediate clue, 20/8 tool calls |
 | Claude holdout smoke | BLOCKED: `oauth_org_not_allowed` |
 
 Базовые команды для повторения среза:
@@ -198,8 +200,14 @@ Claude smoke после снятия внешнего auth-блокера и ч�
 60 наблюдаемых команд и 1092,45 с для успешных запусков. Все восемь
 доказательств проверены вручную. Первый `full`-запуск попал в таймаут; его
 запись сохранена, а повтор завершился успешно. Этот запуск относится к
-рубрике revision 4; revision 5 с полем `discovery_path` требует нового
+рубрике revision 4; revision 6 с полем `discovery_path` требует нового
 baseline.
+
+Первый реальный OpenCode smoke на `pt/positive-llm-qwen36` сохранён отдельным
+отчётом. Он подтвердил работоспособность WSL-runner и структурированного ответа,
+но не прошёл revision 6: правильный финальный вывод соседствовал с ложным
+утверждением о суффиксе кодового слова, а маршрут занял 20 вызовов при бюджете
+8. Это содержательная регрессия пути к решению, а не успешный baseline.
 
 Claude adapter проверен вплоть до реального запуска CLI 2.1.205, разбора
 event-stream и API-запроса. Организация отклоняет модель до первого tool call

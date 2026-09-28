@@ -95,7 +95,8 @@ class PedagogyScore:
         return sum(self.components.values())
 
     @property
-    def passed(self) -> bool:
+    def content_passed(self) -> bool:
+        """Прошла ли содержательная часть независимо от стоимости маршрута."""
         hard = (
             self.components.get("режим", 0) == 1
             and self.components.get("класс", 0) == 1
@@ -107,10 +108,17 @@ class PedagogyScore:
             and self.components.get("запуск оракула", 0) == 1
             and self.components.get("ответ", 0) >= 1
             and self.components.get("границы", 0) == 1
-            and not any(issue.startswith("запрещённое сокращение") for issue in self.issues)
-            and not any(issue.startswith("превышен бюджет команд") for issue in self.issues)
         )
         return self.total >= 10 and hard
+
+    @property
+    def within_budget(self) -> bool:
+        """Уложился ли маршрут в лимит наблюдаемых вызовов инструментов."""
+        return not any(issue.startswith("превышен бюджет команд") for issue in self.issues)
+
+    @property
+    def passed(self) -> bool:
+        return self.content_passed and self.within_budget
 
 
 def _json_lines(path: pathlib.Path) -> list[dict[str, Any]]:
@@ -175,7 +183,9 @@ manifest.json и прошлые отчёты: там закрытая рубри
 альтернативные формализации. В discovery_path покажи два–пять связанных
 учебных шагов: конкретная зацепка в условии, небольшое действие, его результат
 и следующий выбор, который из результата следует. Не подменяй этот путь
-перечнем готовых наблюдений и не привязывайся к фразе «заметим, что».
+перечнем готовых наблюдений и не привязывайся к фразе «заметим, что». Каждый
+шаг должен быть сам по себе математически верным и согласованным с предыдущим;
+правильный финальный ответ не исправляет ложную зацепку.
 В micro_methods перечисли действия до основной теоремы. Выполни предметный
 Python-оракул и честно запиши границы результата.
 
@@ -368,9 +378,9 @@ def score_response(
     else:
         issues.append(f"ответ покрыл {matched_answer}/{len(case.answer_patterns)} опор")
 
-    method_and_answer = f"{method}\n{answer}"
+    evaluated_text = f"{discovery_text}\n{method}\n{answer}"
     forbidden = [
-        pattern for pattern in case.forbidden_patterns if _matches(pattern, method_and_answer)
+        pattern for pattern in case.forbidden_patterns if _matches(pattern, evaluated_text)
     ]
     limitations = [
         str(item).strip() for item in response.get("limitations", ()) if str(item).strip()
@@ -378,7 +388,7 @@ def score_response(
     if not forbidden and limitations:
         components["границы"] = 1
     if forbidden:
-        issues.append("запрещённое сокращение: " + ", ".join(forbidden))
+        issues.append("недопустимое утверждение: " + ", ".join(forbidden))
     if not limitations:
         issues.append("не указана граница машинной проверки")
 
@@ -459,7 +469,12 @@ def score_report(
     by_id = {str(record.get("case_id", "")): record for record in records}
     lines = ["# Педагогический holdout", ""]
     for score in scores:
-        status = "PASS" if score.passed else "FAIL"
+        if score.passed:
+            status = "PASS"
+        elif score.content_passed:
+            status = "CONTENT PASS / BUDGET FAIL"
+        else:
+            status = "FAIL"
         record = by_id.get(score.case_id, {})
         meta = []
         if record.get("model"):
@@ -477,5 +492,9 @@ def score_report(
             lines.extend(f"- {issue}" for issue in score.issues)
         lines.append("")
     passed = sum(score.passed for score in scores)
-    lines.append(f"Итого: {passed}/{len(scores)} PASS")
+    content_passed = sum(score.content_passed for score in scores)
+    lines.append(
+        f"Итого: {passed}/{len(scores)} PASS; "
+        f"содержательно {content_passed}/{len(scores)}"
+    )
     return "\n".join(lines)

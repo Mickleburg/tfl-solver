@@ -69,7 +69,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 5
+    assert manifest["rubric_revision"] == 6
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -128,7 +128,7 @@ def test_forbidden_heavy_shortcut_is_rejected():
     score = score_response(case, response, ["py -3 check.py"])
     assert score.components["границы"] == 0
     assert not score.passed
-    assert any("запрещённое сокращение" in issue for issue in score.issues)
+    assert any("недопустимое утверждение" in issue for issue in score.issues)
 
 
 def test_missing_verification_boundary_loses_component():
@@ -165,6 +165,26 @@ def test_list_of_ready_observations_does_not_replace_discovery_path():
     assert score.components["путь к решению"] == 0
     assert not score.passed
     assert any("хотя бы два" in issue for issue in score.issues)
+
+
+def test_false_clue_invalidates_an_otherwise_correct_path():
+    case = load_cases()[0]
+    response = good_response(case)
+    response["discovery_path"][0]["clue"] = "h(z)=11 является суффиксом h(y)=01."
+    score = score_response(case, response, ["py -3 check.py"])
+    assert not score.content_passed
+    assert not score.passed
+    assert any("недопустимое утверждение" in issue for issue in score.issues)
+
+
+def test_budget_is_reported_separately_from_content_quality():
+    case = load_cases()[0]
+    commands = ["py -3 check.py"] * 9
+    score = score_response(case, good_response(case), commands, command_budget=8)
+    assert score.total == 13
+    assert score.content_passed
+    assert not score.within_budget
+    assert not score.passed
 
 
 def test_cli_lists_and_prints_pedagogy_prompt(capsys):
