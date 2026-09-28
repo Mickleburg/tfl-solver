@@ -27,6 +27,8 @@ from tfl.intake import (
     find_asks,
     find_features,
     load_index,
+    load_seminar_index,
+    suggest_micro_methods,
 )
 
 ATTRIBUTE = """Язык атрибутной грамматики:
@@ -90,6 +92,13 @@ def test_description_recognized_without_braces():
 def test_asks_are_separate_from_features():
     assert "регулярность" in names(find_asks("Проверить язык на регулярность"))
     assert "регулярность" not in names(find_features("Проверить язык на регулярность"))
+
+
+def test_micro_methods_describe_small_steps_before_theorem():
+    evidence = find_features(DESCRIPTION) + find_asks(DESCRIPTION)
+    methods = suggest_micro_methods(evidence)
+    assert "расставить скобки в логическом условии" in methods
+    assert "разделить конъюнкции и дизъюнкции на случаи" in methods
 
 
 def test_attribute_grammar_marker_is_precise(content):
@@ -243,6 +252,30 @@ def test_analysis_reports_evidence(index):
     text = result.report()
     assert "RK2-C" in text and "атрибутная грамматика" in text
     assert "Похожие условия" in text
+
+
+def test_training_analysis_prioritizes_a_verified_seminar(index):
+    seminar = load_seminar_index()
+    result = analyse(
+        "Построить инъективный морфизм с неограниченной задержкой раскодирования",
+        "семинар",
+        index,
+        seminar_index=seminar,
+    )
+    assert result.mode == "training"
+    assert result.seminar_similar
+    assert result.seminar_similar[0][1]["id"] == "sem-2026-09-05-unbounded-delay"
+    assert "Сначала проверить аналоги" in result.report()
+
+
+def test_full_mode_is_reported(index):
+    result = analyse("Проверить язык на регулярность", index=index, mode="full")
+    assert "Режим решения: full" in result.report()
+
+
+def test_unknown_solver_mode_is_rejected():
+    with pytest.raises(ValueError, match="mode"):
+        analyse("задача", mode="unknown")
 
 
 def test_confidence_requires_a_gap():

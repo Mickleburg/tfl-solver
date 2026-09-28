@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import ast
+import hashlib
 import pathlib
 import re
 import subprocess
@@ -68,6 +69,11 @@ def create_lab_scaffold(
     condition = (task_text or "").strip()
     if not condition:
         condition = f"{PLACEHOLDER}: вставить полное неизменённое условие."
+    task_content = f"""# Условие
+
+{condition}
+"""
+    task_sha256 = hashlib.sha256(task_content.encode("utf-8")).hexdigest()
 
     files = {
         "README.md": f"""# {heading}
@@ -94,10 +100,7 @@ python -S -m unittest discover -s tests -v
 {PLACEHOLDER}: заменить заготовку предметной реализацией и командами запуска,
 затем выполнить `tfl lab check .` из окружения tfl-solver.
 """,
-        "task.md": f"""# Условие
-
-{condition}
-""",
+        "task.md": task_content,
         "solution.py": f'''"""Самодостаточное решение: заменить заготовку реализацией из условия."""
 
 from __future__ import annotations
@@ -141,6 +144,13 @@ if __name__ == "__main__":
     unittest.main()
 ''',
         "report.md": f"""# Описание лабораторной
+
+## Версия условия
+
+- Источник или URL: `{PLACEHOLDER}`
+- Редакция или коммит: `{PLACEHOLDER}`
+- Дата локального снимка: `{PLACEHOLDER}`
+- SHA-256 `task.md`: `{task_sha256}`
 
 ## Формализация
 

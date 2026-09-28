@@ -1,10 +1,11 @@
 # Установка и перенос tfl-solver
 
-Версия 1.0 распространяется тремя согласованными способами:
+Версия 1.0 распространяется четырьмя согласованными способами:
 
 1. плагин Codex;
 2. плагин Claude Code;
-3. Python-пакет с самостоятельной CLI `tfl`.
+3. project skill для OpenCode;
+4. Python-пакет с самостоятельной CLI `tfl`.
 
 Во всех вариантах используется один канонический skill `skills/tfl/SKILL.md`
 и одна база рецептов. Локальные тяжёлые оригиналы из `references/` не входят
@@ -69,6 +70,20 @@ codex plugin list
 
 Те же операции доступны из оболочки через `claude plugin marketplace ...` и
 `claude plugin ...`.
+
+## OpenCode: project skill и локальные модели
+
+OpenCode при запуске из корня репозитория автоматически обнаруживает
+`.agents/skills/tfl-solver/SKILL.md`. После установки клиента достаточно:
+
+```text
+opencode .
+```
+
+Отдельная установка или копирование skill не нужны. Доступные provider/model
+ID показывает `opencode models`. Настройка Ollama и других локальных
+OpenAI-совместимых серверов, read-only eval и команда baseline описаны в
+[`docs/OPENCODE.md`](OPENCODE.md).
 
 ## Python и исполняемые оракулы
 
@@ -140,7 +155,7 @@ py -3 -m tfl setup --status
 ```powershell
 git clone https://github.com/Mickleburg/tfl-solver.git
 cd tfl-solver
-py -3 -m pip install -e ".[dev]"
+py -3 -m pip install -e ".[dev]" --config-settings editable_mode=compat
 py -3 -m pytest -q
 py -3 -m tfl doctor
 ```

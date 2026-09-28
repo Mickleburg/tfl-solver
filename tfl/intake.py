@@ -44,13 +44,16 @@ __all__ = [
     "classify",
     "find_features",
     "find_asks",
+    "suggest_micro_methods",
     "TaskIndex",
     "load_index",
+    "load_seminar_index",
     "FEATURES",
     "ASKS",
 ]
 
 INDEX_PATH = ROOT / "evals" / "tasks" / "index.jsonl"
+SEMINAR_INDEX_PATH = ROOT / "corpus" / "seminars" / "index.jsonl"
 
 
 # --------------------------------------------------------------------------
@@ -180,6 +183,63 @@ def find_features(text: str) -> list[Evidence]:
 def find_asks(text: str) -> list[Evidence]:
     """Вопросы, которые задача задаёт."""
     return _found(text, ASKS)
+
+
+MICRO_METHODS: dict[str, tuple[str, ...]] = {
+    "описание языка множеством": (
+        "выписать область значений переменных",
+        "расставить скобки в логическом условии",
+    ),
+    "конъюнкция условий": (
+        "разделить конъюнкции и дизъюнкции на случаи",
+        "проверить возможность одновременного нарушения условий",
+    ),
+    "правила SRS": (
+        "зафиксировать направление каждого правила",
+        "посчитать изменение длины и числа символов",
+        "проверить перекрытия левых частей",
+    ),
+    "КС-грамматика": (
+        "выписать базовые выводы для коротких слов",
+        "отделить язык грамматики от свойства конкретной грамматики",
+    ),
+    "атрибутная грамматика": (
+        "сначала описать выводимые слова без атрибутных условий",
+        "затем выразить вклад каждого правила в атрибуты",
+    ),
+    "регулярность": (
+        "проверить, не упрощается ли определение до известного языка",
+        "разобрать короткие слова и крайние случаи",
+    ),
+    "завершимость": (
+        "сначала искать простую монотонную меру",
+        "отдельно искать короткую петлю как контрпример",
+    ),
+    "кодировка": (
+        "разделить побуквенную инъективность и однозначность строк",
+        "проверить encode/decode на коротком ручном примере",
+    ),
+    "образец с переменной": (
+        "явно указать диапазон строковой переменной",
+        "отделить чистые конфигурации от служебных",
+    ),
+    "проверка готового решения": (
+        "проверять шаги по порядку и остановиться на первой ошибке",
+        "искать минимальный контрпример к этому шагу",
+    ),
+}
+
+
+def suggest_micro_methods(
+    evidence: list[Evidence] | tuple[Evidence, ...],
+) -> tuple[str, ...]:
+    """Предложить короткие подготовительные действия по буквальным уликам."""
+    out: list[str] = []
+    for item in evidence:
+        for method in MICRO_METHODS.get(item.name, ()):
+            if method not in out:
+                out.append(method)
+    return tuple(out[:6])
 
 
 # --------------------------------------------------------------------------
@@ -312,7 +372,7 @@ class TaskIndex:
     _vectors: list[dict[str, float]] = field(default_factory=list, repr=False)
 
     def __post_init__(self) -> None:
-        documents = [tokenize(r["text"]) for r in self.records]
+        documents = [tokenize(_search_text(r)) for r in self.records]
         seen: Counter[str] = Counter()
         for tokens in documents:
             seen.update(set(tokens))
@@ -367,6 +427,69 @@ def load_index(path: pathlib.Path | None = None) -> TaskIndex:
     return TaskIndex(records)
 
 
+def _search_text(record: dict) -> str:
+    """Текст записи для поиска, включая явные методические метки.
+
+    Старый индекс задач содержит только ``text``. Семинарская память также
+    хранит признаки, основной метод и малые приёмы: эти поля важны для поиска
+    аналога, но не должны искусственно дописываться к формулировке задачи.
+    """
+    parts = [str(record.get("text", "")), str(record.get("method", ""))]
+    for name in ("signals", "micro_methods", "prerequisites"):
+        value = record.get(name, ())
+        if isinstance(value, list):
+            parts.extend(str(item) for item in value)
+    return "\n".join(part for part in parts if part)
+
+
+def load_seminar_index(path: pathlib.Path | None = None) -> TaskIndex:
+    """Загрузить проверенные карточки уже пройденных семинаров.
+
+    Сырой датированный текст остаётся в ``references/seminar``. В переносимый
+    индекс попадает только обезличенная карточка с методом и проверкой.
+    Не прошедшие проверку записи намеренно не участвуют в подборе аналога.
+    """
+    source = path or SEMINAR_INDEX_PATH
+    if not source.exists():
+        return TaskIndex([])
+    records = [
+        json.loads(line)
+        for line in source.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    required = {
+        "id",
+        "date",
+        "status",
+        "text",
+        "method",
+        "micro_methods",
+        "signals",
+        "prerequisites",
+        "verification",
+        "source",
+    }
+    seen_ids: set[str] = set()
+    for number, record in enumerate(records, 1):
+        missing = required - set(record)
+        if missing:
+            raise ValueError(
+                f"{source}:{number}: нет полей {', '.join(sorted(missing))}"
+            )
+        if record["id"] in seen_ids:
+            raise ValueError(f"{source}:{number}: повтор id {record['id']}")
+        seen_ids.add(record["id"])
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(record["date"])):
+            raise ValueError(f"{source}:{number}: неверная дата {record['date']}")
+        if record["status"] not in {"raw", "partial", "verified"}:
+            raise ValueError(f"{source}:{number}: неверный статус {record['status']}")
+        for name in ("micro_methods", "signals", "prerequisites"):
+            if not isinstance(record[name], list):
+                raise ValueError(f"{source}:{number}: {name} должен быть списком")
+    verified = [record for record in records if record["status"] == "verified"]
+    return TaskIndex(verified)
+
+
 # --------------------------------------------------------------------------
 # Сводный разбор
 # --------------------------------------------------------------------------
@@ -383,6 +506,9 @@ class Analysis:
     candidates: tuple[Candidate, ...]
     similar: tuple[tuple[float, dict], ...] = ()
     hints: tuple[Hint, ...] = ()
+    mode: str = "training"
+    seminar_similar: tuple[tuple[float, dict], ...] = ()
+    micro_methods: tuple[str, ...] = ()
 
     @property
     def confident(self) -> bool:
@@ -401,6 +527,7 @@ class Analysis:
     def report(self) -> str:
         lines = ["## Разбор задачи", ""]
         lines.append(f"Пометка пользователя: {self.hint or '—'}")
+        lines.append(f"Режим решения: {self.mode}")
         lines.append("")
         if self.hint in {"ЛР1", "ЛР2", "ЛР3", "ЛР4"}:
             lines.append(
@@ -429,6 +556,12 @@ class Analysis:
             lines.append("> Отрыва у лидера нет: класс не определён, "
                          "выбирать метод по этому списку нельзя.")
             lines.append("")
+        if self.micro_methods:
+            lines.append("**Малые шаги до основного метода:**")
+            lines.append("")
+            for method in self.micro_methods:
+                lines.append(f"* {method}")
+            lines.append("")
         if self.hints:
             lines.append("**Структурные образцы** (гипотезы, не вердикты):")
             lines.append("")
@@ -436,6 +569,17 @@ class Analysis:
                 lines.append(f"* {hint}")
                 if hint.note:
                     lines.append(f"  * оговорка: {hint.note}")
+            lines.append("")
+        if self.seminar_similar:
+            lines.append("**Сначала проверить аналоги из пройденных семинаров:**")
+            lines.append("")
+            for score, record in self.seminar_similar:
+                head = record["text"].replace("\n", " ")[:90]
+                methods = ", ".join(record.get("micro_methods", ())[:3])
+                lines.append(
+                    f"* `{record['id']}` ({score:.2f}, {record['date']}) — "
+                    f"{head}… Метод: {record['method']}. Малые приёмы: {methods}."
+                )
             lines.append("")
         if self.similar:
             lines.append("**Похожие условия из корпуса:**")
@@ -448,18 +592,38 @@ class Analysis:
 
 
 def analyse(
-    text: str, hint: str | None = None, index: TaskIndex | None = None, limit: int = 5
+    text: str,
+    hint: str | None = None,
+    index: TaskIndex | None = None,
+    limit: int = 5,
+    *,
+    mode: str = "training",
+    seminar_index: TaskIndex | None = None,
 ) -> Analysis:
     """Полный приём задачи: признаки, вопросы, кандидаты, похожие условия."""
+    if mode not in {"training", "full"}:
+        raise ValueError("mode должен быть 'training' или 'full'")
     similar: tuple[tuple[float, dict], ...] = ()
     if index is not None:
         similar = tuple(index.similar(text, limit=limit))
+    seminar_similar: tuple[tuple[float, dict], ...] = ()
+    if seminar_index is not None:
+        seminar_similar = tuple(
+            hit
+            for hit in seminar_index.similar(text, limit=min(limit, 3))
+            if hit[0] >= 0.15
+        )
+    features = tuple(find_features(text))
+    asks = tuple(find_asks(text))
     return Analysis(
         text=text,
         hint=hint,
-        features=tuple(find_features(text)),
-        asks=tuple(find_asks(text)),
+        features=features,
+        asks=asks,
         candidates=tuple(classify(text, hint)),
         similar=similar,
         hints=tuple(match_hints(text)),
+        mode=mode,
+        seminar_similar=seminar_similar,
+        micro_methods=suggest_micro_methods(features + asks),
     )

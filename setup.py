@@ -15,6 +15,7 @@ RUNTIME_DIRECTORIES = (
     ".claude",
     ".claude-plugin",
     ".codex-plugin",
+    ".opencode",
     "corpus",
     "docs",
     "evals",
@@ -45,6 +46,12 @@ class build_py(_build_py):
 
     def run(self) -> None:
         super().run()
+        # In an editable install the package itself is imported from the source
+        # checkout, where ``tfl.paths`` already finds all runtime assets.  A
+        # second copied runtime is both unnecessary and, on Windows, can remain
+        # open while setuptools is assembling the editable wheel (WinError 32).
+        if getattr(self, "editable_mode", False):
+            return
         source = pathlib.Path(__file__).resolve().parent
         runtime = pathlib.Path(self.build_lib) / "tfl" / "_runtime"
         if runtime.exists():

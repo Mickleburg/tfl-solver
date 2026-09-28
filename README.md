@@ -24,8 +24,9 @@
 
 ## Установка плагина из GitHub
 
-Репозиторий одновременно является плагином для Codex и Claude Code. Отдельно
-копировать skill-файлы или запускать `tfl setup` не требуется.
+Репозиторий одновременно является плагином для Codex и Claude Code и project
+skill для OpenCode. Отдельно копировать skill-файлы или запускать `tfl setup`
+не требуется.
 
 Codex CLI:
 
@@ -47,6 +48,10 @@ Claude Code:
 После перезапуска вызови `/tfl-solver:tfl <запрос>`. Claude Code добавляет к
 командам плагина пространство имён, поэтому это имя намеренно длиннее `/tfl`.
 
+OpenCode автоматически обнаруживает `.agents/skills/tfl-solver/SKILL.md` при
+запуске из корня репозитория. Подключение локальной модели и воспроизводимый
+smoke описаны в [`docs/OPENCODE.md`](docs/OPENCODE.md).
+
 Для объяснений и работы с текстовым корпусом достаточно установленного
 плагина. Исполняемые оракулы и создание проектов ЛР требуют Python 3.11+;
 в каталоге плагина агент запускает их через `scripts/tfl_plugin.py`. Полная
@@ -58,8 +63,11 @@ Claude Code:
 ```powershell
 git clone https://github.com/Mickleburg/tfl-solver.git
 cd tfl-solver
-py -3 -m pip install -e ".[dev]"
+py -3 -m pip install -e ".[dev]" --config-settings editable_mode=compat
 ```
+
+Режим `compat` нужен для стабильной editable-установки на Windows; обычная
+wheel-установка и сборка переносимого плагина от него не зависят.
 
 Старый вариант с `pip` и `tfl setup` сохранён: он устанавливает самостоятельную
 CLI, ненеймспейсную команду Claude Code `/tfl`, Codex skill `$tfl-solver` и
@@ -70,6 +78,8 @@ prompt `/prompts:tfl`.
 ```powershell
 tfl doctor
 tfl intake --file task.txt
+tfl intake --file task.txt --mode training
+tfl intake --file task.txt --mode full
 tfl intake --text "Проверить завершимость SRS ..." --hint ЛР
 tfl srs critical-pairs --rule "aab -> ba" --rule "aaa -> ab"
 tfl srs critical-pairs --file system.srs --format json
@@ -77,6 +87,7 @@ tfl lab init path/to/lab --file task.txt
 tfl lab check path/to/lab
 tfl eval
 tfl holdout list
+tfl pedagogy list
 ```
 
 `lab init` создаёт неперезаписываемую заготовку с условием, кодом, `unittest`
@@ -123,22 +134,34 @@ JSON Schema. Полный набор вызывается только явны�
 [Codex](https://developers.openai.com/codex/noninteractive) и
 [Claude Code](https://code.claude.com/docs/en/headless).
 
+Отдельный замороженный набор проверяет педагогический маршрут: правильный
+режим, семинарский аналог, буквальные признаки, малые приёмы и наблюдаемый
+запуск оракула. Он запускается теми же backend'ами через `tfl pedagogy run`,
+а закрытая рубрика оценивается командой `tfl pedagogy score`. Проверенный
+Codex baseline находится в `reports/pedagogy/codex-baseline-2026-09-28.md`.
+
 ## Устройство
 
-- `skills/tfl/SKILL.md` — единый канонический цикл решения для обоих клиентов;
+- `skills/tfl/SKILL.md` — единый канонический цикл решения для всех клиентов;
 - `plugin.json`, `.codex-plugin/`, `.claude-plugin/` — переносимые манифесты;
 - `.agents/plugins/marketplace.json` — каталог установки Codex;
+- `.opencode/agents/tfl-eval.md` — read-only профиль OpenCode holdout;
 - `tfl/` — проверяющие оракулы;
 - `docs/recipes/` — рецепты 18 содержательных классов задач;
 - `corpus/txt/` — версионируемое текстовое зеркало официальных источников;
 - `corpus/knowledge/` — обезличенные вопросы, методы и типовые ошибки;
+- `corpus/seminars/` — проверенные датированные карточки пройденных методов;
 - `evals/` — исполняемая оценка покрытия;
 - `evals/agent_holdout/` — замороженные задачи и контракт сквозного eval;
+- `evals/pedagogy_holdout/` — eval режимов, аналогов и малых приёмов;
 - `docs/COURSE-2026.md` — актуальная форма контроля и неизвестные детали;
 - `docs/LAB-PROJECT-STANDARD.md` — автономный код, тесты и описание ЛР;
 - `docs/LAB-AI-DISCLOSURE.md` — обязательный раздел лабораторного отчёта;
 - `docs/THEORY-ANSWER-STANDARD.md` — быстрые и проверяемые объяснения теории;
+- `docs/SOLVER-MODES.md` — тренировочный и полный режимы, малые приёмы;
+- `docs/SEMINAR-KNOWLEDGE.md` — еженедельное пополнение памяти семинаров;
 - `docs/INSTALLATION.md` — установка из GitHub и глобальные команды клиентов;
+- `docs/OPENCODE.md` — OpenCode, локальные provider'ы и слабые модели;
 - `docs/PROJECT-STATE.md` — единое актуальное состояние;
 - `docs/OPEN-GAPS.md` — незакрытые задачи;
 - `references/` — локальные исходные материалы, не входящие в Git.

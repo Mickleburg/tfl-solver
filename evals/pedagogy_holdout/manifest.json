@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "rubric_revision": 4,
+  "case_count": 8,
+  "cases_sha256": "8705d7b07255110bd3b44531ed3fdd7a6edd68f76c8a318293c9349453c92104",
+  "modes": ["training", "full"],
+  "purpose": "Evaluate human-readable method selection, seminar transfer, and micro-method explanations."
+}

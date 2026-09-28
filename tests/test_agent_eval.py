@@ -16,11 +16,13 @@ from tfl.agent_eval import (
     load_cases,
     parse_claude_stream,
     parse_codex_stream,
+    parse_opencode_stream,
     run_claude_case,
+    run_opencode_case,
     score_response,
     score_runs,
 )
-from tfl.cli import main
+from tfl.cli import build_parser, main
 from tfl.intake import load_index
 
 
@@ -178,6 +180,26 @@ def test_codex_jsonl_stream_keeps_commands_and_final_response(cases):
     assert not error
 
 
+def test_codex_timeout_keeps_partial_command_trace(monkeypatch, cases):
+    body = json.dumps(
+        {
+            "type": "item.completed",
+            "item": {"type": "command_execution", "command": "py -3 check.py"},
+        }
+    ).encode("utf-8")
+
+    def fake_run(command, **kwargs):
+        raise agent_eval.subprocess.TimeoutExpired(command, 17, output=body)
+
+    monkeypatch.setattr(agent_eval, "_executable_command", lambda executable: [executable])
+    monkeypatch.setattr(agent_eval.subprocess, "run", fake_run)
+    record = agent_eval.run_codex_case(cases[0], timeout=17, version="codex-test")
+
+    assert record["response"] is None
+    assert record["observed_commands"] == ["py -3 check.py"]
+    assert "таймаут 17 с" in record["error"]
+
+
 def test_claude_jsonl_stream_keeps_tool_calls_and_structured_output(cases):
     response = good_response(cases[0])
     events = [
@@ -237,6 +259,48 @@ def test_claude_jsonl_stream_keeps_tool_calls_and_structured_output(cases):
     assert not error
 
 
+def test_claude_timeout_keeps_partial_command_trace(monkeypatch, cases):
+    body = "\n".join(
+        json.dumps(event)
+        for event in (
+            {"type": "system", "subtype": "init", "model": "claude-test"},
+            {
+                "type": "assistant",
+                "message": {
+                    "content": [
+                        {
+                            "type": "tool_use",
+                            "id": "bash-1",
+                            "name": "Bash",
+                            "input": {"command": "py -3 check.py"},
+                        }
+                    ]
+                },
+            },
+            {
+                "type": "user",
+                "message": {
+                    "content": [
+                        {"type": "tool_result", "tool_use_id": "bash-1", "content": "ok"}
+                    ]
+                },
+            },
+        )
+    ).encode("utf-8")
+
+    def fake_run(command, **kwargs):
+        raise agent_eval.subprocess.TimeoutExpired(command, 19, output=body)
+
+    monkeypatch.setattr(agent_eval, "_executable_command", lambda executable: [executable])
+    monkeypatch.setattr(agent_eval.subprocess, "run", fake_run)
+    record = run_claude_case(cases[0], timeout=19, version="claude-test-version")
+
+    assert record["response"] is None
+    assert record["observed_commands"] == ["py -3 check.py"]
+    assert record["model"] == "claude-test"
+    assert "таймаут 19 с" in record["error"]
+
+
 def test_claude_jsonl_stream_surfaces_api_error():
     body = json.dumps(
         {
@@ -254,6 +318,82 @@ def test_claude_jsonl_stream_surfaces_api_error():
     assert "oauth_org_not_allowed" in error
     assert "нет структурированного" in error
     assert model is None
+
+
+def test_opencode_jsonl_stream_keeps_tools_text_and_usage(cases):
+    response = good_response(cases[0])
+    events = [
+        {
+            "type": "tool_use",
+            "part": {
+                "type": "tool",
+                "tool": "bash",
+                "state": {
+                    "status": "completed",
+                    "input": {"command": "py -3 check.py"},
+                    "output": "ok",
+                },
+            },
+        },
+        {
+            "type": "text",
+            "part": {
+                "type": "text",
+                "text": "```json\n" + json.dumps(response, ensure_ascii=False) + "\n```",
+            },
+        },
+        {
+            "type": "step_finish",
+            "part": {
+                "type": "step-finish",
+                "tokens": {
+                    "input": 10,
+                    "output": 20,
+                    "reasoning": 3,
+                    "cache": {"read": 4, "write": 5},
+                },
+            },
+        },
+    ]
+    body = "\n".join(json.dumps(event, ensure_ascii=False) for event in events)
+    parsed, commands, usage, error = parse_opencode_stream(body)
+    assert parsed == response
+    assert commands == ("py -3 check.py",)
+    assert usage == {
+        "input_tokens": 10,
+        "output_tokens": 20,
+        "reasoning_output_tokens": 3,
+        "cached_input_tokens": 4,
+        "cache_write_input_tokens": 5,
+    }
+    assert not error
+
+
+def test_opencode_runner_uses_read_only_agent_and_inline_schema(monkeypatch, cases):
+    response = good_response(cases[0])
+    body = json.dumps(
+        {"type": "text", "part": {"type": "text", "text": json.dumps(response)}}
+    )
+    captured = {}
+
+    def fake_run(command, **kwargs):
+        captured["command"] = command
+        captured["kwargs"] = kwargs
+        return SimpleNamespace(returncode=0, stdout=body, stderr="")
+
+    monkeypatch.setattr(agent_eval, "_executable_command", lambda executable: [executable])
+    monkeypatch.setattr(agent_eval, "_repository_commit", lambda: "commit-test")
+    monkeypatch.setattr(agent_eval.subprocess, "run", fake_run)
+    record = run_opencode_case(cases[0], model="ollama/test", version="opencode-test")
+
+    command = captured["command"]
+    assert command[:4] == ["opencode", "run", "--format", "json"]
+    assert command[command.index("--agent") + 1] == "tfl-eval"
+    assert command[command.index("--model") + 1] == "ollama/test"
+    assert "Обязательная JSON Schema ответа" in captured["kwargs"]["input"]
+    assert cases[0].statement in captured["kwargs"]["input"]
+    assert record["response"] == response
+    assert record["runner"] == "opencode"
 
 
 def test_claude_runner_restricts_tools_and_adapts_schema(monkeypatch, cases):
@@ -344,3 +484,10 @@ def test_cli_requires_explicit_run_scope(tmp_path, capsys):
     assert main(["holdout", "run", "--output", str(output)]) == 2
     assert "--case" in capsys.readouterr().err
     assert not output.exists()
+
+
+def test_cli_accepts_opencode_runner_for_both_holdouts():
+    parser = build_parser()
+    common = ["run", "--runner", "opencode", "--case", "case", "--output", "x"]
+    assert parser.parse_args(["holdout", *common]).runner == "opencode"
+    assert parser.parse_args(["pedagogy", *common]).runner == "opencode"

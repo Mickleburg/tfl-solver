@@ -460,6 +460,93 @@ def parse_claude_stream(
     return response, tuple(commands), usage, "; ".join(errors), model
 
 
+def _json_object_from_text(value: str) -> dict[str, Any] | None:
+    """Извлечь один JSON-объект из обычного или fenced ответа."""
+    text = value.strip()
+    if text.startswith("```") and text.endswith("```"):
+        lines = text.splitlines()
+        if len(lines) >= 3:
+            text = "\n".join(lines[1:-1]).strip()
+    try:
+        candidate = json.loads(text)
+    except json.JSONDecodeError:
+        start = text.find("{")
+        end = text.rfind("}")
+        if start < 0 or end <= start:
+            return None
+        try:
+            candidate = json.loads(text[start : end + 1])
+        except json.JSONDecodeError:
+            return None
+    return candidate if isinstance(candidate, dict) else None
+
+
+def parse_opencode_stream(
+    text: str,
+) -> tuple[Any, tuple[str, ...], dict[str, Any], str]:
+    """Извлечь JSON-ответ, завершённые tools и usage из OpenCode JSONL."""
+    commands: list[str] = []
+    texts: list[str] = []
+    errors: list[str] = []
+    usage: dict[str, int] = {}
+
+    def add_usage(name: str, value: Any) -> None:
+        if isinstance(value, int):
+            usage[name] = usage.get(name, 0) + value
+
+    for number, line in enumerate(text.splitlines(), 1):
+        if not line.strip():
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            errors.append(f"строка {number} потока runner не JSON")
+            continue
+        event_type = event.get("type")
+        part = event.get("part") if isinstance(event.get("part"), dict) else {}
+        if event_type == "tool_use" and part.get("type") == "tool":
+            state = part.get("state") if isinstance(part.get("state"), dict) else {}
+            if state.get("status") == "completed":
+                inputs = state.get("input") if isinstance(state.get("input"), dict) else {}
+                command = inputs.get("command")
+                if isinstance(command, str) and command.strip():
+                    commands.append(command)
+                else:
+                    commands.append(
+                        f"{part.get('tool', 'tool')} "
+                        f"{json.dumps(inputs, ensure_ascii=False, sort_keys=True)}"
+                    )
+            elif state.get("status") == "error":
+                message = str(state.get("error", "ошибка tool")).strip()
+                if message:
+                    errors.append(message)
+        if event_type == "text" and part.get("type") == "text":
+            body = part.get("text")
+            if isinstance(body, str) and body.strip():
+                texts.append(body)
+        if event_type == "step_finish" and part.get("type") == "step-finish":
+            tokens = part.get("tokens") if isinstance(part.get("tokens"), dict) else {}
+            add_usage("input_tokens", tokens.get("input"))
+            add_usage("output_tokens", tokens.get("output"))
+            add_usage("reasoning_output_tokens", tokens.get("reasoning"))
+            cache = tokens.get("cache") if isinstance(tokens.get("cache"), dict) else {}
+            add_usage("cached_input_tokens", cache.get("read"))
+            add_usage("cache_write_input_tokens", cache.get("write"))
+        if event_type == "error":
+            message = event.get("message") or event.get("error") or "ошибка OpenCode"
+            if isinstance(message, dict):
+                message = json.dumps(message, ensure_ascii=False, sort_keys=True)
+            errors.append(str(message))
+
+    response = next(
+        (candidate for body in reversed(texts) if (candidate := _json_object_from_text(body))),
+        None,
+    )
+    if response is None:
+        errors.append("в потоке нет структурированного финального ответа")
+    return response, tuple(commands), usage, "; ".join(errors)
+
+
 def _executable_command(executable: str) -> list[str]:
     """Разрешить native/npm launcher без ``shell=True``."""
     resolved = shutil.which(executable) or executable
@@ -515,6 +602,29 @@ def run_codex_case(
     timeout: int = 900,
     version: str | None = None,
 ) -> dict[str, Any]:
+    return run_codex_prompt(
+        case_id=case.id,
+        prompt=build_prompt(case),
+        schema_path=SCHEMA_PATH,
+        executable=executable,
+        model=model,
+        timeout=timeout,
+        version=version,
+    )
+
+
+def run_codex_prompt(
+    *,
+    case_id: str,
+    prompt: str,
+    schema_path: pathlib.Path,
+    executable: str = "codex",
+    model: str | None = None,
+    timeout: int = 900,
+    version: str | None = None,
+    command_budget: int = COMMAND_BUDGET,
+) -> dict[str, Any]:
+    """Запустить произвольный структурированный eval-промпт через Codex."""
     command = [
         *_executable_command(executable),
         "exec",
@@ -522,7 +632,7 @@ def run_codex_case(
         "--sandbox",
         "read-only",
         "--output-schema",
-        str(SCHEMA_PATH),
+        str(schema_path),
         "--json",
         "-C",
         str(ROOT),
@@ -542,7 +652,7 @@ def run_codex_case(
     try:
         completed = subprocess.run(
             command,
-            input=build_prompt(case),
+            input=prompt,
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -556,12 +666,18 @@ def run_codex_case(
         response, observed_commands, usage, error = parse_codex_stream(completed.stdout)
         if completed.returncode and not error:
             error = (completed.stderr or f"codex exited {completed.returncode}")[-1200:]
-    except subprocess.TimeoutExpired:
-        error = f"таймаут {timeout} с"
+    except subprocess.TimeoutExpired as exc:
+        partial = exc.stdout or exc.output or ""
+        if isinstance(partial, bytes):
+            partial = partial.decode("utf-8", errors="replace")
+        response, observed_commands, usage, stream_error = parse_codex_stream(partial)
+        error = "; ".join(
+            part for part in (f"таймаут {timeout} с", stream_error) if part
+        )
     except OSError as exc:
         error = f"не удалось запустить {executable}: {exc}"
     return {
-        "case_id": case.id,
+        "case_id": case_id,
         "runner": "codex",
         "runner_version": version or _runner_version(executable),
         "model": model or "default",
@@ -572,7 +688,7 @@ def run_codex_case(
         "response": response,
         "observed_commands": list(observed_commands),
         "usage": usage,
-        "command_budget": COMMAND_BUDGET,
+        "command_budget": command_budget,
         "error": error,
     }
 
@@ -608,7 +724,30 @@ def run_claude_case(
     version: str | None = None,
 ) -> dict[str, Any]:
     """Запустить один случай через Claude Code с узким allowlist инструментов."""
-    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    return run_claude_prompt(
+        case_id=case.id,
+        prompt=build_prompt(case),
+        schema_path=SCHEMA_PATH,
+        executable=executable,
+        model=model,
+        timeout=timeout,
+        version=version,
+    )
+
+
+def run_claude_prompt(
+    *,
+    case_id: str,
+    prompt: str,
+    schema_path: pathlib.Path,
+    executable: str = "claude",
+    model: str | None = None,
+    timeout: int = 900,
+    version: str | None = None,
+    command_budget: int = COMMAND_BUDGET,
+) -> dict[str, Any]:
+    """Запустить произвольный структурированный eval-промпт через Claude."""
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
     schema.pop("$schema", None)
     command = [
         *_executable_command(executable),
@@ -641,7 +780,7 @@ def run_claude_case(
     try:
         completed = subprocess.run(
             command,
-            input=build_prompt(case),
+            input=prompt,
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -661,12 +800,20 @@ def run_claude_case(
                 error = "; ".join(part for part in (error, process_error) if part)
             elif not error:
                 error = f"claude exited {completed.returncode}"
-    except subprocess.TimeoutExpired:
-        error = f"таймаут {timeout} с"
+    except subprocess.TimeoutExpired as exc:
+        partial = exc.stdout or exc.output or ""
+        if isinstance(partial, bytes):
+            partial = partial.decode("utf-8", errors="replace")
+        response, observed_commands, usage, stream_error, detected_model = (
+            parse_claude_stream(partial)
+        )
+        error = "; ".join(
+            part for part in (f"таймаут {timeout} с", stream_error) if part
+        )
     except OSError as exc:
         error = f"не удалось запустить {executable}: {exc}"
     return {
-        "case_id": case.id,
+        "case_id": case_id,
         "runner": "claude",
         "runner_version": version or _runner_version(executable),
         "model": model or detected_model or "default",
@@ -677,7 +824,7 @@ def run_claude_case(
         "response": response,
         "observed_commands": list(observed_commands),
         "usage": usage,
-        "command_budget": COMMAND_BUDGET,
+        "command_budget": command_budget,
         "error": error,
     }
 
@@ -696,6 +843,133 @@ def run_claude(
     with output.open("x", encoding="utf-8", newline="\n") as stream:
         for case in cases:
             record = run_claude_case(
+                case, executable=executable, model=model, timeout=timeout, version=version
+            )
+            stream.write(json.dumps(record, ensure_ascii=False) + "\n")
+            stream.flush()
+            records.append(record)
+    return tuple(records)
+
+
+def run_opencode_case(
+    case: HoldoutCase,
+    *,
+    executable: str = "opencode",
+    model: str | None = None,
+    timeout: int = 900,
+    version: str | None = None,
+) -> dict[str, Any]:
+    """Запустить один общий holdout-случай через OpenCode."""
+    return run_opencode_prompt(
+        case_id=case.id,
+        prompt=build_prompt(case),
+        schema_path=SCHEMA_PATH,
+        executable=executable,
+        model=model,
+        timeout=timeout,
+        version=version,
+    )
+
+
+def run_opencode_prompt(
+    *,
+    case_id: str,
+    prompt: str,
+    schema_path: pathlib.Path,
+    executable: str = "opencode",
+    model: str | None = None,
+    timeout: int = 900,
+    version: str | None = None,
+    command_budget: int = COMMAND_BUDGET,
+) -> dict[str, Any]:
+    """Запустить структурированный eval-промпт через OpenCode JSONL CLI."""
+    schema = schema_path.read_text(encoding="utf-8")
+    full_prompt = f"{prompt}\n\nОбязательная JSON Schema ответа:\n{schema}"
+    command = [
+        *_executable_command(executable),
+        "run",
+        "--format",
+        "json",
+        "--agent",
+        "tfl-eval",
+        "--dir",
+        str(ROOT),
+    ]
+    if model:
+        command += ["--model", model]
+    environment = os.environ.copy()
+    environment["PYTHONIOENCODING"] = "utf-8"
+    started_at = datetime.now(timezone.utc).isoformat()
+    started = time.monotonic()
+    response: Any = None
+    observed_commands: tuple[str, ...] = ()
+    usage: dict[str, Any] = {}
+    error = ""
+    returncode = 1
+    try:
+        completed = subprocess.run(
+            command,
+            input=full_prompt,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            cwd=ROOT,
+            env=environment,
+            timeout=timeout,
+            check=False,
+        )
+        returncode = completed.returncode
+        response, observed_commands, usage, error = parse_opencode_stream(
+            completed.stdout
+        )
+        if completed.returncode:
+            process_error = completed.stderr[-1200:]
+            if process_error and process_error not in error:
+                error = "; ".join(part for part in (error, process_error) if part)
+            elif not error:
+                error = f"opencode exited {completed.returncode}"
+    except subprocess.TimeoutExpired as exc:
+        partial = exc.stdout or exc.output or ""
+        if isinstance(partial, bytes):
+            partial = partial.decode("utf-8", errors="replace")
+        response, observed_commands, usage, stream_error = parse_opencode_stream(partial)
+        error = "; ".join(
+            part for part in (f"таймаут {timeout} с", stream_error) if part
+        )
+    except OSError as exc:
+        error = f"не удалось запустить {executable}: {exc}"
+    return {
+        "case_id": case_id,
+        "runner": "opencode",
+        "runner_version": version or _runner_version(executable),
+        "model": model or "default",
+        "repository_commit": _repository_commit(),
+        "started_at": started_at,
+        "elapsed_s": round(time.monotonic() - started, 3),
+        "returncode": returncode,
+        "response": response,
+        "observed_commands": list(observed_commands),
+        "usage": usage,
+        "command_budget": command_budget,
+        "error": error,
+    }
+
+
+def run_opencode(
+    cases: Sequence[HoldoutCase],
+    output: pathlib.Path,
+    *,
+    executable: str = "opencode",
+    model: str | None = None,
+    timeout: int = 900,
+) -> tuple[dict[str, Any], ...]:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    version = _runner_version(executable)
+    records = []
+    with output.open("x", encoding="utf-8", newline="\n") as stream:
+        for case in cases:
+            record = run_opencode_case(
                 case, executable=executable, model=model, timeout=timeout, version=version
             )
             stream.write(json.dumps(record, ensure_ascii=False) + "\n")

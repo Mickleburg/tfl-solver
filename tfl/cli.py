@@ -6,12 +6,13 @@ import argparse
 import json
 import os
 import pathlib
+import shutil
 import subprocess
 import sys
 from collections.abc import Sequence
 
 from tfl import __version__
-from tfl.intake import BY_FORM, analyse, load_index
+from tfl.intake import BY_FORM, analyse, load_index, load_seminar_index
 from tfl.integrations import adapter_status, install_adapters, selected_adapters
 from tfl.paths import IS_BUNDLED, PACKAGE_ROOT, ROOT
 
@@ -51,7 +52,16 @@ def _intake(arguments: argparse.Namespace) -> int:
     except (OSError, ValueError) as error:
         print(f"ошибка входа: {error}", file=sys.stderr)
         return 2
-    print(analyse(text, arguments.hint, load_index(), arguments.limit).report())
+    print(
+        analyse(
+            text,
+            arguments.hint,
+            load_index(),
+            arguments.limit,
+            mode=arguments.mode,
+            seminar_index=load_seminar_index(),
+        ).report()
+    )
     return 0
 
 
@@ -79,10 +89,23 @@ def _doctor(arguments: argparse.Namespace) -> int:
             ROOT / "docs" / "recipes" / "EXAM-ERROR.md"
         ).is_file(),
         "индекс корпуса": (ROOT / "evals" / "tasks" / "index.jsonl").is_file(),
+        "индекс пройденных семинаров": (
+            ROOT / "corpus" / "seminars" / "index.jsonl"
+        ).is_file(),
+        "режимы решателя": (ROOT / "docs" / "SOLVER-MODES.md").is_file(),
         "сквозной holdout": (
             (ROOT / "evals" / "agent_holdout" / "cases.jsonl").is_file()
             and (ROOT / "evals" / "agent_holdout" / "response.schema.json").is_file()
         ),
+        "педагогический holdout": (
+            (ROOT / "evals" / "pedagogy_holdout" / "cases.jsonl").is_file()
+            and (
+                ROOT / "evals" / "pedagogy_holdout" / "response.schema.json"
+            ).is_file()
+        ),
+        "OpenCode eval agent": (
+            ROOT / ".opencode" / "agents" / "tfl-eval.md"
+        ).is_file(),
     }
     optional = {
         "первоисточник преподавателя": ROOT
@@ -98,6 +121,16 @@ def _doctor(arguments: argparse.Namespace) -> int:
         print(f"{'OK' if passed else 'FAIL':4} {name}")
     for name, path in optional.items():
         print(f"{'OK' if path.exists() else 'WARN':4} {name}: {path.relative_to(ROOT)}")
+    entrypoint = shutil.which("tfl") or shutil.which("tfl-agent")
+    if entrypoint:
+        print(f"OK   команда tfl в PATH: {entrypoint}")
+    else:
+        print("WARN команда tfl не в PATH; используйте `py -3 -m tfl`")
+    opencode = shutil.which("opencode")
+    if opencode:
+        print(f"OK   OpenCode CLI: {opencode}")
+    else:
+        print("WARN OpenCode CLI не установлен; runner opencode недоступен")
 
     if arguments.tests:
         print("\nЗапуск pytest...")
@@ -305,6 +338,7 @@ def _holdout(arguments: argparse.Namespace) -> int:
         load_runs,
         run_claude,
         run_codex,
+        run_opencode,
         score_report,
         score_runs,
     )
@@ -330,7 +364,11 @@ def _holdout(arguments: argparse.Namespace) -> int:
         runner = arguments.runner
         executable = arguments.executable or runner
         print(f"Запуск {len(selected)} случаев через {runner}; результат: {output}")
-        run = run_codex if runner == "codex" else run_claude
+        run = {
+            "codex": run_codex,
+            "claude": run_claude,
+            "opencode": run_opencode,
+        }[runner]
         records = run(
             selected,
             output,
@@ -353,6 +391,65 @@ def _holdout(arguments: argparse.Namespace) -> int:
             print(f"\nотчёт записан: {destination}")
         return 0 if scores and all(score.passed for score in scores) else 1
     raise AssertionError(arguments.holdout_command)
+
+
+def _pedagogy(arguments: argparse.Namespace) -> int:
+    from tfl.pedagogy_eval import (
+        build_prompt,
+        choose_cases,
+        load_cases,
+        load_runs,
+        run_cases,
+        score_report,
+        score_runs,
+    )
+
+    cases = load_cases()
+    if arguments.pedagogy_command == "list":
+        for case in cases:
+            analog = case.seminar_analog or "—"
+            head = case.statement.replace("\n", " ")[:72]
+            print(f"{case.id:34} {case.mode:8} {case.task_class:6} {analog:40} {head}")
+        return 0
+    if arguments.pedagogy_command == "prompt":
+        print(build_prompt(choose_cases(cases, [arguments.case])[0]))
+        return 0
+    if arguments.pedagogy_command == "run":
+        if not arguments.all and not arguments.case:
+            print("укажите --case ID (можно несколько раз) или --all", file=sys.stderr)
+            return 2
+        selected = choose_cases(cases, () if arguments.all else arguments.case)
+        output = _repo_path(arguments.output)
+        if output.exists():
+            print(f"файл уже существует: {output}", file=sys.stderr)
+            return 2
+        print(
+            f"Запуск {len(selected)} педагогических случаев через "
+            f"{arguments.runner}; результат: {output}"
+        )
+        records = run_cases(
+            selected,
+            output,
+            runner=arguments.runner,
+            executable=arguments.executable,
+            model=arguments.model,
+            timeout=arguments.timeout,
+        )
+        scores = score_runs(cases, records)
+        print(score_report(scores, records))
+        return 0 if all(score.passed for score in scores) else 1
+    if arguments.pedagogy_command == "score":
+        records = load_runs(_repo_path(arguments.input))
+        scores = score_runs(cases, records)
+        report = score_report(scores, records)
+        print(report)
+        if arguments.report:
+            destination = _repo_path(arguments.report)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_text(report, encoding="utf-8")
+            print(f"\nотчёт записан: {destination}")
+        return 0 if scores and all(score.passed for score in scores) else 1
+    raise AssertionError(arguments.pedagogy_command)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -399,6 +496,12 @@ def build_parser() -> argparse.ArgumentParser:
     source.add_argument("--file", help="UTF-8 файл с условием")
     intake.add_argument("--hint", choices=sorted(BY_FORM), help="необязательная форма контроля")
     intake.add_argument("--limit", type=int, default=5, help="число похожих задач")
+    intake.add_argument(
+        "--mode",
+        choices=("training", "full"),
+        default="training",
+        help="педагогический или полный маршрут решения",
+    )
     intake.set_defaults(handler=_intake)
 
     evaluate = subparsers.add_parser("eval", help="прогнать исполняемый eval-набор")
@@ -474,7 +577,10 @@ def build_parser() -> argparse.ArgumentParser:
     holdout_selection.add_argument("--all", action="store_true", help="запустить весь набор")
     holdout_run.add_argument("--output", required=True, help="новый JSONL-файл результата")
     holdout_run.add_argument(
-        "--runner", choices=("codex", "claude"), default="codex", help="LLM backend"
+        "--runner",
+        choices=("codex", "claude", "opencode"),
+        default="codex",
+        help="LLM backend",
     )
     holdout_run.add_argument(
         "--executable", help="путь к CLI; по умолчанию совпадает с --runner"
@@ -487,6 +593,47 @@ def build_parser() -> argparse.ArgumentParser:
     holdout_score.add_argument("--input", required=True, help="JSONL-файл результата")
     holdout_score.add_argument("--report", help="необязательный Markdown-отчёт")
     holdout_score.set_defaults(handler=_holdout)
+
+    pedagogy = subparsers.add_parser(
+        "pedagogy", help="eval режимов, семинарских аналогов и малых приёмов"
+    )
+    pedagogy_actions = pedagogy.add_subparsers(
+        dest="pedagogy_command", required=True
+    )
+    pedagogy_list = pedagogy_actions.add_parser(
+        "list", help="показать педагогические случаи"
+    )
+    pedagogy_list.set_defaults(handler=_pedagogy)
+
+    pedagogy_prompt = pedagogy_actions.add_parser(
+        "prompt", help="показать педагогический eval-промпт"
+    )
+    pedagogy_prompt.add_argument("--case", required=True, help="id случая")
+    pedagogy_prompt.set_defaults(handler=_pedagogy)
+
+    pedagogy_run = pedagogy_actions.add_parser(
+        "run", help="запустить педагогические случаи через LLM CLI"
+    )
+    pedagogy_selection = pedagogy_run.add_mutually_exclusive_group(required=False)
+    pedagogy_selection.add_argument(
+        "--case", action="append", help="id случая; повторяется"
+    )
+    pedagogy_selection.add_argument("--all", action="store_true")
+    pedagogy_run.add_argument("--output", required=True, help="новый JSONL-файл")
+    pedagogy_run.add_argument(
+        "--runner", choices=("codex", "claude", "opencode"), default="codex"
+    )
+    pedagogy_run.add_argument("--executable", help="путь к CLI")
+    pedagogy_run.add_argument("--model", help="необязательная явная модель")
+    pedagogy_run.add_argument("--timeout", type=int, default=900)
+    pedagogy_run.set_defaults(handler=_pedagogy)
+
+    pedagogy_score = pedagogy_actions.add_parser(
+        "score", help="оценить сохранённый педагогический run"
+    )
+    pedagogy_score.add_argument("--input", required=True, help="JSONL-файл")
+    pedagogy_score.add_argument("--report", help="необязательный Markdown-отчёт")
+    pedagogy_score.set_defaults(handler=_pedagogy)
     return parser
 
 
