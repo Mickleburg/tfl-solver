@@ -154,6 +154,7 @@ Pharma в текущем курсе отсутствует.
 | Codex pedagogy holdout v1 | historical: 8/8 PASS, 104/104 on rubric revision 4 |
 | Pedagogy holdout v2 | baseline pending; rubric checks reproducible discovery path |
 | OpenCode Qwen smoke | FAIL: correct general conclusion; false/contradictory steps, schema error, 16–20/8 tool calls |
+| OpenCode Qwen revision 7 | внешний 503 до ответа модели; содержательный smoke не состоялся |
 | Claude holdout smoke | BLOCKED: `oauth_org_not_allowed` |
 
 Базовые команды для повторения среза:
@@ -212,6 +213,11 @@ intake-пакетом требует нового baseline.
 20 вызовов при бюджете 8. Повтор исправил эту зацепку, но нарушил JSON Schema,
 оставил противоречия в объяснении и использовал 16 вызовов. Это содержательная
 регрессия пути к решению, а не успешный baseline.
+
+Первая попытка OpenCode smoke на revision 7 и commit `8402361` не дошла до
+содержательного ответа: provider вернул `503 ERR_CONNECT_FAIL` через 491,76 с,
+а короткий запрос без инструментов также не ответил. Вызовов оракула и usage
+нет; результат не считается ни PASS, ни содержательным FAIL новой схемы.
 
 Claude adapter проверен вплоть до реального запуска CLI 2.1.205, разбора
 event-stream и API-запроса. Организация отклоняет модель до первого tool call
