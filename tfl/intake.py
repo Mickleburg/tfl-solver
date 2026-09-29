@@ -712,7 +712,7 @@ def analyse(
                 re.search(pattern, text, re.IGNORECASE)
                 for pattern in hit[1].get("required_patterns", ())
             )
-            if hit[0] >= 0.08
+            if hit[0] >= 0.075
         )
         seminar_similar = tuple(eligible_seminars)[: min(limit, 3)]
     return Analysis(

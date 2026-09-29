@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 20
+    assert manifest["rubric_revision"] == 21
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -250,6 +250,47 @@ def test_bracket_reference_response_scores_thirteen():
     score = score_response(case, good_bracket_response(case), ["python3 -c import tfl.pattern"])
     assert score.total == 13
     assert score.passed
+
+
+def test_rotation_rejects_confusing_source_letters_with_image_letters():
+    case = next(case for case in load_cases() if case.id == "training-cyclic-shift")
+    response = {
+        "case_id": case.id,
+        "mode": "training",
+        "task_class": "CODE",
+        "seminar_analog": "sem-2026-09-05-rotation",
+        "discovery_path": [],
+        "micro_methods": [],
+        "prerequisites_used": [],
+        "chosen_method": "циклический сдвиг",
+        "oracle_calls": [],
+        "final_answer": "E(w1) и E(w2) начинаются с различных букв a и b.",
+        "limitations": ["Конечная проверка не заменяет доказательство."],
+    }
+    score = score_response(case, response, ["python3 -c pass"])
+    assert score.components["границы"] == 0
+    assert any("недопустимое утверждение" in issue for issue in score.issues)
+
+
+def test_decoding_srs_accepts_boundary_marker_after_boundary_wording():
+    case = next(case for case in load_cases() if case.id == "training-decoding-srs")
+    response = {
+        "case_id": case.id,
+        "mode": "training",
+        "task_class": "CODE",
+        "seminar_analog": "sem-2026-09-05-decoding-srs",
+        "discovery_path": [],
+        "micro_methods": [
+            "проверить перекрытия и критические пары; отдельно проверить границу слова маркером $"
+        ],
+        "prerequisites_used": [],
+        "chosen_method": "пополнение по критическим парам",
+        "oracle_calls": [],
+        "final_answer": "Наивная система не конфлюэнтна на ada; добавить маркер конца $ и правила a) -> (), d( -> )(." ,
+        "limitations": ["Конечный список критических пар проверяется полностью."],
+    }
+    score = score_response(case, response, ["python3 -c pass"])
+    assert score.components["малые приёмы"] == 2
 
 
 def test_wrong_analog_is_a_hard_failure():

@@ -365,6 +365,11 @@ def test_encoding_cards_contain_executable_checks_and_general_arguments():
     assert "d$ -> )$" in decoding["method"]
     assert "ada_nfs" in decoding["verification"]
     assert "ad_end_nfs" in decoding["verification"]
+    assert "end_local" in decoding["verification"]
+    assert "критических пар" in decoding["verification"]
+    assert "все 10" in decoding["verification"]
+    assert "не перебор входных слов" in decoding["verification"]
+    assert len(decoding["required_patterns"]) == 2
 
 
 def test_full_mode_is_reported(index):

@@ -140,7 +140,7 @@ JSON Schema. Полный набор вызывается только явны�
 backend'ами через `tfl pedagogy run`, а закрытая рубрика оценивается командой
 `tfl pedagogy score`. Codex baseline revision 4 в
 `reports/pedagogy/codex-baseline-2026-09-28.md` сохранён как исторический;
-revision 20 требует нового поля `discovery_path`, проверяет ошибки внутри пути,
+revision 21 требует нового поля `discovery_path`, проверяет ошибки внутри пути,
 передаёт модели детерминированный компактный intake-пакет и раскладывает один
 запрос на четыре последовательных этапа без дополнительных model calls.
 
