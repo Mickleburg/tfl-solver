@@ -323,6 +323,21 @@ def test_verified_seminars_store_reproducible_discovery_paths():
     assert all("→" in step for record in records for step in record["discovery_path"])
 
 
+def test_pattern_cards_contain_executable_checks_and_correct_proof_directions():
+    records = {record["id"]: record for record in load_seminar_index().records}
+    normal = records["sem-2026-09-05-pattern-normal-form"]
+    brackets = records["sem-2026-09-05-bracket-deletion"]
+    assert "python3 -c" in normal["verification"]
+    assert "сумма позиций b" in normal["method"]
+    assert "единственную нормальную форму" in normal["method"]
+    assert "python3 -c" in brackets["verification"]
+    assert "читать успешный вывод назад" in brackets["method"]
+    assert any(
+        "произвольное удаление может нарушить правильность" in step
+        for step in brackets["discovery_path"]
+    )
+
+
 def test_full_mode_is_reported(index):
     result = analyse("Проверить язык на регулярность", index=index, mode="full")
     assert "Режим решения: full" in result.report()

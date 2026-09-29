@@ -66,12 +66,108 @@ def good_response(case):
     }
 
 
+def good_pattern_response(case):
+    assert case.id == "training-pattern-normal-form"
+    return {
+        "case_id": case.id,
+        "mode": "training",
+        "task_class": "CODE",
+        "seminar_analog": "sem-2026-09-05-pattern-normal-form",
+        "discovery_path": [
+            {
+                "clue": "X — произвольная строковая переменная, а правила переставляют буквы и заменяют b на aa.",
+                "action": "Посчитать число b и сумму позиций b.",
+                "result": "Лексикографическая пара строго убывает.",
+                "next_step": "Найти инвариант и вид неприводимых слов.",
+            },
+            {
+                "clue": "Любое b является редексом Xb при X=epsilon.",
+                "action": "Вычислить инвариант |w|_a+2|w|_b.",
+                "result": "Нормальная форма единственна и равна a^mu(w).",
+                "next_step": "Заключить конфлюэнтность завершимой системы.",
+            },
+        ],
+        "micro_methods": [
+            "посчитать изменение числа b",
+            "посчитать сумму позиций b",
+            "описать неприменимость правил",
+        ],
+        "prerequisites_used": ["фундированный порядок", "инвариант"],
+        "chosen_method": (
+            "Проверить оракулом лексикографическую меру, затем использовать "
+            "инвариант для единственной нормальной формы."
+        ),
+        "oracle_calls": [
+            {
+                "module": "pattern",
+                "operation": "check_measure + check_invariant",
+                "input": "aXb -> bXa; Xb -> aaX",
+                "result": "мера убывает, инвариант сохраняется на проверенном срезе",
+            }
+        ],
+        "final_answer": (
+            "Система завершима по лексикографической мере из числа b и суммы "
+            "их позиций. Инвариант определяет единственную нормальную форму "
+            "a^mu(w), поэтому завершимая система конфлюэнтна."
+        ),
+        "limitations": ["Конечный запуск проверяет формулы, общее доказательство дано отдельно."],
+    }
+
+
+def good_bracket_response(case):
+    assert case.id == "training-bracket-deletion"
+    return {
+        "case_id": case.id,
+        "mode": "training",
+        "task_class": "CODE",
+        "seminar_analog": "sem-2026-09-05-bracket-deletion",
+        "discovery_path": [
+            {
+                "clue": "Нужно доказать две импликации тогда и только тогда.",
+                "action": "Успешное удаление открывающей и более поздней закрывающей скобки прочитать назад.",
+                "result": "Обратная вставка сохраняет префиксный баланс.",
+                "next_step": "Получить необходимость от epsilon к исходному слову.",
+            },
+            {
+                "clue": "В непустой правильной скобочной последовательности есть соседняя пара ().",
+                "action": "Удалить её и применить индукцию по длине.",
+                "result": "Правильное слово сводится к epsilon.",
+                "next_step": "Соединить обе импликации.",
+            },
+        ],
+        "micro_methods": [
+            "разделить доказательство на две импликации",
+            "прочитать успешную редукцию назад",
+            "выбрать параметр индукции — длину",
+        ],
+        "prerequisites_used": ["префиксный баланс", "индукция"],
+        "chosen_method": (
+            "Использовать префиксный баланс для обратных вставок и удалять "
+            "соседнюю пару () по индукции."
+        ),
+        "oracle_calls": [
+            {
+                "module": "pattern",
+                "operation": "reachable",
+                "input": "(X) -> X",
+                "result": "на конечном срезе контрпримеров нет",
+            }
+        ],
+        "final_answer": (
+            "Получено равносильное условие: w сводится к epsilon тогда и только "
+            "тогда, когда w является правильной скобочной последовательностью. "
+            "Необходимость следует из обратных вставок, достаточность — по индукции."
+        ),
+        "limitations": ["Конечный срез не заменяет две общие импликации."],
+    }
+
+
 def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     cases = load_cases()
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 12
+    assert manifest["rubric_revision"] == 13
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -100,7 +196,9 @@ def test_prompt_exposes_precomputed_intake_but_hides_rubric_files():
         assert "только эти точные" in prompt
         assert "идентификаторы без пояснений" in prompt
         assert "Не используй bash" in prompt
-        assert "буквально перенеси минимум два" in prompt
+        assert "буквально перенеси все применимые" in prompt
+        assert "Не заменяй данную команду своим скриптом" in prompt
+        assert "импорт `tfl.pattern` означает точное значение `pattern`" in prompt
         assert "не привязывайся к фразе «заметим, что»" in prompt
         if case.seminar_analog:
             assert case.seminar_analog in prompt
@@ -125,6 +223,20 @@ def test_complete_pedagogical_response_scores_thirteen():
     assert score.total == 13
     assert score.passed
     assert not score.issues
+
+
+def test_pattern_normal_form_reference_response_scores_thirteen():
+    case = load_cases()[1]
+    score = score_response(case, good_pattern_response(case), ["python3 -c import tfl.pattern"])
+    assert score.total == 13
+    assert score.passed
+
+
+def test_bracket_reference_response_scores_thirteen():
+    case = load_cases()[2]
+    score = score_response(case, good_bracket_response(case), ["python3 -c import tfl.pattern"])
+    assert score.total == 13
+    assert score.passed
 
 
 def test_wrong_analog_is_a_hard_failure():
@@ -239,6 +351,26 @@ def test_finite_delay_curve_cannot_prove_unboundedness():
         "delay_growth=[1,3,5,7,9,11] подтверждает неограниченность."
     )
     score = score_response(case, response, ["py -3 check.py"])
+    assert not score.content_passed
+    assert any("недопустимое утверждение" in issue for issue in score.issues)
+
+
+def test_pattern_system_rejects_the_observed_false_nonconfluence():
+    case = load_cases()[1]
+    response = good_pattern_response(case)
+    response["discovery_path"][1]["result"] = (
+        "Система не конфлюэнтна, потому что ba неприводимо."
+    )
+    score = score_response(case, response, ["python3 -c import tfl.pattern"])
+    assert not score.content_passed
+    assert any("недопустимое утверждение" in issue for issue in score.issues)
+
+
+def test_arbitrary_bracket_deletion_does_not_preserve_prefix_balance():
+    case = load_cases()[2]
+    response = good_bracket_response(case)
+    response["chosen_method"] += " Каждое удаление сохраняет префиксный баланс."
+    score = score_response(case, response, ["python3 -c import tfl.pattern"])
     assert not score.content_passed
     assert any("недопустимое утверждение" in issue for issue in score.issues)
 
