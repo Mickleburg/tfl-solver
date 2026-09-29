@@ -139,7 +139,7 @@ Pharma в текущем курсе отсутствует.
 
 | Проверка | Результат |
 |---|---|
-| Unit/integration tests | 1555 passed, 1 skipped |
+| Unit/integration tests | 1557 passed, 1 skipped |
 | Codex plugin | manifest valid, local marketplace parsed |
 | Claude Code plugin | plugin + marketplace strict validation passed |
 | OpenCode adapter | JSONL/parser/read-only profile tested; CLI 1.18.32 found in WSL |
@@ -155,7 +155,7 @@ Pharma в текущем курсе отсутствует.
 | Pedagogy holdout v2 | baseline pending; rubric checks reproducible discovery path |
 | OpenCode Qwen smoke | FAIL: correct general conclusion; false/contradictory steps, schema error, 16–20/8 tool calls |
 | OpenCode Qwen revision 7 | внешний 503 до ответа модели; содержательный smoke не состоялся |
-| OpenCode revision 8 | однопроходная декомпозиция готова; provider недоступен, model-run не оценён |
+| OpenCode revision 8 | FAIL 8/13: верные оракул и итог, ложное общее доказательство, 3 команды при целевом бюджете 2 |
 | Claude holdout smoke | BLOCKED: `oauth_org_not_allowed` |
 
 Базовые команды для повторения среза:
@@ -204,7 +204,7 @@ Claude smoke после снятия внешнего auth-блокера и ч�
 60 наблюдаемых команд и 1092,45 с для успешных запусков. Все восемь
 доказательств проверены вручную. Первый `full`-запуск попал в таймаут; его
 запись сохранена, а повтор завершился успешно. Этот запуск относится к
-рубрике revision 4; revision 8 с полем `discovery_path`, подготовленным
+рубрике revision 4; revision 9 с полем `discovery_path`, подготовленным
 intake-пакетом и четырьмя последовательными этапами требует нового baseline.
 
 Первый реальный OpenCode smoke на `pt/positive-llm-qwen36` сохранён отдельным
@@ -221,6 +221,16 @@ intake-пакетом и четырьмя последовательными э�
 нет; результат не считается ни PASS, ни содержательным FAIL новой схемы.
 Педагогический scorer распознаёт HTTP/auth/connection-сбои и помечает их как
 `INFRA ERROR`, не смешивая с ошибкой доказательства или JSON Schema.
+
+Повторная диагностика 2026-09-29 показала, что прямой запуск команды через WSL
+не читал существующую загрузку `LLM_API_KEY` из интерактивного `.bashrc`.
+Глобальная конфигурация OpenCode не менялась: health-check и revision-8 smoke
+заработали через `bash -ic`. На commit `98a90d5` модель завершила случай за
+219,975 с и получила 8/13. Она использовала правильный оракул и дала верный
+итог, но ошибочно приписала кодовым словам длины 1, 2, 4 и заявила рост
+остатков Сардинаса—Паттерсона вместо явного семейства общих префиксов. В
+revision 9 карточка содержит свидетель `xz^k` / `yz^(k-1)`, scorer ловит эти
+ложные утверждения, а отдельная инструментальная сериализация запрещена.
 
 Claude adapter проверен вплоть до реального запуска CLI 2.1.205, разбора
 event-stream и API-запроса. Организация отклоняет модель до первого tool call
