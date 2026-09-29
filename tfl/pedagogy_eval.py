@@ -91,6 +91,7 @@ class PedagogyScore:
     issues: tuple[str, ...]
     runner: str = "unknown"
     valid_response: bool = True
+    infrastructure_error: bool = False
 
     @property
     def total(self) -> int:
@@ -121,7 +122,11 @@ class PedagogyScore:
 
     @property
     def passed(self) -> bool:
-        return self.content_passed and self.within_budget
+        return (
+            not self.infrastructure_error
+            and self.content_passed
+            and self.within_budget
+        )
 
 
 def _json_lines(path: pathlib.Path) -> list[dict[str, Any]]:
@@ -232,6 +237,19 @@ def _module_name(value: Any) -> str:
     return re.split(r"[./:]", name, maxsplit=1)[0]
 
 
+def _is_infrastructure_error(message: str) -> bool:
+    """Отличить отказ runner/provider от некорректного ответа модели."""
+    if not message.strip():
+        return False
+    return re.search(
+        r"\b(?:401|403|429|5\d\d)\b|service unavailable|err_connect_fail|"
+        r"connection (?:timed out|refused)|oauth_org_not_allowed|"
+        r"executable .*(?:not found|не найден)",
+        message,
+        re.IGNORECASE,
+    ) is not None
+
+
 def validate_response(response: Any) -> tuple[str, ...]:
     if not isinstance(response, dict):
         return ("ответ не является JSON-объектом",)
@@ -298,11 +316,17 @@ def score_response(
     }
     validation_issues = validate_response(response)
     issues = list(validation_issues)
+    infrastructure_error = _is_infrastructure_error(runner_error)
     if runner_error:
         issues.append(f"ошибка runner: {runner_error}")
     if not isinstance(response, dict):
         return PedagogyScore(
-            case.id, components, tuple(issues), runner, valid_response=False
+            case.id,
+            components,
+            tuple(issues),
+            runner,
+            valid_response=False,
+            infrastructure_error=infrastructure_error,
         )
 
     if response.get("case_id") != case.id:
@@ -412,6 +436,7 @@ def score_response(
         tuple(issues),
         runner,
         valid_response=not validation_issues,
+        infrastructure_error=infrastructure_error,
     )
 
 
@@ -489,7 +514,9 @@ def score_report(
     by_id = {str(record.get("case_id", "")): record for record in records}
     lines = ["# Педагогический holdout", ""]
     for score in scores:
-        if score.passed:
+        if score.infrastructure_error:
+            status = "INFRA ERROR"
+        elif score.passed:
             status = "PASS"
         elif score.content_passed:
             status = "CONTENT PASS / BUDGET FAIL"
@@ -513,8 +540,10 @@ def score_report(
         lines.append("")
     passed = sum(score.passed for score in scores)
     content_passed = sum(score.content_passed for score in scores)
+    infrastructure_errors = sum(score.infrastructure_error for score in scores)
     lines.append(
         f"Итого: {passed}/{len(scores)} PASS; "
-        f"содержательно {content_passed}/{len(scores)}"
+        f"содержательно {content_passed}/{len(scores)}; "
+        f"инфраструктурных ошибок {infrastructure_errors}"
     )
     return "\n".join(lines)

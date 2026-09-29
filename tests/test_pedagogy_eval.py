@@ -12,6 +12,7 @@ from tfl.pedagogy_eval import (
     MANIFEST_PATH,
     build_prompt,
     load_cases,
+    score_report,
     score_response,
 )
 
@@ -197,6 +198,33 @@ def test_schema_violation_is_not_a_content_pass():
     assert not score.content_passed
     assert score.components["ответ"] == 0
     assert any("final_answer" in issue for issue in score.issues)
+
+
+def test_provider_outage_is_reported_separately_from_model_failure():
+    case = load_cases()[0]
+    score = score_response(
+        case,
+        None,
+        runner="opencode",
+        runner_error="503 Service Unavailable: ERR_CONNECT_FAIL 110",
+    )
+    assert score.infrastructure_error
+    assert not score.passed
+    report = score_report([score])
+    assert "INFRA ERROR, 0/13" in report
+    assert "инфраструктурных ошибок 1" in report
+
+
+def test_malformed_model_output_is_not_an_infrastructure_error():
+    case = load_cases()[0]
+    score = score_response(
+        case,
+        None,
+        runner="opencode",
+        runner_error="в потоке нет структурированного финального ответа",
+    )
+    assert not score.infrastructure_error
+    assert "FAIL, 0/13" in score_report([score])
 
 
 def test_cli_lists_and_prints_pedagogy_prompt(capsys):
