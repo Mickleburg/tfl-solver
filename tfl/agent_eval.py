@@ -888,7 +888,13 @@ def run_opencode_prompt(
 ) -> dict[str, Any]:
     """Запустить структурированный eval-промпт через OpenCode JSONL CLI."""
     schema = schema_path.read_text(encoding="utf-8")
-    full_prompt = f"{prompt}\n\nОбязательная JSON Schema ответа:\n{schema}"
+    full_prompt = (
+        "Обязательная JSON Schema ответа (это определение формата, а не сам "
+        f"ответ):\n{schema}\n\n{prompt}\n\n"
+        "Верни экземпляр ответа по схеме выше. Заполни значения полей задачи; "
+        "не копируй объект схемы и её служебные поля $schema, type, properties "
+        "или required."
+    )
     command = [
         *_executable_command(executable),
         "run",

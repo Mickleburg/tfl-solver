@@ -413,8 +413,10 @@ def test_opencode_runner_uses_read_only_agent_and_inline_schema(monkeypatch, cas
     assert command[:4] == ["opencode", "run", "--format", "json"]
     assert command[command.index("--agent") + 1] == "tfl-eval"
     assert command[command.index("--model") + 1] == "ollama/test"
-    assert "Обязательная JSON Schema ответа" in captured["kwargs"]["input"]
-    assert cases[0].statement in captured["kwargs"]["input"]
+    prompt = captured["kwargs"]["input"]
+    assert "Обязательная JSON Schema ответа" in prompt
+    assert prompt.index('"$schema"') < prompt.index(cases[0].statement)
+    assert "не копируй объект схемы" in prompt.rsplit("\n\n", 1)[-1]
     assert record["response"] == response
     assert record["runner"] == "opencode"
 
