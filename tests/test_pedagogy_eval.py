@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 22
+    assert manifest["rubric_revision"] == 23
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -199,6 +199,7 @@ def test_prompt_exposes_precomputed_intake_but_hides_rubric_files():
         assert "буквально перенеси все применимые" in prompt
         assert "Не заменяй данную команду своим скриптом" in prompt
         assert "импорт `tfl.pattern` означает точное значение `pattern`" in prompt
+        assert "`from tfl.srs import parse_srs` обе означают `srs`" in prompt
         assert "если команда не импортирует `tfl`, укажи `python`" in prompt
         assert "не привязывайся к фразе «заметим, что»" in prompt
         if case.seminar_analog:
@@ -277,6 +278,17 @@ def test_rotation_rejects_confusing_source_letters_with_image_letters():
     assert score.components["границы"] == 0
     assert any("обратн" in issue and "морфизм" in issue for issue in score.issues)
 
+    response["chosen_method"] = "Использовать левый циклический сдвиг."
+    response["final_answer"] = "Определим E(wx)=xw и назовём это левым сдвигом."
+    score = score_response(case, response, ["python3 -c pass"])
+    assert score.components["границы"] == 0
+    assert any("E\\(wx" in issue for issue in score.issues)
+
+    response["final_answer"] = "Формулы следуют из леммы об общем префиксе."
+    score = score_response(case, response, ["python3 -c pass"])
+    assert score.components["границы"] == 0
+    assert any("префикс" in issue for issue in score.issues)
+
 
 def test_decoding_srs_accepts_boundary_marker_after_boundary_wording():
     case = next(case for case in load_cases() if case.id == "training-decoding-srs")
@@ -297,6 +309,13 @@ def test_decoding_srs_accepts_boundary_marker_after_boundary_wording():
     }
     score = score_response(case, response, ["python3 -c pass"])
     assert score.components["малые приёмы"] == 2
+
+    response["limitations"] = [
+        "Оракул проверяет критические пары с ограничением max_len, это лишь иллюстрация."
+    ]
+    score = score_response(case, response, ["python3 -c pass"])
+    assert score.components["границы"] == 0
+    assert any("критическ" in issue and "огранич" in issue for issue in score.issues)
 
 
 def test_wrong_analog_is_a_hard_failure():

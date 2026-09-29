@@ -29,6 +29,8 @@ order: verify transfer without tools, run the supplied oracle once, construct
 the general proof, then validate and emit the single JSON object. After a
 successful oracle call, do not call another tool. Never use Python, `cat`, or
 a heredoc to serialize or validate the final JSON; emit it directly.
+In `oracle_calls.module`, serialize the imported `tfl` submodule: both
+`import tfl.srs` and `from tfl.srs import parse_srs` mean `srs`, not `python`.
 Preserve the exact oracle result: a nonempty residual set without a codeword is
 not an empty set, and a finite curve is only an illustration, not a general
 proof. When reversing a pattern rule, retain its variable substring: the
@@ -36,3 +38,6 @@ reverse of `(X) -> X` wraps an existing `X`, rather than merely inserting an
 adjacent `()`. Copy tested length bounds exactly. Do not invent theorem names
 when the supplied route already gives a direct proof, and do not append a
 different confluence theorem after a unique-normal-form argument is complete.
+If the oracle exhausts every critical pair without truncating a
+length-preserving search, describe that as an exact finite critical-pair check,
+not as sampling input words or an empirical illustration.

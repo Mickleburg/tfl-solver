@@ -356,6 +356,8 @@ def test_encoding_cards_contain_executable_checks_and_general_arguments():
     assert "E(ab)=ba" in rotation["method"]
     assert "ab^n" in rotation["method"]
     assert "общий вывод об инъективности даёт явная обратная функция" in rotation["verification"]
+    assert "E(wx)=xw означала бы другой" in rotation["verification"]
+    assert "лемма об общем префиксе не нужна" in rotation["verification"]
     assert len(rotation["required_patterns"]) == 2
 
     assert "python3 -c" in decoding["verification"]
