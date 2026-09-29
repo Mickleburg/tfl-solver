@@ -61,3 +61,5 @@ the response or inventing its expected result does not count as execution.
 Treat a successful `terminates()` order as an exact rule check, not a bounded
 enumeration of input words. Remove normal-form claims from a termination-only
 answer, including from `micro_methods` and `limitations`.
+Pattern rules with a string variable `X` and a literal SRS are different
+formal objects even when the termination-measure strategy transfers.
