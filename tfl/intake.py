@@ -700,11 +700,11 @@ def analyse(
         similar = tuple(index.similar(text, limit=limit))
     seminar_similar: tuple[tuple[float, dict], ...] = ()
     if seminar_index is not None:
-        seminar_similar = tuple(
+        eligible_seminars = (
             hit
             for hit in seminar_index.similar(
                 text,
-                limit=min(limit, 3),
+                limit=len(seminar_index),
                 query_coverage_weight=0.5,
                 routes={candidate.code for candidate in candidates} or None,
             )
@@ -714,6 +714,7 @@ def analyse(
             )
             if hit[0] >= 0.08
         )
+        seminar_similar = tuple(eligible_seminars)[: min(limit, 3)]
     return Analysis(
         text=text,
         hint=hint,

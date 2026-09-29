@@ -345,6 +345,28 @@ def test_pattern_cards_contain_executable_checks_and_correct_proof_directions():
     )
 
 
+def test_encoding_cards_contain_executable_checks_and_general_arguments():
+    records = {record["id"]: record for record in load_seminar_index().records}
+    rotation = records["sem-2026-09-05-rotation"]
+    decoding = records["sem-2026-09-05-decoding-srs"]
+
+    assert "python3 -c" in rotation["verification"]
+    assert "D(vx)=xv" in rotation["method"]
+    assert "E(ab)=ba" in rotation["method"]
+    assert "ab^n" in rotation["method"]
+    assert "общий вывод об инъективности даёт явная обратная операция" in rotation["verification"]
+    assert len(rotation["required_patterns"]) == 2
+
+    assert "python3 -c" in decoding["verification"]
+    assert "ada" in decoding["method"]
+    assert "a) -> ()" in decoding["method"]
+    assert "d( -> )(" in decoding["method"]
+    assert "a$ -> ($" in decoding["method"]
+    assert "d$ -> )$" in decoding["method"]
+    assert "ada_nfs" in decoding["verification"]
+    assert "ad_end_nfs" in decoding["verification"]
+
+
 def test_full_mode_is_reported(index):
     result = analyse("Проверить язык на регулярность", index=index, mode="full")
     assert "Режим решения: full" in result.report()

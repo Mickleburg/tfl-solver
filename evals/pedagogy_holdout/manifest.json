@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "rubric_revision": 19,
+  "rubric_revision": 20,
   "case_count": 8,
   "cases_sha256": "bac93bb5886fb0868e240f08c93a5c0fc5860b8afcaf82049e3de520d97566b2",
   "modes": ["training", "full"],
