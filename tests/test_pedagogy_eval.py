@@ -71,7 +71,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 11
+    assert manifest["rubric_revision"] == 12
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -100,6 +100,7 @@ def test_prompt_exposes_precomputed_intake_but_hides_rubric_files():
         assert "только эти точные" in prompt
         assert "идентификаторы без пояснений" in prompt
         assert "Не используй bash" in prompt
+        assert "буквально перенеси минимум два" in prompt
         assert "не привязывайся к фразе «заметим, что»" in prompt
         if case.seminar_analog:
             assert case.seminar_analog in prompt
@@ -214,6 +215,28 @@ def test_common_prefix_is_a_lower_bound_not_an_exact_delay_value():
     response = good_response(case)
     response["discovery_path"][1]["result"] = (
         "Для этой пары задержка раскодирования равна 2k."
+    )
+    score = score_response(case, response, ["py -3 check.py"])
+    assert not score.content_passed
+    assert any("недопустимое утверждение" in issue for issue in score.issues)
+
+
+def test_nonempty_sardinas_cycle_cannot_be_called_empty():
+    case = load_cases()[0]
+    response = good_response(case)
+    response["discovery_path"][0]["result"] = (
+        "Все множества Сардинаса–Паттерсона пусты."
+    )
+    score = score_response(case, response, ["py -3 check.py"])
+    assert not score.content_passed
+    assert any("недопустимое утверждение" in issue for issue in score.issues)
+
+
+def test_finite_delay_curve_cannot_prove_unboundedness():
+    case = load_cases()[0]
+    response = good_response(case)
+    response["oracle_calls"][0]["result"] = (
+        "delay_growth=[1,3,5,7,9,11] подтверждает неограниченность."
     )
     score = score_response(case, response, ["py -3 check.py"])
     assert not score.content_passed

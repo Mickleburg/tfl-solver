@@ -235,8 +235,10 @@ read или glob, чтобы заново собрать те же сведен�
 3. Общее доказательство. Построй два–пять связанных шагов
    clue → action → result → next_step. Для общего утверждения добавь формулу,
    инвариант или параметрическое семейство; конечной таблицы недостаточно.
-   В `micro_methods` перенеси применимые малые приёмы карточки, а в
-   `chosen_method` назови и проверку оракулом, и общий свидетель.
+   В `micro_methods` буквально перенеси минимум два применимых пункта из
+   строки «малые приёмы карточки», сохранив их ключевые слова; не заменяй их
+   другими приёмами. В `chosen_method` назови и проверку оракулом, и общий
+   свидетель.
 4. Сериализация. Верни только один JSON-объект по переданной Schema. Перед
    отправкой проверь: `final_answer` и `chosen_method` — строки, не массивы;
    `discovery_path` — массив минимум из двух объектов со всеми четырьмя
@@ -450,12 +452,22 @@ def score_response(
     else:
         issues.append(f"ответ покрыл {matched_answer}/{len(case.answer_patterns)} опор")
 
-    evaluated_text = f"{discovery_text}\n{method}\n{answer}"
-    forbidden = [
-        pattern for pattern in case.forbidden_patterns if _matches(pattern, evaluated_text)
-    ]
     limitations = [
         str(item).strip() for item in response.get("limitations", ()) if str(item).strip()
+    ]
+    oracle_text = "\n".join(
+        " ".join(
+            str(call.get(field, ""))
+            for field in ("module", "operation", "input", "result")
+        )
+        for call in calls
+        if isinstance(call, dict)
+    )
+    evaluated_text = "\n".join(
+        (discovery_text, micro_text, method, oracle_text, answer, *limitations)
+    )
+    forbidden = [
+        pattern for pattern in case.forbidden_patterns if _matches(pattern, evaluated_text)
     ]
     if not forbidden and limitations:
         components["границы"] = 1
