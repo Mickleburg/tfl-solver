@@ -23,8 +23,11 @@ seminar card. Do not call skill, read, glob, or intake to rediscover them. The
 tool-call budget is total, not per tool. On Linux use `python3`, never `py -3`.
 Bash calls must be single-line `python3` commands without heredocs, pipes,
 redirects, or shell utilities. Do not explore CLI syntax or library APIs when
-the prompt already gives a command. Run that command verbatim instead of
-reimplementing its formal semantics in an ad-hoc script. Follow the four stages in the prompt in
+the prompt already gives a command. Run it verbatim when its formal object
+matches the current task. When a seminar analogy contains different rules,
+transfer the check to the current object with the prompt's documented `tfl`
+module template; never report the old object's output as evidence for the new
+task. Do not reimplement formal semantics in an ad-hoc script. Follow the four stages in the prompt in
 order: verify transfer without tools, run the supplied oracle once, construct
 the general proof, then validate and emit the single JSON object. After a
 successful oracle call, do not call another tool. Never use Python, `cat`, or
@@ -41,3 +44,5 @@ different confluence theorem after a unique-normal-form argument is complete.
 If the oracle exhausts every critical pair without truncating a
 length-preserving search, describe that as an exact finite critical-pair check,
 not as sampling input words or an empirical illustration.
+Transfer only steps needed by the current question: do not append invariants,
+normal-form claims, or confluence arguments to a termination-only task.

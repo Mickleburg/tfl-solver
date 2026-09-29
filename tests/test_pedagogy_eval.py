@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 23
+    assert manifest["rubric_revision"] == 24
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -197,9 +197,12 @@ def test_prompt_exposes_precomputed_intake_but_hides_rubric_files():
         assert "идентификаторы без пояснений" in prompt
         assert "Не используй bash" in prompt
         assert "буквально перенеси все применимые" in prompt
-        assert "Не заменяй данную команду своим скриптом" in prompt
+        assert "Не реализуй формальную семантику самодельным скриптом" in prompt
         assert "импорт `tfl.pattern` означает точное значение `pattern`" in prompt
         assert "`from tfl.srs import parse_srs` обе означают `srs`" in prompt
+        assert "Если карточка\nпроверяет другие правила или другой объект" in prompt
+        assert "s=parse_srs('RULES'); print(s.terminates())" in prompt
+        assert "не выдавай запуск на старой задаче за проверку новой" in prompt
         assert "если команда не импортирует `tfl`, укажи `python`" in prompt
         assert "не привязывайся к фразе «заметим, что»" in prompt
         if case.seminar_analog:
@@ -316,6 +319,26 @@ def test_decoding_srs_accepts_boundary_marker_after_boundary_wording():
     score = score_response(case, response, ["python3 -c pass"])
     assert score.components["границы"] == 0
     assert any("критическ" in issue and "огранич" in issue for issue in score.issues)
+
+
+def test_termination_only_case_rejects_false_transferred_normal_forms():
+    case = next(case for case in load_cases() if case.id == "training-simple-srs-measure")
+    response = {
+        "case_id": case.id,
+        "mode": "training",
+        "task_class": "LAB-1",
+        "seminar_analog": "sem-2026-09-05-pattern-normal-form",
+        "discovery_path": [],
+        "micro_methods": [],
+        "prerequisites_used": [],
+        "chosen_method": "лексикографическая мера (длина, inv(w))",
+        "oracle_calls": [],
+        "final_answer": "Мера убывает, поэтому система завершаема.",
+        "limitations": ["Нормальные формы имеют вид b^m a^n."],
+    }
+    score = score_response(case, response, ["python3 -c pass"])
+    assert score.components["границы"] == 0
+    assert any("нормальн" in issue for issue in score.issues)
 
 
 def test_wrong_analog_is_a_hard_failure():

@@ -98,6 +98,7 @@ def test_micro_methods_describe_small_steps_before_theorem():
     evidence = find_features(DESCRIPTION) + find_asks(DESCRIPTION)
     methods = suggest_micro_methods(evidence)
     assert "расставить скобки в логическом условии" in methods
+    assert "проверить совместность отрицания дизъюнкции" in methods
     assert "разделить конъюнкции и дизъюнкции на случаи" in methods
 
 
