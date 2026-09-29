@@ -139,7 +139,7 @@ Pharma в текущем курсе отсутствует.
 
 | Проверка | Результат |
 |---|---|
-| Unit/integration tests | 1552 passed, 1 skipped |
+| Unit/integration tests | 1555 passed, 1 skipped |
 | Codex plugin | manifest valid, local marketplace parsed |
 | Claude Code plugin | plugin + marketplace strict validation passed |
 | OpenCode adapter | JSONL/parser/read-only profile tested; CLI 1.18.32 found in WSL |
@@ -155,6 +155,7 @@ Pharma в текущем курсе отсутствует.
 | Pedagogy holdout v2 | baseline pending; rubric checks reproducible discovery path |
 | OpenCode Qwen smoke | FAIL: correct general conclusion; false/contradictory steps, schema error, 16–20/8 tool calls |
 | OpenCode Qwen revision 7 | внешний 503 до ответа модели; содержательный smoke не состоялся |
+| OpenCode revision 8 | однопроходная декомпозиция готова; provider недоступен, model-run не оценён |
 | Claude holdout smoke | BLOCKED: `oauth_org_not_allowed` |
 
 Базовые команды для повторения среза:

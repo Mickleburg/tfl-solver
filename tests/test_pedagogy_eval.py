@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from dataclasses import replace
 
 from tfl.cli import main
 from tfl.intake import load_seminar_index
@@ -102,6 +103,16 @@ def test_prompt_exposes_precomputed_intake_but_hides_rubric_files():
         else:
             assert "Проверенного семинарного аналога не найдено" in prompt
         assert "Не читай evals/pedagogy_holdout" in prompt
+
+
+def test_precomputed_fields_do_not_leak_hidden_expected_values():
+    case = load_cases()[0]
+    changed_rubric = replace(
+        case,
+        task_class="RK1-A",
+        seminar_analog="hidden-wrong-analog",
+    )
+    assert build_prompt(case) == build_prompt(changed_rubric)
 
 
 def test_complete_pedagogical_response_scores_thirteen():
