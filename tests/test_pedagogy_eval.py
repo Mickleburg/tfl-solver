@@ -71,7 +71,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 10
+    assert manifest["rubric_revision"] == 11
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -207,6 +207,28 @@ def test_sardinas_residuals_cannot_replace_the_common_prefix_family():
     score = score_response(case, response, ["py -3 check.py"])
     assert not score.content_passed
     assert any("недопустимое утверждение" in issue for issue in score.issues)
+
+
+def test_common_prefix_is_a_lower_bound_not_an_exact_delay_value():
+    case = load_cases()[0]
+    response = good_response(case)
+    response["discovery_path"][1]["result"] = (
+        "Для этой пары задержка раскодирования равна 2k."
+    )
+    score = score_response(case, response, ["py -3 check.py"])
+    assert not score.content_passed
+    assert any("недопустимое утверждение" in issue for issue in score.issues)
+
+
+def test_answer_accepts_grammatical_space_in_not_bounded():
+    case = load_cases()[0]
+    response = good_response(case)
+    response["final_answer"] = response["final_answer"].replace(
+        "неограничена", "не ограничена"
+    )
+    score = score_response(case, response, ["py -3 check.py"])
+    assert score.components["ответ"] == 2
+    assert score.passed
 
 
 def test_budget_is_reported_separately_from_content_quality():
