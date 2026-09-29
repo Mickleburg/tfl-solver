@@ -56,6 +56,8 @@ For a swap rule plus a shortening rule, prefer the prompt's human-readable
 natural-valued measure `(word length, number of ordered symbol pairs)` in the
 general proof. Do not substitute a global `ord_lex(word)` component: ordinary
 lexicographic order on all finite words is not well-founded.
+Make exactly one allowed oracle tool call. Merely describing the command in
+the response or inventing its expected result does not count as execution.
 Treat a successful `terminates()` order as an exact rule check, not a bounded
 enumeration of input words. Remove normal-form claims from a termination-only
 answer, including from `micro_methods` and `limitations`.

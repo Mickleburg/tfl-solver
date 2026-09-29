@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 27
+    assert manifest["rubric_revision"] == 28
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -208,6 +208,7 @@ def test_prompt_exposes_precomputed_intake_but_hides_rubric_files():
         assert "(длина слова, число пар x...y)" in prompt
         assert "не называй обычный" in prompt
         assert "цепочка `x > yx > yyx > ...` бесконечна" in prompt
+        assert "Фактически выполни ровно один разрешённый вызов" in prompt
         assert "если команда не импортирует `tfl`, укажи `python`" in prompt
         assert "не привязывайся к фразе «заметим, что»" in prompt
         if case.seminar_analog:
@@ -365,6 +366,13 @@ def test_termination_only_case_rejects_false_transferred_normal_forms():
     score = score_response(case, response, ["python3 -c pass"])
     assert score.components["границы"] == 0
     assert any("ord_lex" in issue for issue in score.issues)
+
+    response["final_answer"] = (
+        "Мера (|w|, число пар a...b) убывает в лексикографическом порядке "
+        "на N x N, который хорошо основан."
+    )
+    score = score_response(case, response, ["python3 -c pass"])
+    assert score.components["границы"] == 1
 
 
 def test_wrong_analog_is_a_hard_failure():
