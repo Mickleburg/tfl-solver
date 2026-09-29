@@ -335,6 +335,8 @@ def test_pattern_cards_contain_executable_checks_and_correct_proof_directions():
     assert "единственную нормальную форму" in normal["method"]
     assert "ab -> (3,[aaa])" in normal["verification"]
     assert "ровно на |X|+1" in normal["verification"]
+    assert "длины 1–3 (не 1–4)" in normal["verification"]
+    assert any("-2+2=0" in step for step in normal["discovery_path"])
     assert "python3 -c" in brackets["verification"]
     assert "оборачивает существующее подслово X" in brackets["method"]
     assert any(
