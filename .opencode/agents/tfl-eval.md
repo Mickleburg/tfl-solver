@@ -34,4 +34,5 @@ not an empty set, and a finite curve is only an illustration, not a general
 proof. When reversing a pattern rule, retain its variable substring: the
 reverse of `(X) -> X` wraps an existing `X`, rather than merely inserting an
 adjacent `()`. Copy tested length bounds exactly. Do not invent theorem names
-when the supplied route already gives a direct proof.
+when the supplied route already gives a direct proof, and do not append a
+different confluence theorem after a unique-normal-form argument is complete.

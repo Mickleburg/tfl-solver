@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 17
+    assert manifest["rubric_revision"] == 18
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -405,6 +405,17 @@ def test_pattern_response_cannot_invent_a_theorem_name_or_test_bound():
     response["limitations"] = [
         "Проверены слова длины 1–4; конфлюэнтность следует по теореме Ньютона-Бёрджесса."
     ]
+    score = score_response(case, response, ["python3 -c import tfl.pattern"])
+    assert not score.content_passed
+    assert any("недопустимое утверждение" in issue for issue in score.issues)
+
+
+def test_unique_normal_form_argument_does_not_imply_strong_confluence():
+    case = load_cases()[1]
+    response = good_pattern_response(case)
+    response["discovery_path"][1]["next_step"] = (
+        "Завершимость и слабая конфлюэнтность дают сильную конфлюэнтность."
+    )
     score = score_response(case, response, ["python3 -c import tfl.pattern"])
     assert not score.content_passed
     assert any("недопустимое утверждение" in issue for issue in score.issues)
