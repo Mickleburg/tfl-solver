@@ -330,6 +330,7 @@ def test_pattern_cards_contain_executable_checks_and_correct_proof_directions():
     assert "python3 -c" in normal["verification"]
     assert "сумма позиций b" in normal["method"]
     assert "единственную нормальную форму" in normal["method"]
+    assert "ab -> (3,[aaa])" in normal["verification"]
     assert "python3 -c" in brackets["verification"]
     assert "оборачивает существующее подслово X" in brackets["method"]
     assert any(
