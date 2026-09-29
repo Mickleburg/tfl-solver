@@ -283,6 +283,8 @@ def test_short_concrete_statement_still_finds_the_delay_seminar():
     assert result.seminar_similar[0][1]["id"] == "sem-2026-09-05-unbounded-delay"
     briefing = result.solver_briefing()
     assert "алгоритмом Сардинаса–Паттерсона" in briefing
+    assert "xz^k" in briefing and "yz^(k-1)" in briefing
+    assert "общий префикс" in briefing
     assert "python3 -c" in briefing
 
 
@@ -297,10 +299,26 @@ def test_route_filter_does_not_force_a_seminar_analog():
     assert "Проверенного семинарного аналога не найдено" in result.solver_briefing()
 
 
+def test_delay_card_does_not_capture_a_plain_injectivity_question():
+    result = analyse(
+        "Коды символов заданы так: h(S)=12, h(b)=1, h(c)=2. Образы разных "
+        "символов попарно различны. Следует ли отсюда инъективность морфизма "
+        "на всех строках? Перечислите все естественные декодирования строки 12.",
+        "семинар",
+        mode="full",
+        seminar_index=load_seminar_index(),
+    )
+    assert result.seminar_similar
+    assert result.seminar_similar[0][1]["id"] == "sem-2026-09-05-decode-candidate"
+
+
 def test_verified_seminars_store_reproducible_discovery_paths():
     records = load_seminar_index().records
     assert records
     assert all(record["routes"] for record in records)
+    assert all(
+        isinstance(record.get("required_patterns", []), list) for record in records
+    )
     assert all(len(record["discovery_path"]) >= 2 for record in records)
     assert all("→" in step for record in records for step in record["discovery_path"])
 

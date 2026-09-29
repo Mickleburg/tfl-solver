@@ -26,4 +26,5 @@ redirects, or shell utilities. Do not explore CLI syntax or library APIs when
 the prompt already gives a command. Follow the four stages in the prompt in
 order: verify transfer without tools, run the supplied oracle once, construct
 the general proof, then validate and emit the single JSON object. After a
-successful oracle call, do not call another tool.
+successful oracle call, do not call another tool. Never use Python, `cat`, or
+a heredoc to serialize or validate the final JSON; emit it directly.

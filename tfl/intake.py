@@ -516,6 +516,12 @@ def load_seminar_index(path: pathlib.Path | None = None) -> TaskIndex:
         ):
             if not isinstance(record[name], list):
                 raise ValueError(f"{source}:{number}: {name} должен быть списком")
+        if "required_patterns" in record and not isinstance(
+            record["required_patterns"], list
+        ):
+            raise ValueError(
+                f"{source}:{number}: required_patterns должен быть списком"
+            )
     verified = [record for record in records if record["status"] == "verified"]
     return TaskIndex(verified)
 
@@ -659,6 +665,9 @@ class Analysis:
         lines.append(f"- признаки карточки: {'; '.join(record['signals'])}")
         lines.append(f"- предпосылки переноса: {'; '.join(record['prerequisites'])}")
         lines.append(f"- основной метод: {record['method']}")
+        lines.append(
+            f"- малые приёмы карточки: {'; '.join(record['micro_methods'])}"
+        )
         lines.append("- путь открытия:")
         lines.extend(
             f"  {number}. {step}"
@@ -699,6 +708,10 @@ def analyse(
                 limit=min(limit, 3),
                 query_coverage_weight=0.5,
                 routes={candidate.code for candidate in candidates} or None,
+            )
+            if all(
+                re.search(pattern, text, re.IGNORECASE)
+                for pattern in hit[1].get("required_patterns", ())
             )
             if hit[0] >= 0.08
         )

@@ -71,7 +71,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 8
+    assert manifest["rubric_revision"] == 9
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -97,6 +97,9 @@ def test_prompt_exposes_precomputed_intake_but_hides_rubric_files():
         assert "3. Общее доказательство" in prompt
         assert "4. Сериализация" in prompt
         assert "`final_answer` и `chosen_method` — строки, не массивы" in prompt
+        assert "только эти точные" in prompt
+        assert "идентификаторы без пояснений" in prompt
+        assert "Не используй bash" in prompt
         assert "не привязывайся к фразе «заметим, что»" in prompt
         if case.seminar_analog:
             assert case.seminar_analog in prompt
@@ -192,6 +195,17 @@ def test_false_clue_invalidates_an_otherwise_correct_path():
     score = score_response(case, response, ["py -3 check.py"])
     assert not score.content_passed
     assert not score.passed
+    assert any("недопустимое утверждение" in issue for issue in score.issues)
+
+
+def test_sardinas_residuals_cannot_replace_the_common_prefix_family():
+    case = load_cases()[0]
+    response = good_response(case)
+    response["discovery_path"][1]["result"] = (
+        "Длины остатков S_k алгоритма Сардинаса–Паттерсона равны 2k-1."
+    )
+    score = score_response(case, response, ["py -3 check.py"])
+    assert not score.content_passed
     assert any("недопустимое утверждение" in issue for issue in score.issues)
 
 
