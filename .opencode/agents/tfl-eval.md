@@ -27,7 +27,9 @@ the prompt already gives a command. Run it verbatim when its formal object
 matches the current task. When a seminar analogy contains different rules,
 transfer the check to the current object with the prompt's documented `tfl`
 module template; never report the old object's output as evidence for the new
-task. Do not reimplement formal semantics in an ad-hoc script. Follow the four stages in the prompt in
+task. Different rules do not invalidate an analogy when the roles of its steps
+and the structure of its method transfer. Do not reimplement formal semantics
+in an ad-hoc script. Follow the four stages in the prompt in
 order: verify transfer without tools, run the supplied oracle once, construct
 the general proof, then validate and emit the single JSON object. After a
 successful oracle call, do not call another tool. Never use Python, `cat`, or
@@ -50,3 +52,8 @@ For an ordinary SRS adaptation, use the prompt's single `parse_srs(...).terminat
 call without `dir`, API exploration, a custom enumerator, or a second module.
 An SRS precedence string lists symbols from smaller to larger, so `ba` means
 `b < a`; preserve that orientation in the explanation.
+For a swap rule plus a shortening rule, prefer the prompt's human-readable
+measure `(word length, number of ordered symbol pairs)` in the general proof.
+Treat a successful `terminates()` order as an exact rule check, not a bounded
+enumeration of input words. Remove normal-form claims from a termination-only
+answer, including from `micro_methods` and `limitations`.

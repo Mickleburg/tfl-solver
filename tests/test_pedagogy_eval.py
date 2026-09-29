@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 25
+    assert manifest["rubric_revision"] == 26
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -204,6 +204,8 @@ def test_prompt_exposes_precomputed_intake_but_hides_rubric_files():
         assert "print(parse_srs('RULES').terminates())" in prompt
         assert "`ba` означает `b < a`, не `b > a`" in prompt
         assert "не выдавай запуск на старой задаче за проверку новой" in prompt
+        assert "Различие конкретных правил само по себе не отменяет аналог" in prompt
+        assert "(длина слова, число пар x...y)" in prompt
         assert "если команда не импортирует `tfl`, укажи `python`" in prompt
         assert "не привязывайся к фразе «заметим, что»" in prompt
         if case.seminar_analog:
@@ -346,6 +348,12 @@ def test_termination_only_case_rejects_false_transferred_normal_forms():
     score = score_response(case, response, ["python3 -c pass"])
     assert score.components["границы"] == 0
     assert any("b\\s*>" in issue for issue in score.issues)
+
+    response["final_answer"] = "Мера убывает, поэтому система завершаема."
+    response["limitations"] = ["Проверка ограничена словами длины 1–3."]
+    score = score_response(case, response, ["python3 -c pass"])
+    assert score.components["границы"] == 0
+    assert any("огранич" in issue and "длин" in issue for issue in score.issues)
 
 
 def test_wrong_analog_is_a_hard_failure():
