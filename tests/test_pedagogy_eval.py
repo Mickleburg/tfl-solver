@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 18
+    assert manifest["rubric_revision"] == 19
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -229,6 +229,18 @@ def test_pattern_normal_form_reference_response_scores_thirteen():
     case = load_cases()[1]
     score = score_response(case, good_pattern_response(case), ["python3 -c import tfl.pattern"])
     assert score.total == 13
+    assert score.passed
+
+
+def test_pattern_method_accepts_a_common_lexicographic_typo():
+    case = load_cases()[1]
+    response = good_pattern_response(case)
+    response["chosen_method"] = response["chosen_method"].replace(
+        "лексикографическую", "лексиографическую"
+    )
+    assert "лексиографическую" in response["chosen_method"]
+    score = score_response(case, response, ["python3 -c import tfl.pattern"])
+    assert score.components["метод"] == 1
     assert score.passed
 
 
