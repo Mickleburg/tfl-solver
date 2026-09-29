@@ -70,7 +70,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 7
+    assert manifest["rubric_revision"] == 8
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -91,6 +91,11 @@ def test_prompt_exposes_precomputed_intake_but_hides_rubric_files():
         assert f"Режим: {case.mode}" in prompt
         assert "Стартовый пакет решателя" in prompt
         assert "не вызывай skill, intake" in prompt
+        assert "1. Сверка без инструментов" in prompt
+        assert "2. Одна исполняемая проверка" in prompt
+        assert "3. Общее доказательство" in prompt
+        assert "4. Сериализация" in prompt
+        assert "`final_answer` и `chosen_method` — строки, не массивы" in prompt
         assert "не привязывайся к фразе «заметим, что»" in prompt
         if case.seminar_analog:
             assert case.seminar_analog in prompt
