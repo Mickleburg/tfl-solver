@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 15
+    assert manifest["rubric_revision"] == 16
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -372,6 +372,17 @@ def test_pattern_invariant_values_must_match_the_words():
     response["discovery_path"][1]["result"] = (
         "Получены ab -> aaa при μ=4, ba -> aaa при μ=4 и abb -> aaaaa при μ=6."
     )
+    score = score_response(case, response, ["python3 -c import tfl.pattern"])
+    assert not score.content_passed
+    assert any("недопустимое утверждение" in issue for issue in score.issues)
+
+
+def test_pattern_position_drop_is_the_length_of_x_plus_one():
+    case = load_cases()[1]
+    response = good_pattern_response(case)
+    response["limitations"] = [
+        "Сдвиг k равен числу букв a справа от перемещаемой b."
+    ]
     score = score_response(case, response, ["python3 -c import tfl.pattern"])
     assert not score.content_passed
     assert any("недопустимое утверждение" in issue for issue in score.issues)

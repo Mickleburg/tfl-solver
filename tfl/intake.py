@@ -648,11 +648,10 @@ class Analysis:
             lines.append(f"Кандидаты класса: {candidates} ({confidence}).")
         else:
             lines.append("Кандидаты класса: не найдены; классифицировать вручную.")
-        if self.micro_methods:
-            lines.append("Малые действия до основного метода:")
-            lines.extend(f"- {method}" for method in self.micro_methods)
-
         if not self.seminar_similar:
+            if self.micro_methods:
+                lines.append("Малые действия до основного метода:")
+                lines.extend(f"- {method}" for method in self.micro_methods)
             lines.append("Проверенного семинарного аналога не найдено.")
             lines.append(
                 "Не подбирай аналог по общим словам; выбери метод по структуре условия."

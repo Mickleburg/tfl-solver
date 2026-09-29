@@ -282,6 +282,7 @@ def test_short_concrete_statement_still_finds_the_delay_seminar():
     assert result.seminar_similar
     assert result.seminar_similar[0][1]["id"] == "sem-2026-09-05-unbounded-delay"
     briefing = result.solver_briefing()
+    assert "Малые действия до основного метода" not in briefing
     assert "алгоритмом Сардинаса–Паттерсона" in briefing
     assert "xz^k" in briefing and "yz^(k-1)" in briefing
     assert "общий префикс" in briefing
@@ -296,7 +297,9 @@ def test_route_filter_does_not_force_a_seminar_analog():
         seminar_index=load_seminar_index(),
     )
     assert not result.seminar_similar
-    assert "Проверенного семинарного аналога не найдено" in result.solver_briefing()
+    briefing = result.solver_briefing()
+    assert "Проверенного семинарного аналога не найдено" in briefing
+    assert "Малые действия до основного метода" in briefing
 
 
 def test_delay_card_does_not_capture_a_plain_injectivity_question():
@@ -331,6 +334,7 @@ def test_pattern_cards_contain_executable_checks_and_correct_proof_directions():
     assert "сумма позиций b" in normal["method"]
     assert "единственную нормальную форму" in normal["method"]
     assert "ab -> (3,[aaa])" in normal["verification"]
+    assert "ровно на |X|+1" in normal["verification"]
     assert "python3 -c" in brackets["verification"]
     assert "оборачивает существующее подслово X" in brackets["method"]
     assert any(
