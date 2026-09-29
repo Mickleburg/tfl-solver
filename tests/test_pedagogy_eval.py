@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 13
+    assert manifest["rubric_revision"] == 14
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -370,6 +370,17 @@ def test_arbitrary_bracket_deletion_does_not_preserve_prefix_balance():
     case = load_cases()[2]
     response = good_bracket_response(case)
     response["chosen_method"] += " Каждое удаление сохраняет префиксный баланс."
+    score = score_response(case, response, ["python3 -c import tfl.pattern"])
+    assert not score.content_passed
+    assert any("недопустимое утверждение" in issue for issue in score.issues)
+
+
+def test_reverse_bracket_step_must_keep_the_variable_substring():
+    case = load_cases()[2]
+    response = good_bracket_response(case)
+    response["discovery_path"][0]["result"] = (
+        "Обратный шаг — это вставка () между частями v()t."
+    )
     score = score_response(case, response, ["python3 -c import tfl.pattern"])
     assert not score.content_passed
     assert any("недопустимое утверждение" in issue for issue in score.issues)

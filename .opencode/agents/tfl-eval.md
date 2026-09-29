@@ -31,4 +31,6 @@ successful oracle call, do not call another tool. Never use Python, `cat`, or
 a heredoc to serialize or validate the final JSON; emit it directly.
 Preserve the exact oracle result: a nonempty residual set without a codeword is
 not an empty set, and a finite curve is only an illustration, not a general
-proof.
+proof. When reversing a pattern rule, retain its variable substring: the
+reverse of `(X) -> X` wraps an existing `X`, rather than merely inserting an
+adjacent `()`.

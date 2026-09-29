@@ -331,7 +331,7 @@ def test_pattern_cards_contain_executable_checks_and_correct_proof_directions():
     assert "сумма позиций b" in normal["method"]
     assert "единственную нормальную форму" in normal["method"]
     assert "python3 -c" in brackets["verification"]
-    assert "читать успешный вывод назад" in brackets["method"]
+    assert "оборачивает существующее подслово X" in brackets["method"]
     assert any(
         "произвольное удаление может нарушить правильность" in step
         for step in brackets["discovery_path"]
