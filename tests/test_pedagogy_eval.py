@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 21
+    assert manifest["rubric_revision"] == 22
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -270,6 +270,12 @@ def test_rotation_rejects_confusing_source_letters_with_image_letters():
     score = score_response(case, response, ["python3 -c pass"])
     assert score.components["границы"] == 0
     assert any("недопустимое утверждение" in issue for issue in score.issues)
+
+    response["final_answer"] = "Коды имеют общий префикс, а исходные слова начинаются с разных букв."
+    response["chosen_method"] = "Доказать инъективность через обратный морфизм."
+    score = score_response(case, response, ["python3 -c pass"])
+    assert score.components["границы"] == 0
+    assert any("обратн" in issue and "морфизм" in issue for issue in score.issues)
 
 
 def test_decoding_srs_accepts_boundary_marker_after_boundary_wording():

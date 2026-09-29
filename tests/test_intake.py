@@ -352,9 +352,10 @@ def test_encoding_cards_contain_executable_checks_and_general_arguments():
 
     assert "python3 -c" in rotation["verification"]
     assert "D(vx)=xv" in rotation["method"]
+    assert "обратная функция, а не морфизм" in rotation["method"]
     assert "E(ab)=ba" in rotation["method"]
     assert "ab^n" in rotation["method"]
-    assert "общий вывод об инъективности даёт явная обратная операция" in rotation["verification"]
+    assert "общий вывод об инъективности даёт явная обратная функция" in rotation["verification"]
     assert len(rotation["required_patterns"]) == 2
 
     assert "python3 -c" in decoding["verification"]
@@ -366,6 +367,8 @@ def test_encoding_cards_contain_executable_checks_and_general_arguments():
     assert "ada_nfs" in decoding["verification"]
     assert "ad_end_nfs" in decoding["verification"]
     assert "end_local" in decoding["verification"]
+    assert "chr(36)+'()abcd'" in decoding["verification"]
+    assert "'$()abcd'" not in decoding["verification"]
     assert "критических пар" in decoding["verification"]
     assert "все 10" in decoding["verification"]
     assert "не перебор входных слов" in decoding["verification"]
