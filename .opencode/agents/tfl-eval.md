@@ -46,3 +46,7 @@ length-preserving search, describe that as an exact finite critical-pair check,
 not as sampling input words or an empirical illustration.
 Transfer only steps needed by the current question: do not append invariants,
 normal-form claims, or confluence arguments to a termination-only task.
+For an ordinary SRS adaptation, use the prompt's single `parse_srs(...).terminates()`
+call without `dir`, API exploration, a custom enumerator, or a second module.
+An SRS precedence string lists symbols from smaller to larger, so `ba` means
+`b < a`; preserve that orientation in the explanation.
