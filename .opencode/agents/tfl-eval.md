@@ -53,7 +53,9 @@ call without `dir`, API exploration, a custom enumerator, or a second module.
 An SRS precedence string lists symbols from smaller to larger, so `ba` means
 `b < a`; preserve that orientation in the explanation.
 For a swap rule plus a shortening rule, prefer the prompt's human-readable
-measure `(word length, number of ordered symbol pairs)` in the general proof.
+natural-valued measure `(word length, number of ordered symbol pairs)` in the
+general proof. Do not substitute a global `ord_lex(word)` component: ordinary
+lexicographic order on all finite words is not well-founded.
 Treat a successful `terminates()` order as an exact rule check, not a bounded
 enumeration of input words. Remove normal-form claims from a termination-only
 answer, including from `micro_methods` and `limitations`.
