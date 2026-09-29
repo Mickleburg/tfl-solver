@@ -139,7 +139,7 @@ Pharma в текущем курсе отсутствует.
 
 | Проверка | Результат |
 |---|---|
-| Unit/integration tests | 1557 passed, 1 skipped |
+| Unit/integration tests | 1561 passed, 1 skipped |
 | Codex plugin | manifest valid, local marketplace parsed |
 | Claude Code plugin | plugin + marketplace strict validation passed |
 | OpenCode adapter | JSONL/parser/read-only profile tested; CLI 1.18.32 found in WSL |
@@ -156,6 +156,7 @@ Pharma в текущем курсе отсутствует.
 | OpenCode Qwen smoke | FAIL: correct general conclusion; false/contradictory steps, schema error, 16–20/8 tool calls |
 | OpenCode Qwen revision 7 | внешний 503 до ответа модели; содержательный smoke не состоялся |
 | OpenCode revision 8 | FAIL 8/13: верные оракул и итог, ложное общее доказательство, 3 команды при целевом бюджете 2 |
+| OpenCode revision 12 | PASS 13/13: один Python-вызов, 62,83 с; математика проверена вручную |
 | Claude holdout smoke | BLOCKED: `oauth_org_not_allowed` |
 
 Базовые команды для повторения среза:
@@ -204,7 +205,7 @@ Claude smoke после снятия внешнего auth-блокера и ч�
 60 наблюдаемых команд и 1092,45 с для успешных запусков. Все восемь
 доказательств проверены вручную. Первый `full`-запуск попал в таймаут; его
 запись сохранена, а повтор завершился успешно. Этот запуск относится к
-рубрике revision 4; revision 9 с полем `discovery_path`, подготовленным
+рубрике revision 4; revision 12 с полем `discovery_path`, подготовленным
 intake-пакетом и четырьмя последовательными этапами требует нового baseline.
 
 Первый реальный OpenCode smoke на `pt/positive-llm-qwen36` сохранён отдельным
@@ -229,8 +230,12 @@ intake-пакетом и четырьмя последовательными э�
 219,975 с и получила 8/13. Она использовала правильный оракул и дала верный
 итог, но ошибочно приписала кодовым словам длины 1, 2, 4 и заявила рост
 остатков Сардинаса—Паттерсона вместо явного семейства общих префиксов. В
-revision 9 карточка содержит свидетель `xz^k` / `yz^(k-1)`, scorer ловит эти
+revision 12 карточка содержит свидетель `xz^k` / `yz^(k-1)`, scorer ловит эти
 ложные утверждения, а отдельная инструментальная сериализация запрещена.
+Контрольный повтор на commit `95edb56` прошёл 13/13 за 62,83 с с одним
+Python-вызовом. Ручной аудит подтвердил: остаток `{1}` зацикливается без
+кодового слова, конечная кривая используется только как иллюстрация, а общая
+нижняя граница `2k` доказана параметрическим семейством.
 
 Claude adapter проверен вплоть до реального запуска CLI 2.1.205, разбора
 event-stream и API-запроса. Организация отклоняет модель до первого tool call
