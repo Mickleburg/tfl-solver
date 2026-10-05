@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 40
+    assert manifest["rubric_revision"] == 41
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -210,6 +210,7 @@ def test_prompt_exposes_precomputed_intake_but_hides_rubric_files():
         assert "цепочка `x > yx > yyx > ...` бесконечна" in prompt
         assert "Фактически выполни ровно один разрешённый вызов" in prompt
         assert "разные формальные объекты" in prompt
+        assert "первая компонента — число\nбукв `b`, а не длина слова" in prompt
         assert "не добавляй в `micro_methods` вид неприводимых слов" in prompt
         assert "пробел между правилами меняет формальный объект" in prompt
         assert "сохрани id\nаналога" in prompt
@@ -708,6 +709,23 @@ def test_pattern_response_cannot_invent_a_theorem_name_or_test_bound():
     score = score_response(case, response, ["python3 -c import tfl.pattern"])
     assert not score.content_passed
     assert any("недопустимое утверждение" in issue for issue in score.issues)
+
+
+def test_pattern_audit_distinguishes_a_counter_from_word_length():
+    case = load_cases()[1]
+    response = good_pattern_response(case)
+    response["limitations"] = [
+        "Общий вывод опирается на формулы, а не на конечный перебор."
+    ]
+    score = score_response(case, response, ["python3 -c import tfl.pattern"])
+    assert score.components["границы"] == 1
+
+    response["prerequisites_used"] = [
+        "Первая компонента — длина, вторая — позиция для меры (|w|_b, сумма позиций b)."
+    ]
+    score = score_response(case, response, ["python3 -c import tfl.pattern"])
+    assert score.components["границы"] == 0
+    assert any("компонент" in issue and "длин" in issue for issue in score.issues)
 
 
 def test_unique_normal_form_argument_does_not_imply_strong_confluence():
