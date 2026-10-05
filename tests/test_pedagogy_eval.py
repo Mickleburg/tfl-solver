@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 43
+    assert manifest["rubric_revision"] == 44
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -484,7 +484,10 @@ def test_full_injectivity_case_rejects_a_fake_length_two_theorem():
             "слова. Все декодирования строки 12: одно кодовое слово S либо "
             "два кодовых слова b,c, то есть слово bc."
         ),
-        "limitations": ["Полнота доказана перебором разбиений заданной строки."],
+        "limitations": [
+            "Полнота доказана перебором разбиений заданной строки.",
+            "Общего критерия «достаточно проверить слова длины не более 2» не существует.",
+        ],
     }
     command = "python3 -c \"from tfl.code import parse_morphism\""
     score = score_response(case, response, [command])
