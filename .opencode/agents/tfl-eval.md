@@ -80,3 +80,6 @@ For a letter morphism, use the prompt's exact `tfl.code` call. Distinct images
 of letters do not imply injectivity on words, and checking words of length at
 most two is not a general injectivity theorem. Prove a finite decoding list
 complete by exhausting all splits into nonempty codewords.
+Keep source words and encoded strings at separate levels: write
+`h(bc)=1·2=12`, never `1·2=bc`. Put the oracle's collision witness in both
+`micro_methods` and `chosen_method`.

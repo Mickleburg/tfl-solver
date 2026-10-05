@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "rubric_revision": 35,
+  "rubric_revision": 36,
   "case_count": 8,
-  "cases_sha256": "4e538207ff61d8005a80c55dec2d1981bacc838dda8b484afcf1087acd445316",
+  "cases_sha256": "fcf245541a90c79e8eecbd1f9f73d33f58f0fad1c1922fa6ea22e597e3b9eb4d",
   "modes": ["training", "full"],
   "purpose": "Evaluate reproducible solution discovery, seminar transfer, and human-readable method selection."
 }

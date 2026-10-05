@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 35
+    assert manifest["rubric_revision"] == 36
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -229,6 +229,7 @@ def test_prompt_exposes_precomputed_intake_but_hides_rubric_files():
     full_prompt = build_prompt(full_case)
     assert "h=parse_morphism('S -> 12; b -> 1; c -> 2')" in full_prompt
     assert "не существует общего критерия" in full_prompt
+    assert "пиши `h(bc)=1·2=12`, а не `1·2=bc`" in full_prompt
 
 
 def test_precomputed_fields_do_not_leak_hidden_expected_values():
@@ -482,6 +483,19 @@ def test_full_injectivity_case_rejects_a_fake_length_two_theorem():
     score = score_response(case, response, [command])
     assert score.total == 13
     assert score.passed
+
+    response["chosen_method"] = (
+        "Запустить is_injective и исчерпать все разбиения строки 12."
+    )
+    score = score_response(case, response, [command])
+    assert score.components["метод"] == 1
+
+    original_answer = response["final_answer"]
+    response["final_answer"] += " Неверная запись уровней: 1·2 = bc."
+    score = score_response(case, response, [command])
+    assert score.components["границы"] == 0
+    assert any("1\\s*[·*]" in issue for issue in score.issues)
+    response["final_answer"] = original_answer
 
     response["limitations"] = [
         "Морфизм инъективен тогда и только тогда, когда это верно на словах длины не более 2."
