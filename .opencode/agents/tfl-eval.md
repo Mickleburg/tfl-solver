@@ -65,8 +65,10 @@ enumeration of input words. Remove normal-form claims from a termination-only
 answer, including from `micro_methods` and `limitations`.
 Pattern rules with a string variable `X` and a literal SRS are different
 formal objects even when the termination-measure strategy transfers.
-Keep the proposed seminar analog when shortening and reordering rules play the
-same roles; adapt the oracle module without discarding the method source.
+Keep the proposed seminar analog when it separates a counter-changing rule
+from a reordering rule and the new task needs the same two-level proof shape.
+Adapt the oracle module without discarding the method source, but do not claim
+that the rules or directions of change are identical.
 Audit `prerequisites_used` too. Name the well-founded word order shortlex
 (length first, lexicographic only at equal length), never ordinary lexicographic
 order on all finite words.

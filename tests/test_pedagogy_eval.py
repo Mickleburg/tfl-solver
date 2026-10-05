@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 32
+    assert manifest["rubric_revision"] == 33
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -213,6 +213,7 @@ def test_prompt_exposes_precomputed_intake_but_hides_rubric_files():
         assert "не добавляй в `micro_methods` вид неприводимых слов" in prompt
         assert "пробел между правилами меняет формальный объект" in prompt
         assert "сохрани id\nаналога" in prompt
+        assert "не буквальные роли правил" in prompt
         assert "Проверь также `prerequisites_used`" in prompt
         assert "не\n   называй её компоненты неубывающими" in prompt
         assert "если команда не импортирует `tfl`, укажи `python`" in prompt
