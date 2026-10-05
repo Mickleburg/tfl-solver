@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 39
+    assert manifest["rubric_revision"] == 40
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -230,6 +230,7 @@ def test_prompt_exposes_precomputed_intake_but_hides_rubric_files():
     assert "h=parse_morphism('S -> 12; b -> 1; c -> 2')" in full_prompt
     assert "не существует общего критерия" in full_prompt
     assert "Не\nусиливай её до `2k+1` или «более `2k`»" in full_prompt
+    assert "Во всех полях используй только безопасный вывод" in full_prompt
     assert "пиши `h(bc)=1·2=12`, а не `1·2=bc`" in full_prompt
 
 
