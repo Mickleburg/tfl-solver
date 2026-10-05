@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 42
+    assert manifest["rubric_revision"] == 43
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -332,7 +332,10 @@ def test_decoding_srs_accepts_boundary_marker_after_boundary_wording():
         "chosen_method": "пополнение по критическим парам",
         "oracle_calls": [],
         "final_answer": "Наивная система не конфлюэнтна на ada; добавить маркер конца $ и правила a) -> (), d( -> )(." ,
-        "limitations": ["Конечный список критических пар проверяется полностью."],
+        "limitations": [
+            "Конечный список критических пар проверяется полностью.",
+            "Ограничение max_len не обрезает обходы, поскольку правила сохраняют длину.",
+        ],
     }
     score = score_response(case, response, ["python3 -c pass"])
     assert score.components["малые приёмы"] == 2
