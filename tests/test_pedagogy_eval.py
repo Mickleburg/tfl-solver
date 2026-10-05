@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 31
+    assert manifest["rubric_revision"] == 32
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -214,6 +214,7 @@ def test_prompt_exposes_precomputed_intake_but_hides_rubric_files():
         assert "пробел между правилами меняет формальный объект" in prompt
         assert "сохрани id\nаналога" in prompt
         assert "Проверь также `prerequisites_used`" in prompt
+        assert "не\n   называй её компоненты неубывающими" in prompt
         assert "если команда не импортирует `tfl`, укажи `python`" in prompt
         assert "не привязывайся к фразе «заметим, что»" in prompt
         if case.seminar_analog:
@@ -410,6 +411,18 @@ def test_termination_only_case_rejects_false_transferred_normal_forms():
     ]
     score = score_response(case, response, ["python3 -c pass"])
     assert score.components["границы"] == 1
+
+    response["discovery_path"] = [
+        {
+            "clue": "Правила уменьшают меру.",
+            "action": "Сравнить компоненты.",
+            "result": "Обе компоненты неубывают, и одна строго падает.",
+            "next_step": "Сделать вывод о завершимости.",
+        }
+    ]
+    score = score_response(case, response, ["python3 -c pass"])
+    assert score.components["границы"] == 0
+    assert any("неубыва" in issue for issue in score.issues)
 
 
 def test_wrong_analog_is_a_hard_failure():

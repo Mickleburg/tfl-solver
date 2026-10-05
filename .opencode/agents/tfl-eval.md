@@ -70,3 +70,5 @@ same roles; adapt the oracle module without discarding the method source.
 Audit `prerequisites_used` too. Name the well-founded word order shortlex
 (length first, lexicographic only at equal length), never ordinary lexicographic
 order on all finite words.
+If a termination proof uses a decreasing measure, do not call its components
+nondecreasing anywhere in the discovery path.
