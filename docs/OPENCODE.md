@@ -148,6 +148,25 @@ Revision 12 передаёт модели явное семейство `xz^k` �
 результата находятся в
 `reports/pedagogy/opencode-qwen36-baseline-revision37-2026-10-05.md`.
 
+Следующий последовательный baseline выполнен на provider-модели
+`pt/positive-llm-code`, которая в актуальном каталоге соответствует
+`deepseek-ai/DeepSeek-V4.1-Flash`. Выбранные ответы с revisions 40–43
+пересчитаны единой рубрикой revision 44: все восемь случаев прошли, каждый с
+одним Python-вызовом; математика и границы проверены вручную. Запуски заняли
+588,224 с суммарно. Отчёт:
+`reports/pedagogy/opencode-deepseek-v41-baseline-revision44-2026-10-06.md`.
+
+Для повтора достаточно заменить model ID, не меняя глобальную конфигурацию:
+
+```bash
+python3 -m tfl pedagogy run \
+  --runner opencode \
+  --model pt/positive-llm-code \
+  --case training-unbounded-delay \
+  --timeout 900 \
+  --output ~/Projects/tfl-eval-runs/opencode-deepseek-smoke.jsonl
+```
+
 Перед дорогим smoke нужно дождаться завершения других активных генераций и
 проверить выбранную модель минимальным запросом. Сам открытый процесс/UI
 OpenCode не обязательно занимает model slot. Если минимальный запрос не

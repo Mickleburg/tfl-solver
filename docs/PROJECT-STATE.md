@@ -1,6 +1,6 @@
 # Актуальное состояние tfl-solver
 
-Дата среза: **2026-10-05**. Это единственный документ с текущими числовыми
+Дата среза: **2026-10-06**. Это единственный документ с текущими числовыми
 показателями. История разработки доступна через Git; отдельный архив сессионных
 журналов намеренно не публикуется.
 
@@ -140,7 +140,7 @@ Pharma в текущем курсе отсутствует.
 
 | Проверка | Результат |
 |---|---|
-| Unit/integration tests | 1578 passed, 1 skipped |
+| Unit/integration tests | 1579 passed, 1 skipped |
 | Codex plugin | manifest valid, local marketplace parsed |
 | Claude Code plugin | plugin + marketplace strict validation passed |
 | OpenCode adapter | JSONL/parser/read-only profile tested; CLI 1.18.34 in WSL |
@@ -154,6 +154,7 @@ Pharma в текущем курсе отсутствует.
 | Codex holdout v1 | 7/7 PASS, 67/70 (среднее 9.57/10) |
 | Codex pedagogy holdout v1 | historical: 8/8 PASS, 104/104 on rubric revision 4 |
 | Pedagogy holdout v2 / OpenCode Qwen | 8/8 PASS, 103/104 on revision 37; 8 Python-вызовов, 368,864 с; ручной аудит пройден |
+| Pedagogy holdout v2 / OpenCode DeepSeek V4.1 Flash | 8/8 PASS, 104/104 после пересчёта revision 44; 8 Python-вызовов, 588,224 с; ручной аудит пройден |
 | OpenCode Qwen smoke | FAIL: correct general conclusion; false/contradictory steps, schema error, 16–20/8 tool calls |
 | OpenCode Qwen revision 7 | внешний 503 до ответа модели; содержательный smoke не состоялся |
 | OpenCode revision 8 | FAIL 8/13: верные оракул и итог, ложное общее доказательство, 3 команды при целевом бюджете 2 |
@@ -247,6 +248,15 @@ Python-вызовов за 368,864 с. Все восемь финальных о
 структурированный JSON после правильного tool call; повтор без изменения
 инструкций прошёл. Полный разбор и выбранные сырые run-файлы перечислены в
 `reports/pedagogy/opencode-qwen36-baseline-revision37-2026-10-05.md`.
+
+Последовательный baseline `pt/positive-llm-code`
+(`deepseek-ai/DeepSeek-V4.1-Flash`) также завершён. Выбранные ответы получены
+на revisions 40–43 и пересчитаны единой рубрикой revision 44: 8/8 PASS,
+104/104, восемь Python-вызовов и 588,224 с. Все ответы проверены вручную.
+Наблюдаемые уточнения отделили число букв от длины слова, закрепили точное
+название метода и исправили два ложных срабатывания scorer'а на отрицаниях.
+Подробности — в
+`reports/pedagogy/opencode-deepseek-v41-baseline-revision44-2026-10-06.md`.
 
 Claude adapter проверен вплоть до реального запуска CLI 2.1.205, разбора
 event-stream и API-запроса. Организация отклоняет модель до первого tool call
