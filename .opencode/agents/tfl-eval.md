@@ -34,6 +34,8 @@ order: verify transfer without tools, run the supplied oracle once, construct
 the general proof, then validate and emit the single JSON object. After a
 successful oracle call, do not call another tool. Never use Python, `cat`, or
 a heredoc to serialize or validate the final JSON; emit it directly.
+Write explanatory JSON fields in Russian; keep only exact ids, API names, and
+formulas in their original notation.
 In `oracle_calls.module`, serialize the imported `tfl` submodule: both
 `import tfl.srs` and `from tfl.srs import parse_srs` mean `srs`, not `python`.
 Preserve the exact oracle result: a nonempty residual set without a codeword is
@@ -74,3 +76,7 @@ Audit `prerequisites_used` too. Name the well-founded word order shortlex
 order on all finite words.
 If a termination proof uses a decreasing measure, do not call its components
 nondecreasing anywhere in the discovery path.
+For a letter morphism, use the prompt's exact `tfl.code` call. Distinct images
+of letters do not imply injectivity on words, and checking words of length at
+most two is not a general injectivity theorem. Prove a finite decoding list
+complete by exhausting all splits into nonempty codewords.

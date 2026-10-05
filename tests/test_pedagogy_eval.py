@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 34
+    assert manifest["rubric_revision"] == 35
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -216,6 +216,7 @@ def test_prompt_exposes_precomputed_intake_but_hides_rubric_files():
         assert "не буквальные роли правил" in prompt
         assert "Проверь также `prerequisites_used`" in prompt
         assert "не\n   называй её компоненты неубывающими" in prompt
+        assert "Все поясняющие поля JSON пиши по-русски" in prompt
         assert "если команда не импортирует `tfl`, укажи `python`" in prompt
         assert "не привязывайся к фразе «заметим, что»" in prompt
         if case.seminar_analog:
@@ -223,6 +224,11 @@ def test_prompt_exposes_precomputed_intake_but_hides_rubric_files():
         else:
             assert "Проверенного семинарного аналога не найдено" in prompt
         assert "Не читай evals/pedagogy_holdout" in prompt
+
+    full_case = next(case for case in load_cases() if case.id == "full-injectivity-levels")
+    full_prompt = build_prompt(full_case)
+    assert "h=parse_morphism('S -> 12; b -> 1; c -> 2')" in full_prompt
+    assert "не существует общего критерия" in full_prompt
 
 
 def test_precomputed_fields_do_not_leak_hidden_expected_values():
@@ -428,6 +434,61 @@ def test_termination_only_case_rejects_false_transferred_normal_forms():
     score = score_response(case, response, ["python3 -c pass"])
     assert score.components["границы"] == 0
     assert any("неубыва" in issue for issue in score.issues)
+
+
+def test_full_injectivity_case_rejects_a_fake_length_two_theorem():
+    case = next(case for case in load_cases() if case.id == "full-injectivity-levels")
+    response = {
+        "case_id": case.id,
+        "mode": "full",
+        "task_class": "CODE",
+        "seminar_analog": "sem-2026-09-05-decode-candidate",
+        "discovery_path": [
+            {
+                "clue": "Образы букв попарно различны, но спрашивают слова.",
+                "action": "Разделить инъективность на буквах и на словах.",
+                "result": "Нужно проверить конкатенации кодовых слов.",
+                "next_step": "Сравнить образы S и bc.",
+            },
+            {
+                "clue": "Строка 12 допускает разные разбиения.",
+                "action": "Сравнить S и bc.",
+                "result": "h(S)=12=h(bc), поэтому найдена коллизия.",
+                "next_step": "Перечислить все разбиения 12.",
+            },
+        ],
+        "micro_methods": [
+            "разделить инъективность букв и слов",
+            "сравнить S и bc и исчерпать разбиения строки 12",
+        ],
+        "prerequisites_used": ["морфизм слов", "конкатенация образов"],
+        "chosen_method": "Проверить оракулом и предъявить коллизию S и bc.",
+        "oracle_calls": [
+            {
+                "module": "code",
+                "operation": "is_injective",
+                "input": "S -> 12; b -> 1; c -> 2",
+                "result": "не инъективен: 12 = 1·2",
+            }
+        ],
+        "final_answer": (
+            "Морфизм не инъективен: h(S)=12=h(bc), хотя S и bc — разные "
+            "слова. Все декодирования строки 12: одно кодовое слово S либо "
+            "два кодовых слова b,c, то есть слово bc."
+        ),
+        "limitations": ["Полнота доказана перебором разбиений заданной строки."],
+    }
+    command = "python3 -c \"from tfl.code import parse_morphism\""
+    score = score_response(case, response, [command])
+    assert score.total == 13
+    assert score.passed
+
+    response["limitations"] = [
+        "Морфизм инъективен тогда и только тогда, когда это верно на словах длины не более 2."
+    ]
+    score = score_response(case, response, [command])
+    assert score.components["границы"] == 0
+    assert any("длин" in issue for issue in score.issues)
 
 
 def test_wrong_analog_is_a_hard_failure():
