@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 36
+    assert manifest["rubric_revision"] == 37
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -483,6 +483,14 @@ def test_full_injectivity_case_rejects_a_fake_length_two_theorem():
     score = score_response(case, response, [command])
     assert score.total == 13
     assert score.passed
+
+    response["micro_methods"] = [
+        "переход от образов букв к образам слов",
+        "сравнение свидетельств коллизии",
+        "исчерпание разбиений целевой строки",
+    ]
+    score = score_response(case, response, [command])
+    assert score.components["малые приёмы"] == 2
 
     response["chosen_method"] = (
         "Запустить is_injective и исчерпать все разбиения строки 12."
