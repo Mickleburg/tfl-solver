@@ -81,8 +81,8 @@ of letters do not imply injectivity on words, and checking words of length at
 most two is not a general injectivity theorem. Prove a finite decoding list
 complete by exhausting all splits into nonempty codewords.
 For an image pair with a common prefix of length `2k`, claim only the lower
-bound `2k`; do not strengthen it to `2k+1` or an exact delay without a stated
-end-of-input convention.
+bound `2k`; do not strengthen it to `2k+1`, "more than `2k`", or a first
+differing symbol at `2k+1` without a stated end-of-input convention.
 Keep source words and encoded strings at separate levels: write
 `h(bc)=1·2=12`, never `1·2=bc`. Put the oracle's collision witness in both
 `micro_methods` and `chosen_method`.
