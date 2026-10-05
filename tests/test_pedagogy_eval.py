@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 37
+    assert manifest["rubric_revision"] == 38
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -229,6 +229,7 @@ def test_prompt_exposes_precomputed_intake_but_hides_rubric_files():
     full_prompt = build_prompt(full_case)
     assert "h=parse_morphism('S -> 12; b -> 1; c -> 2')" in full_prompt
     assert "не существует общего критерия" in full_prompt
+    assert "Не\nусиливай её до `2k+1`" in full_prompt
     assert "пиши `h(bc)=1·2=12`, а не `1·2=bc`" in full_prompt
 
 
@@ -605,6 +606,14 @@ def test_common_prefix_is_a_lower_bound_not_an_exact_delay_value():
     score = score_response(case, response, ["py -3 check.py"])
     assert not score.content_passed
     assert any("недопустимое утверждение" in issue for issue in score.issues)
+
+    response = good_response(case)
+    response["discovery_path"][1]["result"] = (
+        "Общий префикс имеет длину 2k, поэтому нужно прочитать не менее 2k+1 символов."
+    )
+    score = score_response(case, response, ["py -3 check.py"])
+    assert not score.content_passed
+    assert any("2k" in issue and "1" in issue for issue in score.issues)
 
 
 def test_nonempty_sardinas_cycle_cannot_be_called_empty():
