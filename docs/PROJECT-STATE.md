@@ -1,6 +1,6 @@
 # Актуальное состояние tfl-solver
 
-Дата среза: **2026-09-28**. Это единственный документ с текущими числовыми
+Дата среза: **2026-10-05**. Это единственный документ с текущими числовыми
 показателями. История разработки доступна через Git; отдельный архив сессионных
 журналов намеренно не публикуется.
 
@@ -53,7 +53,8 @@ Pharma в текущем курсе отсутствует.
 - OpenCode использует совместимый `.agents`-адаптер без копирования базы.
   Добавлены JSONL-runner для общего и педагогического holdout, read-only
   профиль `.opencode/agents/tfl-eval.md` и сохранение partial-trace при
-  таймауте. Клиент OpenCode 1.18.32 и проектная копия готовы в WSL Debian.
+  таймауте. Текущий клиент OpenCode 1.18.34 и проектная копия готовы в WSL
+  Debian.
   Отдельный SSH-ключ привязан только к локальному клону; его открытая часть
   добавлена в личный GitHub, а `ssh -T`, `fetch` и `pull` успешно проверены.
 - Устанавливаемый из GitHub wheel 1.0 включает skill, plugin-манифесты,
@@ -139,10 +140,10 @@ Pharma в текущем курсе отсутствует.
 
 | Проверка | Результат |
 |---|---|
-| Unit/integration tests | 1561 passed, 1 skipped |
+| Unit/integration tests | 1578 passed, 1 skipped |
 | Codex plugin | manifest valid, local marketplace parsed |
 | Claude Code plugin | plugin + marketplace strict validation passed |
-| OpenCode adapter | JSONL/parser/read-only profile tested; CLI 1.18.32 found in WSL |
+| OpenCode adapter | JSONL/parser/read-only profile tested; CLI 1.18.34 in WSL |
 | Wheel 1.0 | clean venv install and `doctor` passed |
 | Исполняемый eval | 63 задачи |
 | Eval: решено | 46 |
@@ -152,11 +153,11 @@ Pharma в текущем курсе отсутствует.
 | Явно представленные классы eval | 18 из 18 |
 | Codex holdout v1 | 7/7 PASS, 67/70 (среднее 9.57/10) |
 | Codex pedagogy holdout v1 | historical: 8/8 PASS, 104/104 on rubric revision 4 |
-| Pedagogy holdout v2 | baseline pending; rubric checks reproducible discovery path |
+| Pedagogy holdout v2 / OpenCode Qwen | 8/8 PASS, 103/104 on revision 37; 8 Python-вызовов, 368,864 с; ручной аудит пройден |
 | OpenCode Qwen smoke | FAIL: correct general conclusion; false/contradictory steps, schema error, 16–20/8 tool calls |
 | OpenCode Qwen revision 7 | внешний 503 до ответа модели; содержательный smoke не состоялся |
 | OpenCode revision 8 | FAIL 8/13: верные оракул и итог, ложное общее доказательство, 3 команды при целевом бюджете 2 |
-| OpenCode revision 12 | PASS 13/13: один Python-вызов, 62,83 с; математика проверена вручную |
+| OpenCode revision 12 | исторический контрольный smoke: PASS 13/13, один Python-вызов, 62,83 с |
 | Claude holdout smoke | BLOCKED: `oauth_org_not_allowed` |
 
 Базовые команды для повторения среза:
@@ -205,8 +206,8 @@ Claude smoke после снятия внешнего auth-блокера и ч�
 60 наблюдаемых команд и 1092,45 с для успешных запусков. Все восемь
 доказательств проверены вручную. Первый `full`-запуск попал в таймаут; его
 запись сохранена, а повтор завершился успешно. Этот запуск относится к
-рубрике revision 4; revision 12 с полем `discovery_path`, подготовленным
-intake-пакетом и четырьмя последовательными этапами требует нового baseline.
+рубрике revision 4. Новый декомпозированный контракт проверен отдельно
+OpenCode-baseline на рубрике revision 37.
 
 Первый реальный OpenCode smoke на `pt/positive-llm-qwen36` сохранён отдельным
 отчётом. Он подтвердил работоспособность WSL-runner и структурированного ответа,
@@ -236,6 +237,16 @@ revision 12 карточка содержит свидетель `xz^k` / `yz^(k
 Python-вызовом. Ручной аудит подтвердил: остаток `{1}` зацикливается без
 кодового слова, конечная кривая используется только как иллюстрация, а общая
 нижняя граница `2k` доказана параметрическим семейством.
+
+Последовательный baseline `pt/positive-llm-qwen36` завершён на revision 37:
+8/8 случаев получили PASS, суммарный балл 103/104, выполнено восемь
+Python-вызовов за 368,864 с. Все восемь финальных ответов просмотрены вручную.
+Инструкции уточнялись только после наблюдаемых сбоев: разделены формальные
+объекты, зафиксированы направления мер, точные команды оракулов и различие
+исходного слова с его образом. Первый запуск последнего full-случая не вернул
+структурированный JSON после правильного tool call; повтор без изменения
+инструкций прошёл. Полный разбор и выбранные сырые run-файлы перечислены в
+`reports/pedagogy/opencode-qwen36-baseline-revision37-2026-10-05.md`.
 
 Claude adapter проверен вплоть до реального запуска CLI 2.1.205, разбора
 event-stream и API-запроса. Организация отклоняет модель до первого tool call
