@@ -167,7 +167,7 @@ def test_pedagogy_holdout_is_frozen_and_has_both_modes():
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     digest = hashlib.sha256(CASES_PATH.read_text(encoding="utf-8").encode()).hexdigest()
     assert manifest["version"] == 2
-    assert manifest["rubric_revision"] == 41
+    assert manifest["rubric_revision"] == 42
     assert manifest["case_count"] == len(cases) == 8
     assert manifest["cases_sha256"] == digest
     assert {case.mode for case in cases} == {"training", "full"}
@@ -211,6 +211,7 @@ def test_prompt_exposes_precomputed_intake_but_hides_rubric_files():
         assert "Фактически выполни ровно один разрешённый вызов" in prompt
         assert "разные формальные объекты" in prompt
         assert "первая компонента — число\nбукв `b`, а не длина слова" in prompt
+        assert "точное название применённого подхода" in prompt
         assert "не добавляй в `micro_methods` вид неприводимых слов" in prompt
         assert "пробел между правилами меняет формальный объект" in prompt
         assert "сохрани id\nаналога" in prompt

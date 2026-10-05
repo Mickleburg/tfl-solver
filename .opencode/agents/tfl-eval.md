@@ -74,6 +74,10 @@ Keep the proposed seminar analog when it separates a counter-changing rule
 from a reordering rule and the new task needs the same two-level proof shape.
 Adapt the oracle module without discarding the method source, but do not claim
 that the rules or directions of change are identical.
+In `chosen_method`, retain the exact applicable approach name from the
+briefing's `основной метод` line (for example, `лексикографическая мера`) in
+addition to its witness and oracle check. Do not replace the method name only
+with a generic property such as `фундированный порядок`.
 Audit `prerequisites_used` too. Name the well-founded word order shortlex
 (length first, lexicographic only at equal length), never ordinary lexicographic
 order on all finite words.
