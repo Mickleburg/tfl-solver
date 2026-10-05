@@ -221,6 +221,10 @@ read или glob, чтобы заново собрать те же сведен�
 переносятся роли шагов и устройство метода, но не старый формальный объект.
 При этом правила с переменной `X` (`tfl.pattern`) и обычная SRS из буквальных
 правил (`tfl.srs`) — разные формальные объекты, даже если мера переносится.
+Если предложенный аналог доказывает завершимость системой из сокращающего и
+переставляющего правил, а новая задача имеет те же роли правил, сохрани id
+аналога: различие модулей требует адаптации оракула, но не отменяет перенос
+метода.
 Если объект тот же, выполни приведённую команду буквально. Если карточка
 проверяет другие правила или другой объект, перенеси тип проверки, но подставь
 объект текущей задачи; не выдавай запуск на старой задаче за проверку новой.
@@ -288,6 +292,9 @@ read или glob, чтобы заново собрать те же сведен�
    `limitations` — массивы; никаких дополнительных полей. Не используй bash,
    Python, `cat` или heredoc для построения и проверки JSON: сформируй
    финальный объект непосредственно в ответе.
+   Проверь также `prerequisites_used`: для порядка «длина, затем
+   лексикографика» пиши shortlex/армейский порядок, а не обычную лексикографику
+   на всех конечных словах.
 
 {briefing}
 
@@ -447,6 +454,9 @@ def score_response(
             issues.append("нет двух полных связанных шагов пути к решению")
 
     micro_text = "\n".join(map(str, response.get("micro_methods", ())))
+    prerequisites_text = "\n".join(
+        map(str, response.get("prerequisites_used", ()))
+    )
     matched_micro = sum(_matches(pattern, micro_text) for pattern in case.micro_method_patterns)
     if matched_micro == len(case.micro_method_patterns):
         components["малые приёмы"] = 2
@@ -506,7 +516,15 @@ def score_response(
         if isinstance(call, dict)
     )
     evaluated_text = "\n".join(
-        (discovery_text, micro_text, method, oracle_text, answer, *limitations)
+        (
+            discovery_text,
+            micro_text,
+            prerequisites_text,
+            method,
+            oracle_text,
+            answer,
+            *limitations,
+        )
     )
     forbidden = [
         pattern for pattern in case.forbidden_patterns if _matches(pattern, evaluated_text)
