@@ -28,6 +28,7 @@ def test_doctor_is_independent_of_current_directory(tmp_path, monkeypatch, capsy
     assert "OK   манифест Codex" in output
     assert "OK   манифест Claude" in output
     assert "OK   индекс корпуса" in output
+    assert "OK   стандарт учебного решения" in output
 
 
 def test_intake_accepts_whole_task_without_variant_number(capsys):

@@ -164,6 +164,7 @@ revision 44 требует нового поля `discovery_path`, провер�
 - `docs/LAB-PROJECT-STANDARD.md` — автономный код, тесты и описание ЛР;
 - `docs/LAB-AI-DISCLOSURE.md` — обязательный раздел лабораторного отчёта;
 - `docs/THEORY-ANSWER-STANDARD.md` — быстрые и проверяемые объяснения теории;
+- `docs/TASK-ANSWER-STANDARD.md` — полные условия, подсказки, спойлеры решений и редакторский проход;
 - `docs/SOLVER-MODES.md` — тренировочный и полный режимы, малые приёмы;
 - `docs/SEMINAR-KNOWLEDGE.md` — еженедельное пополнение памяти семинаров;
 - `docs/INSTALLATION.md` — установка из GitHub и глобальные команды клиентов;

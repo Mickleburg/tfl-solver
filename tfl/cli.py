@@ -84,6 +84,9 @@ def _doctor(arguments: argparse.Namespace) -> int:
         "стандарт быстрого ответа по теории": (
             ROOT / "docs" / "THEORY-ANSWER-STANDARD.md"
         ).is_file(),
+        "стандарт учебного решения": (
+            ROOT / "docs" / "TASK-ANSWER-STANDARD.md"
+        ).is_file(),
         "рецепт аудита ИИ-решения": (
             ROOT / "docs" / "recipes" / "EXAM-ERROR.md"
         ).is_file(),
