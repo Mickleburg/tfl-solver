@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import ast
+import os
 import pathlib
 import re
 import subprocess
@@ -288,6 +289,8 @@ def audit_lab_project(
     test_output = ""
     tests_run = run_tests and (root / "tests").is_dir()
     if tests_run:
+        child_env = os.environ.copy()
+        child_env["PYTHONIOENCODING"] = "utf-8"
         try:
             completed = subprocess.run(
                 [
@@ -304,6 +307,9 @@ def audit_lab_project(
                 check=False,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
+                env=child_env,
                 timeout=timeout,
             )
         except subprocess.TimeoutExpired:

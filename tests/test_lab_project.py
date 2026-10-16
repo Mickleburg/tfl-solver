@@ -27,6 +27,28 @@ def test_scaffold_is_self_contained_and_never_overwrites(tmp_path):
         raise AssertionError("заполненный каталог нельзя перезаписывать")
 
 
+def test_audit_preserves_unicode_child_output_despite_parent_encoding(tmp_path, monkeypatch):
+    root = tmp_path / "unicode"
+    (root / "tests").mkdir(parents=True)
+    for name in ("README.md", "task.md", "report.md"):
+        (root / name).write_text("Готовый проект\n", encoding="utf-8")
+    (root / "solution.py").write_text("def solve(): return 1\n", encoding="utf-8")
+    (root / "tests/test_solution.py").write_text(
+        "import sys, unittest\n"
+        "class Tests(unittest.TestCase):\n"
+        "    def test_unicode(self):\n"
+        "        print('Проверка → ✓')\n"
+        "        sys.stderr.write('Диагностика → ✓\\n')\n"
+        "        self.assertTrue(True)\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("PYTHONIOENCODING", "ascii")
+    audit = audit_lab_project(root)
+    assert audit.passed, audit.issues
+    assert "Проверка → ✓" in audit.test_output
+    assert "Диагностика → ✓" in audit.test_output
+
+
 def test_audit_accepts_stdlib_only_project_and_runs_tests(tmp_path):
     root = tmp_path / "ready"
     (root / "tests").mkdir(parents=True)
