@@ -30,6 +30,7 @@ __all__ = [
     "dfa_of",
     "equivalent",
     "counterexample",
+    "shuffle",
 ]
 
 State = Hashable
@@ -523,6 +524,37 @@ def _to_dot(
         lines.append(f'  q{label[src]} -> q{label[dst]} [label="{text}"];')
     lines.append("}")
     return "\n".join(lines)
+
+
+def shuffle(left: DFA, right: DFA) -> NFA:
+    """Асинхронное перемежение языков двух, возможно неполных, ДКА.
+
+    На каждой букве продвигается ровно один компонент; другой остаётся
+    на месте. НКА хранит только достижимые пары, метки состояний компонентов
+    не смешиваются. Это конструкция лекции 4, не синхронное пересечение.
+    """
+    alphabet = left.alphabet | right.alphabet
+    start = (left.start, right.start)
+    seen = {start}
+    pending = deque([start])
+    delta = {}
+    finals = set()
+    while pending:
+        p, q = pending.popleft()
+        if p in left.finals and q in right.finals:
+            finals.add((p, q))
+        for char in alphabet:
+            targets = set()
+            if (p, char) in left.delta:
+                targets.add((left.delta[p, char], q))
+            if (q, char) in right.delta:
+                targets.add((p, right.delta[q, char]))
+            if targets:
+                delta[((p, q), char)] = frozenset(targets)
+            for target in targets - seen:
+                seen.add(target)
+                pending.append(target)
+    return NFA(alphabet, start, frozenset(finals), delta)
 
 
 def disagreements(
