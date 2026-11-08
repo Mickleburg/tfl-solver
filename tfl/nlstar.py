@@ -71,6 +71,7 @@ __all__ = [
     "NFALearningResult",
     "learn_nfa",
     "canonical_rfsa",
+    "compact_residual_nfa",
     "residual_primes",
     "SUFFIXES",
     "PREFIXES",
@@ -442,6 +443,76 @@ def learn_nfa(
 # --------------------------------------------------------------------------
 # Канонический остаточный автомат — эталон для сверки
 # --------------------------------------------------------------------------
+
+
+def compact_residual_nfa(dfa: DFA, *, max_columns: int = 10_000,
+                         prune_covered_transitions: bool = False) -> NFA:
+    """Exact residual NFA using the complete reverse-subset observation table.
+
+    A column is the set of states accepting a suffix. Closing columns under
+    inverse letter transitions enumerates *all* different such sets. Bit rows
+    therefore decide residual inclusion exactly. Exceeding the column budget
+    raises RuntimeError; a partial table must never certify inclusion.
+    This minimizes within residual automata, not among arbitrary NFAs.
+    Optional pruning keeps only maximal target residuals: smaller targets add
+    no words to their union. It changes transition density, not the proof.
+    """
+    from collections import deque
+
+    if type(max_columns) is not int or max_columns < 1:
+        raise ValueError("max_columns must be a positive integer")
+    machine = dfa.minimize(keep_trap=True)
+    states = sorted(machine.states, key=repr)
+    index = {q: i for i, q in enumerate(states)}
+    n = len(states)
+    predecessors = {c: [0] * n for c in machine.alphabet}
+    for (q, c), r in machine.delta.items():
+        predecessors[c][index[r]] |= 1 << index[q]
+    initial_column = sum(1 << index[q] for q in machine.finals)
+    columns, seen, todo = [initial_column], {initial_column}, deque([initial_column])
+    while todo:
+        column = todo.popleft()
+        for c in sorted(machine.alphabet):
+            remaining, target = column, 0
+            while remaining:
+                bit = remaining & -remaining
+                target |= predecessors[c][bit.bit_length() - 1]
+                remaining ^= bit
+            if target not in seen:
+                if len(columns) >= max_columns:
+                    raise RuntimeError("Reverse-column budget exceeded; no residual certificate")
+                seen.add(target)
+                columns.append(target)
+                todo.append(target)
+    rows = [0] * n
+    for k, column in enumerate(columns):
+        while column:
+            bit = column & -column
+            rows[bit.bit_length() - 1] |= 1 << k
+            column ^= bit
+    primes = []
+    for q, row in enumerate(rows):
+        joined = 0
+        for r, other in enumerate(rows):
+            if r != q and other & row == other:
+                joined |= other
+        if joined != row:
+            primes.append(q)
+
+    def cover(q):
+        candidates = [r for r in primes if rows[r] & rows[q] == rows[r]]
+        if prune_covered_transitions:
+            candidates = [r for r in candidates if not any(
+                r != s and rows[r] & rows[s] == rows[r] for s in candidates)]
+        return frozenset(candidates)
+
+    delta = {(q, c): cover(index[machine.delta[states[q], c]])
+             for q in primes for c in machine.alphabet}
+    initial = cover(index[machine.start])
+    start = next(iter(initial)) if len(initial) == 1 else n
+    return NFA(machine.alphabet, start,
+               frozenset(q for q in primes if states[q] in machine.finals), delta,
+               {} if len(initial) == 1 else {start: initial})
 
 
 def _residual(dfa: DFA, state: State) -> DFA:

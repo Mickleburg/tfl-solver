@@ -10,6 +10,10 @@
 счётчиках и унарных длинах —
 [`REGULARITY-TRAINING.md`](../corpus/knowledge/REGULARITY-TRAINING.md).
 
+Для формул операций над регулярными языками и уменьшения их аргументов:
+[`REGULAR-COMPOSITIONS.md`](recipes/REGULAR-COMPOSITIONS.md). Проверяющее
+ядро — `tfl/composition.py`; остаточные НКА — `tfl/nlstar.py`.
+
 ---
 
 ## 0. Слои корпуса
